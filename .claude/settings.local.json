@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "PowerShell(Get-ChildItem *)",
+      "Skill(hookify:hookify)",
+      "PowerShell(npm *)",
+      "PowerShell(npx --yes @upstash/context7-mcp --version 2>&1 | Select-Object -First 5)",
+      "Bash(npx --version)",
+      "Bash(python3)"
+    ]
+  }
+}

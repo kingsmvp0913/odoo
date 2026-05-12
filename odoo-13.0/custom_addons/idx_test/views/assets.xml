@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="assets_backend"
+              name="idx_test assets"
+              inherit_id="web.assets_backend">
+        <xpath expr="//script[last()]" position="after">
+            <script type="text/javascript"
+                    src="/idx_test/static/src/js/idx_test.js"/>
+        </xpath>
+    </template>
+</odoo>

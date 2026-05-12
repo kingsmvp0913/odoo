@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_front_news_detail">
+        <t t-call="web.external_layout"> <!--公司基本資料 web/views/report_templates.xml-->
+            <t t-set="doc" t-value="doc.with_context(lang=lang)"/>
+            <table class="table table-sm o_main_table">
+                <tr>
+                    <td colspan="1">
+                        <strong>主旨:</strong>
+                    </td>
+                    <td>
+                        <span t-field="doc.subject"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1">
+                        <strong>內容:</strong>
+                    </td>
+                    <td>
+                        <span t-esc="doc.name"/>
+                    </td>
+                </tr>
+            </table>
+            <div id="report_detail" class="row mt32 mb32">
+                <div class="col-3 bm-2">
+                    <strong>公告類別 :</strong>
+                    <p t-field="doc.type" class="m-0"/>
+                </div>
+                <div class="col-3 bm-2">
+                    <strong>公告負責人 :</strong>
+                    <p t-field="doc.user_id.name" class="m-0"/>
+                </div>
+                <div class="col-3 bm-2">
+                    <strong>公告負責人email :</strong>
+                    <p t-field="doc.user_email" class="m-0"/>
+                </div>
+                <div class="col-3 bm-2">
+                    <strong>發布日期:</strong>
+                    <p t-field="doc.post_date" class="m-0"/>
+                </div>
+            </div>
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th name="th_name"><strong>聯絡人姓名</strong></th>
+                        <th name="th_mail"><strong>聯絡人mail</strong></th>
+                        <th name="th_phone"><strong>聯絡人電話</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="doc.news_more_ids" t-as="more">
+                        <tr>
+                            <t>
+                            <td id="connect_name">
+                                <span t-field="more.connect_name"/>
+                            </td>
+                            <td id="connect_mail">
+                                <span t-field="more.connect_mail"/>
+                            </td>
+                                <td id="connect_phone">
+                                <span t-field="more.connect_phone"/>
+                            </td>
+                            </t>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+        </t>
+    </template>
+
+    <template id="report_idx_front_news">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="idx_repair_manage_system.report_front_news_detail" t-lang="lang"/>
+            </t>
+        </t>
+    </template>
+</odoo>

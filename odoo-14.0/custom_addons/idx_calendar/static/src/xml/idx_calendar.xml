@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="calendar-box_inherit" t-inherit="web.calendar-box" t-inherit-mode="extension" owl="1">
+        <xpath expr="//span[@t-if='showTime']" position="replace">
+            <t t-if="showTime and record.calendar_end_time">
+                <span t-if="showTime" class="fc-time"/> - <span t-esc="record.calendar_end_time"/>
+            </t>
+            <t t-else=""><span t-if="showTime" class="fc-time"/></t>
+        </xpath>
+    </t>
+
+    <!--日曆上增加"複製"的按鈕-->
+    <t t-name="Calendar.attendee.status.popover" t-extend="Calendar.attendee.status.popover">
+        <t t-jquery=".o-calendar-attendee-status" t-operation="after">
+            <a href="#" class="btn btn-secondary o_cw_popover_copy ml-2">複製</a>
+        </t>
+    </t>
+
+</templates>

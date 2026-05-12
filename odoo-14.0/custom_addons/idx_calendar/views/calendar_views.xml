@@ -1,0 +1,39 @@
+<odoo>
+    <data>
+
+        <record id="view_calendar_alarm_tree_inherit" model="ir.ui.view">
+            <field name="name">calendar.alarm.tree.inherit</field>
+            <field name="model">calendar.alarm</field>
+            <field name="inherit_id" ref="calendar.view_calendar_alarm_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='alarm_type']" position="before">
+                    <field name="sequence" widget='handle'/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_calendar_event_type_tree_inherit" model="ir.ui.view">
+            <field name="name">calendar.event.type.tree.inherit</field>
+            <field name="model">calendar.event.type</field>
+            <field name="inherit_id" ref="calendar.view_calendar_event_type_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="before">
+                    <field name="sequence" widget='handle'/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_calendar_event_type_search" model="ir.ui.view">
+        <field name="name">calendar.event.type.search</field>
+        <field name="model">calendar.event.type</field>
+        <field name="arch" type="xml">
+            <search string="Calendar Event Type Search">
+                <field name="name" string="名稱" filter_domain="[('name', 'ilike', self)]"/>
+                <filter string="封存" name="inactive" domain="[('active','=',False)]"/>
+            </search>
+        </field>
+    </record>
+
+    </data>
+</odoo>
+

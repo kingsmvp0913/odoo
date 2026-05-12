@@ -1,0 +1,24 @@
+<templates>
+    <t t-name="my_module.Test" owl="1">
+        <p t-on-click="alertMessage">
+            <hr/>
+            <t t-out="this.state.face" />
+            <t t-if="this.state.face == '😠'" t-esc="angryCounter.state.count"/>
+            <hr/>
+            <span t-if="this.comment == 'good'" class="text-success" >Well Done!</span>
+            <span t-if="this.comment == 'better'" class="text-danger" >You can do better!</span>          
+        </p>
+    </t>
+
+    <t t-name="my_module.TestCalculator" owl="1">
+        數字1：<input type="number" t-on-keyup="updateCounter1" class="js_calculator_input"/>
+        數字2：<input type="number" t-on-keyup="updateCounter2" />
+        加總：<t t-out="sum" />
+    </t>
+
+    <t t-name="my_module.TestRef" owl="1">
+        input：<input type="number" t-ref="input1" />
+        <button t-on-click="focusInput">Click To Focus</button>
+    </t>
+    
+</templates>

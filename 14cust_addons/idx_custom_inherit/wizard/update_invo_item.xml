@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--view-->
+    <record id="idx_update_invo_item_wizard_form" model="ir.ui.view">
+       <field name="name">idx.update.invo.item.wizard.form</field>
+       <field name="model">idx.update.invo.item.wizard</field>
+       <field name="arch" type="xml">
+           <form string="更新發票品名">
+               <group class="oe_title">
+                   <field name="order_id" invisible="1"/>
+                   <field name="line_id"/>
+                   <field name="invoice_name"/>
+               </group>
+               <footer>
+                   <button name="write_invo_item" string="更新" type="object" class="btn-primary"/>
+                   <button string="取消" class="btn-secondary" special="cancel"/>
+               </footer>
+           </form>
+       </field>
+    </record>
+
+    <!--action-->
+    <record id="idx_update_invo_item_wizard" model="ir.actions.act_window">
+        <field name="name">更新發票品名</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">idx.update.invo.item.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="idx_update_invo_item_wizard_form"/>
+        <field name="target">new</field>
+    </record>      
+</odoo>

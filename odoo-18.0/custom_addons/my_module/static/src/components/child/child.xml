@@ -1,0 +1,14 @@
+<templates>
+    <t t-name="my_module.Child" owl="1">
+        <t t-slot="default" />
+        <p><t t-out="props.title" /></p>
+        <h1>Counter: <t t-out="counterValue"/></h1>
+        <ol>
+            <t t-foreach="props.list" t-as="item" t-key="item_index">
+                <li t-out="item+item_index"></li>
+            </t>
+        </ol>
+        <button t-on-dblclick="props.onDBLClick" class="btn btn-primary">Click Me!!(Sub)</button>
+        <t t-out="env.data" />
+    </t>
+</templates>

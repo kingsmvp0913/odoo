@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <report
+                id="report_front_news"
+                string="訊息公告報表"
+                model="idx.front.news"
+                report_type="qweb-pdf"
+                file="idx_repair_manage_system.report_idx_front_news"
+                name="idx_repair_manage_system.report_idx_front_news"
+                print_report_name="'訊息公告 - %s' % (object.order_number)" 
+        />
+    </data>
+</odoo>

@@ -1,0 +1,47 @@
+<odoo>
+
+    <!-- tree -->
+    <record id="purchase_order_tree_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.tree.inherit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="partner_email" optional="hide"/>
+                <field name="is_repair" widget="boolean" />
+            </xpath>           
+        </field>
+    </record>
+
+    <!-- search -->
+    <record id="purchase_order_search_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.search.inherit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='activities_exception']" position="after">
+                <separator/>
+                <filter string="維修" name="is_repair_true" domain="[('is_repair', '=', True)]"/>
+                <filter string="非維修" name="is_repair_false" domain="[('is_repair', '=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- form -->
+    <record id="purchase_order_form_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="partner_email"/>
+                <field name="is_repair_readonly" invisible="1"/>
+                <field name="is_repair" widget="boolean" attrs="{'readonly': [('is_repair_readonly', '=', True)]}"/>
+            </xpath>
+            <xpath expr="//field[@name='date_order']" position="before">
+                <field name="inquiry_date"/>
+            </xpath>            
+        </field>
+    </record>
+
+</odoo>

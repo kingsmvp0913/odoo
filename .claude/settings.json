@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Read(**)",
+      "Write(.claude/kingsmvpsplan/**)",
+      "Edit(.claude/kingsmvpsplan/**)",
+      "Bash(**kingsmvpsplan**)",
+      "Bash(date /t)",
+      "Bash(time /t)",
+      "Bash(powershell**Get-Date**)",
+      "PowerShell(**.claude/kingsmvpsplan/**)",
+      "PowerShell(**kingsmvpsplan**)",
+      "PowerShell(**New-Item**)",
+      "PowerShell(New-Item**)",
+      "PowerShell(New-Item*)",
+      "PowerShell(**Test-Path**)",
+      "PowerShell(**Get-ChildItem**)",
+      "PowerShell(**Get-Date**)",
+      "PowerShell(**Select-String**)",
+      "PowerShell(**Rename-Item**kingsmvpsplan**)",
+      "PowerShell(**Move-Item**kingsmvpsplan**)",
+      "PowerShell(**Copy-Item**kingsmvpsplan**)",
+      "PowerShell(**Remove-Item**kingsmvpsplan**)",
+      "Skill(keybindings-help)",
+      "Skill(update-config)"
+    ]
+  },
+  "spinnerTipsEnabled": false
+}

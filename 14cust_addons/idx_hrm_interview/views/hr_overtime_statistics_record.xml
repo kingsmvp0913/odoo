@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<odoo>
+    <data>
+        <record id="view_hr_overtime_statistics_record_tree" model="ir.ui.view">
+            <field name="name">hr overtime statistics record tree</field>
+            <field name="model">hr.overtime.statistics.record</field>
+            <field name="arch" type="xml">
+                <tree string="overtime" create="false">
+                    <field name="overtime_start" readonly="1"/>
+                    <field name="overtime_end" readonly="1"/>
+                    <field name="worked_hours" readonly="1"/>
+                    <field name="type" readonly="1"/>
+                    <field name="overtime_type" readonly="1"/>
+                    <field name="overtime_pay" readonly="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="hr_overtime_statistics_record_action">
+            <field name="name">加班統計明細</field>
+            <field name="res_model">hr.overtime.statistics.record</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+
+        <menuitem id="menu_hr_overtime_statistics_top"
+                name="加班統計"
+                sequence="1"/>
+        <menuitem id="menu_hr_overtime_statistics_record" name="加班統計明細"
+                  parent="menu_hr_overtime_statistics_top"
+                  action="hr_overtime_statistics_record_action"
+                  sequence="2"
+        />
+
+    </data>
+</odoo>

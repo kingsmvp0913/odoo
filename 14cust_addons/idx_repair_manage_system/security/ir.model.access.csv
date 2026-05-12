@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_idx_front_news,access_idx_front_news,model_idx_front_news,base.group_user,1,1,1,1
+access_idx_front_news_more,access_idx_front_news_more,model_idx_front_news_more,base.group_user,1,1,1,1
+access_idx_repair_related,access_idx_repair_related,model_idx_repair_related,base.group_user,1,1,1,1
+access_idx_create_news_wizard,access_idx_create_news_wizard,model_idx_create_news_wizard,base.group_user,1,1,1,1

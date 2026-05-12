@@ -1,0 +1,22 @@
+{
+    'name': 'IDX Custom Inherit',
+    'summary': 'IDX Custom Inherit',
+    'description': 'IDX Custom Inherit',
+    'author': 'Steven',
+    'version': '14.0.0.1',
+    'website': 'https://ideaxpress.biz',
+    'category': 'IDX',
+    'depends': ['base', 'sale', 'sale_management'],
+    'data': [
+        'wizard/update_invo_item.xml',
+        'views/sale_views.xml',
+        'views/view_action.xml',
+        'security/ir.model.access.csv',     
+        'views/view_menuitem.xml',
+        'report/report_label.xml',
+        'report/report.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}

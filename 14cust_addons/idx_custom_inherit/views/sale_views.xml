@@ -1,0 +1,47 @@
+<odoo>
+    <record id="view_order_form_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='payment_term_id']" position="before">
+                <field name="reply_date"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name" invisible="1"/>
+                <field name="name_and_customer" readonly="1"/>
+            </xpath>
+            <xpath expr="//button[@name='preview_sale_order']" position="after">
+                <button name="open_related_lines"
+                        string="相關人員"
+                        class="oe_stat_button"
+                        type="object" icon="fa-th-list">
+                </button>
+            </xpath>
+            <xpath expr="//button[@name='action_cancel']" position="after">
+                <button name="open_update_invo_wizard"
+                        type="object"
+                        string="更新發票品名"
+                        class="oe_highlight"
+                        attrs="{'invisible': [('state','not in',['sale'])]}"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/tree//field[@name='product_uom_qty']" position="before">
+                <field name="invoice_name"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <!-- 相關人員tree -->
+    <record id="view_idx_custom_inheit_related_tree" model="ir.ui.view">
+        <field name="name">idx.sale.related.tree</field>
+        <field name="model">idx.sale.related</field>
+        <field name="arch" type="xml">
+            <tree string="相關人員" editable="bottom">
+                <field name="sale_id"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+
+</odoo>

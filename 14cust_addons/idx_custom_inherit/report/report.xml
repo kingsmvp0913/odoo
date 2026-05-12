@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <report
+                id="report_label"
+                string="料件標籤"
+                model="sale.order"
+                report_type="qweb-pdf"
+                file="idx_custom_inherit.report_sale_order_label"
+                name="idx_custom_inherit.report_sale_order_label"
+                print_report_name="'料件標籤 - %s' % (object.name)"
+        />
+    </data>
+</odoo>

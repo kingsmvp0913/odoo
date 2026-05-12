@@ -1,0 +1,214 @@
+# ==========================================
+# 1. 排除所有虛擬環境 (Python Venv)
+# ==========================================
+venv_*/
+**/venv_*/
+**/site-packages/
+**/.venv/
+
+# ==========================================
+# 2. 排除不重要的 Odoo 核心舊版本（只留下你目前要分析的版本）
+# ==========================================
+odoo-13.0/
+odoo-14.0/
+odoo-18.0/
+
+# ==========================================
+# 3. 排除 Odoo 核心底層中「不常修改」的巨型模組
+# ==========================================
+**/odoo/addons/base/
+**/odoo/addons/web/
+**/odoo/addons/website/
+
+# ==========================================
+# 4. 排除 Python 編譯快取與 IDE 暫存檔
+# ==========================================
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.vscode/
+.git/
+.idea/
+
+# ==========================================
+# 5. 排除 Odoo 執行產生的日誌與暫存資料
+# ==========================================
+**/*.log
+**/filestore/
+**/sessions/
+
+# ==========================================
+# 6. 排除 Graphify 自身的輸出與快取
+# ==========================================
+graphify-out/
+
+# ==========================================
+# 7. 排除靜態資源（JS bundle、CSS、圖片、字型）
+#    約 5,700 個檔案，不含程式邏輯
+# ==========================================
+**/static/
+
+# ==========================================
+# 8. 排除測試目錄（約 2,855 個檔案）
+# ==========================================
+**/tests/
+**/test/
+
+# ==========================================
+# 9. 排除各國本地化模組（約 1,720 個檔案）
+#    這些模組與台灣業務通常無關
+# ==========================================
+addons/l10n_*/
+
+# ==========================================
+# 10. 排除示範資料與文件目錄
+# ==========================================
+**/demo/
+doc/
+debian/
+setup/
+
+# ==========================================
+# 11. 排除翻譯檔（.po / .pot）
+# ==========================================
+**/i18n/
+**/*.po
+**/*.pot
+
+# ==========================================
+# 12. 追加排除（針對 Odoo 17 深度優化）
+# ==========================================
+# 確保所有階層的各國會計都被阻斷
+**/addons/l10n_*/
+# 排除 IoT / POS 硬體驅動模組
+**/addons/hw_*/
+addons/hw_drivers/
+addons/hw_escpos/
+addons/hw_posbox_homepage/
+# 排除官方數十個網頁主題範本
+**/addons/theme_*/
+
+# ==========================================
+# 13. 排除非常用模組（只保留業務開發核心）開發有用到再來開
+# ==========================================
+
+# --- 網站 / 電商 ---
+addons/website/
+addons/website_*/
+addons/web_unsplash/
+addons/web_editor/
+addons/web_hierarchy/
+addons/web_tour/
+addons/social_media/
+
+# --- 製造 (MRP) ---
+addons/mrp/
+addons/mrp_*/
+
+# --- 銷售點 (POS) ---
+addons/point_of_sale/
+addons/pos_*/
+
+# --- 活動管理 ---
+addons/event/
+addons/event_*/
+
+# --- 車隊 / 餐廳 / 遊戲化 / 午餐 ---
+addons/fleet/
+addons/lunch/
+addons/gamification/
+addons/gamification_*/
+addons/maintenance/
+addons/repair/
+addons/membership/
+addons/survey/
+addons/data_recycle/
+addons/privacy_lookup/
+
+# --- 大量發送 ---
+addons/mass_mailing/
+addons/mass_mailing_*/
+
+# --- 即時通訊 ---
+addons/im_livechat/
+addons/im_livechat_*/
+
+# --- Google / Microsoft 整合 ---
+addons/google_account/
+addons/google_calendar/
+addons/google_gmail/
+addons/google_recaptcha/
+addons/microsoft_account/
+addons/microsoft_calendar/
+addons/microsoft_outlook/
+
+# --- 付款閘道（保留 payment/ 核心，排除各地區特定閘道）---
+addons/payment_adyen/
+addons/payment_alipay/
+addons/payment_aps/
+addons/payment_asiapay/
+addons/payment_authorize/
+addons/payment_buckaroo/
+addons/payment_flutterwave/
+addons/payment_mercado_pago/
+addons/payment_mollie/
+addons/payment_ogone/
+addons/payment_payulatam/
+addons/payment_payumoney/
+addons/payment_razorpay/
+addons/payment_razorpay_oauth/
+addons/payment_sips/
+addons/payment_worldline/
+addons/payment_xendit/
+
+# --- 國際電子發票 / EDI ---
+addons/account_edi/
+addons/account_edi_*/
+addons/account_peppol/
+addons/account_peppol_*/
+addons/account_qr_code_emv/
+addons/account_qr_code_sepa/
+addons/account_add_gln/
+addons/snailmail/
+addons/snailmail_*/
+
+# --- Spreadsheet 儀表板（保留核心，排除各業務儀表板）---
+addons/spreadsheet_dashboard_*/
+
+# --- 測試專用模組 ---
+addons/test_*/
+
+# --- CRM 附加整合 ---
+addons/crm_iap_enrich/
+addons/crm_iap_mine/
+addons/crm_livechat/
+addons/crm_mail_plugin/
+addons/crm_sms/
+
+# --- 其他低頻模組 ---
+addons/attachment_indexation/
+addons/barcodes_gs1_nomenclature/
+addons/base_address_extended/
+addons/base_geolocalize/
+addons/base_iban/
+addons/base_sparse_field/
+addons/delivery_mondialrelay/
+addons/delivery_stock_picking_batch/
+addons/hr_gamification/
+addons/hr_homeworking/
+addons/hr_livechat/
+addons/hr_org_chart/
+addons/hr_presence/
+addons/hr_recruitment_skills/
+addons/hr_recruitment_sms/
+addons/hr_recruitment_survey/
+addons/hr_skills_slides/
+addons/hr_skills_survey/
+addons/link_tracker/
+addons/mail_group/
+addons/mail_plugin/
+addons/mail_bot_hr/
+addons/partner_autocomplete/
+addons/transifex/
+addons/web/

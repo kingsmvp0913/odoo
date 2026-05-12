@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+
+        <menuitem name="維修管理" id="idx_repair_root"/>
+            <menuitem name="維修表單" id="idx_repair_order" parent="idx_repair_root" action="action_idx_repair_order"/>
+
+    </data>
+</odoo>

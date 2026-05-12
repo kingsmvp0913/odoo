@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="idx_calendar_meeting_room_tree">
+            <field name="name">idx calendar meeting room tree</field>
+            <field name="model">idx.calendar.meeting.room</field>
+            <field name="arch" type="xml">
+                <tree editable="top">
+                    <field name="room"/>
+                    <field name="name"/>
+                    <field name="description"/>
+                    <field name="limit"/>
+                    <field name="color" widget="color_picker"/>
+                    <field name="is_entity"/>
+                </tree>
+            </field>
+        </record>
+    </data>
+</odoo>

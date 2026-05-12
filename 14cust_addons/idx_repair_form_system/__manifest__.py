@@ -1,0 +1,22 @@
+{
+    'name': 'IDX Repair Order System22',
+    'summary': '維修表單',
+    'description': '維修表單',
+    'version': '14.0.0.2',
+    'author': 'Steven2',
+    'website': 'https://ideaxpress.biz',
+    'category': 'IDX',
+    'depends': ['base', 'mail'],
+    'data': [
+        'security/security.xml',
+        'security/ir.model.access.csv',
+        'views/view_action.xml',
+        'views/view_menuitem.xml',
+        'views/idx_repair_order.xml',
+        'data/sequence.xml',
+    ],
+    'demo': [],
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}

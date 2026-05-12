@@ -1,0 +1,23 @@
+{
+  "indexing": {
+    "includes": [
+      "custom_addons/**/*.py",
+      "custom_addons/**/*.xml",
+      "custom_addons/**/*.js"
+    ],
+    "excludes": [
+      "**/node_modules/**",
+      "**/venv/**",
+      "**/.git/**",
+      "**/__pycache__/**",
+      "**/static/lib/**",
+      "**/odoo/addons/web/static/lib/**",
+      "**/*.pyc",
+      "**/*.exe"
+    ],
+    "maxFileSize": "2MB"
+  },
+  "lsp": {
+    "preferredLanguage": "python"
+  }
+}

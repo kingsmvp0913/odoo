@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <menuitem name="前台管理" id="idx_front_root"/>
+            <menuitem name="訊息公告" id="idx_front_news" parent="idx_front_root" action="action_idx_front_news"/>
+            <menuitem name="建立訊息公告" id="idx_create_news_wizard_menu" parent="idx_front_root" action="idx_create_news_wizard"/>
+
+        <menuitem id="service_config" name="設定"/>    
+            <menuitem name="設定" id="service_setting" parent="service_config" action="service_setting_action" />
+
+    </data>
+</odoo>

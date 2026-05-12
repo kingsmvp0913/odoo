@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record model="ir.actions.act_window" id="idx_calendar_meeting_room_action">
+            <field name="name">會議室</field>
+            <field name="res_model">idx.calendar.meeting.room</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <record id="action_idx_calendar" model="ir.actions.act_window">
+            <field name="name">日曆</field>
+            <field name="res_model">calendar.event</field>
+            <field name="view_mode">calendar,tree,form</field>
+            <field name="view_id" ref="idx_view_calendar_event_calendar2"/>
+            <field name="context" eval="{
+                'search_default_mymeetings': 1,
+                'default_no_create': 1,
+            }"/>
+        </record>
+
+        <record id="action_idx_meeting" model="ir.actions.act_window">
+            <field name="name">會議</field>
+            <field name="res_model">calendar.event</field>
+            <field name="view_mode">calendar,tree,form</field>
+            <field name="view_id" ref="idx_view_calendar_event_calendar"/>
+            <field name="context" eval="{
+                'search_default_all_meetings': 1,
+                'default_is_meeting': 1,
+            }"/>
+        </record>
+
+    </data>
+</odoo>

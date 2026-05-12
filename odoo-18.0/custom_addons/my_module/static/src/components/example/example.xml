@@ -1,0 +1,10 @@
+<templates>
+    <t t-name="my_module.Example" owl="1">
+        <p>Hello OWL!</p>
+        <button t-on-click="increaseCounter" class="btn btn-primary">Add !!</button>
+        <Child title="'Child of Example'" list="['測試', '正式', '備份']" onDBLClick="alertMessage"  counter="counter">
+            <span> This is a Slot , it should be come first</span>
+        </Child>
+        <p><t t-esc="counter.state.counter" /></p>
+    </t>
+</templates>

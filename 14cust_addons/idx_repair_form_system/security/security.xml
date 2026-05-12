@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<odoo>
+
+    <record id="module_idx_front_system" model="ir.module.category">
+        <field name="name">維修管理</field>
+        <field name="description">IDX維修表單</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="group_front_user" model="res.groups">
+        <field name="name">使用者</field>
+        <field name="category_id" ref="module_idx_front_system"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="group_front_manager" model="res.groups">
+        <field name="name">管理員</field>
+        <field name="category_id" ref="module_idx_front_system"/>
+        <field name="implied_ids" eval="[(4, ref('group_front_user'))]"/>
+    </record>
+
+</odoo>
