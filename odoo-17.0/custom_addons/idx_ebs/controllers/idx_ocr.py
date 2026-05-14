@@ -291,7 +291,7 @@ class IdxOCRController(http.Controller):
                     partner_name = (item.get("送檢單位") or "ERROR").strip()  # 聯絡人(送檢單位)
                     patient_name = (item.get("姓名") or "ERROR").strip()  # 姓名
                     birth_date = item.get("生日", "").strip()  # 出生年月日
-                    inspection_date = item.get("檢測日期", "").strip()  # 檢測日期
+                    inspection_date = item.get("採檢日期", "").strip()  # 採檢日期
                     medical_no = item.get("流水號", "").strip()  # 病歷號碼
                     inspect_number = item.get("流水號", "").strip()  # 送檢流水編號
                     gender_name = (item.get("性別") or "").strip()  # 性別
@@ -382,15 +382,15 @@ class IdxOCRController(http.Controller):
                             else "[出生年月日]欄位異常；"
                         )
 
-                    # 檢測日期
+                    # 採檢日期
                     inspection_date_f = (
                         self._check_date(inspection_date) if inspection_date else None
                     )
                     if inspection_date and not inspection_date_f:
                         detect_error = (
-                            f"{detect_error}[檢測日期]欄位異常；"
+                            f"{detect_error}[採檢日期]欄位異常；"
                             if detect_error
-                            else "[檢測日期]欄位異常；"
+                            else "[採檢日期]欄位異常；"
                         )
                     
                     error_fields = []

@@ -29,7 +29,7 @@ confirm/
 }
 ```
 
-填完存檔後，再次執行 `分析.ps1`，AI 將驗證答案並嘗試升級至 MODE_B。
+填完存檔後，再次執行 `analysis.ps1`，AI 將驗證答案並嘗試升級至 MODE_B。
 
 ### Odoo 版本為必填項目
 
@@ -37,8 +37,8 @@ confirm/
 
 ### 當 `execution_mode == "MODE_B"` 且 `is_complete == true` 時
 
-`分析.ps1` 自動將案件移至 `testcoding/`，無需手動操作。
+`analysis.ps1` 自動將案件移至 `testcoding/`，無需手動操作。
 
 ## 失敗回滾
 
-`寫測試.ps1` 或 `寫程式.ps1` 執行失敗時，案件會帶著 `blocker.txt` 回滾至此目錄。
+`test_coding.ps1` 或 `coding.ps1` 執行失敗時，案件會帶著 `blocker.txt` 回滾至此目錄。

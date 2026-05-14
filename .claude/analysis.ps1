@@ -10,10 +10,10 @@ $agentPath     = "$root\.claude\agents\requirements-analyst.md"
 . "$root\.claude\_common.ps1"
 
 # === 【公司 Odoo 連線設定】 ===
-$ODOO_URL = "https://ideaxpress.biz"
+$ODOO_URL = "https://odoo.ideaxpress.biz"
 $DB_NAME  = "odoo"
 $USERNAME = "steven.lin@ideaxpress.biz"
-
+$USER_ID  = 79
 # 🔐 強制從環境變數讀取密碼，無預設值
 # [Environment]::SetEnvironmentVariable("ODOO_PASSWORD", "您的真實密碼", "User")
 $PASSWORD = $env:ODOO_PASSWORD
@@ -21,7 +21,8 @@ if (-not $PASSWORD) {
     Write-Host "[ERROR] 環境變數 ODOO_PASSWORD 未設定，請設定後重新執行" -ForegroundColor Red
     exit 1
 }
-$USER_ID  = 79
+
+$pyScriptPath = Join-Path $root ".claude\curl.py"
 
 # =========================================================
 # CACHE
@@ -135,94 +136,25 @@ function Clean-HtmlToText($html) {
 # 0. FETCH ODOO TASKS
 # =========================================================
 Write-Host "[ODOO] Syncing tasks from $ODOO_URL ..."
-
 if (-not (Test-Path $startDir)) { New-Item -ItemType Directory -Force $startDir | Out-Null }
 
+# 收集所有 pipeline 中已存在的 task ID，避免 Python 重複建立
+$_pipelineDirs = @($startDir, $confirmDir, $testcodingDir, $codingDir, $finalDir)
+$_processedIds = @()
+foreach ($_dir in $_pipelineDirs) {
+    if (Test-Path $_dir) {
+        Get-ChildItem $_dir -ErrorAction SilentlyContinue | ForEach-Object {
+            if ($_.Name -match '^task_(\d+)') { $_processedIds += $matches[1] }
+        }
+    }
+}
+$_skipIds = ($_processedIds | Select-Object -Unique) -join ","
+
 try {
-    $sessionVar = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-
-    # 1. 驗證登入
-    $authPayload = @{ jsonrpc = "2.0"; params = @{ db = $DB_NAME; login = $USERNAME; password = $PASSWORD } }
-    $authResp = Invoke-RestMethod -Uri "$ODOO_URL/web/session/authenticate" -Method Post -Body ($authPayload | ConvertTo-Json -Depth 20) -ContentType "application/json" -WebSession $sessionVar
-    if ($authResp.error) { throw "Odoo 登入失敗: $($authResp.error.message)" }
-
-    # 2. 抓取 project.task
-    $taskPayload = @{
-        jsonrpc = "2.0"
-        params = @{
-            model = "project.task"
-            method = "search_read"
-            args = @()
-            kwargs = @{
-                domain = ,@(@("user_id", "=", $USER_ID))
-                fields = @("id", "name", "project_id", "stage_id", "description")
-                limit = 30
-            }
-        }
-    }
-    $taskResp = Invoke-RestMethod -Uri "$ODOO_URL/web/dataset/call_kw" -Method Post -Body ($taskPayload | ConvertTo-Json -Depth 20) -ContentType "application/json" -WebSession $sessionVar
-    $tasks = $taskResp.result
-
-    if ($null -eq $tasks -or $tasks.Count -eq 0) {
-        Write-Host "[INFO] 當前沒有指派給您的 Odoo 開發任務。管線安全結束。"
-        return
-    }
-
-    # 3. 循環處理任務
-    foreach ($task in $tasks) {
-        $taskId = $task.id
-        $taskName = $task.name
-        $filePath = Join-Path $startDir "task_$taskId.txt"
-
-        $isAlreadyProcessed = $false
-        $pipelineDirs = @($startDir, $confirmDir, $testcodingDir, $codingDir, $finalDir)
-
-        foreach ($dir in $pipelineDirs) {
-            if (Test-Path $dir) {
-                $match = Get-ChildItem $dir -ErrorAction SilentlyContinue | Where-Object {
-                    $_.Name -eq $taskId -or $_.Name -eq "task_$taskId.txt" -or $_.BaseName -eq "task_$taskId"
-                }
-                if ($null -ne $match) { $isAlreadyProcessed = $true; break }
-            }
-        }
-
-        if ($isAlreadyProcessed) { continue }
-
-        $cleanDesc = Remove-HtmlImagesOnly $task.description
-
-        $msgPayload = @{
-            jsonrpc = "2.0"
-            params = @{
-                model = "mail.message"
-                method = "search_read"
-                args = @()
-                kwargs = @{
-                    domain = ,@(@("model", "=", "project.task"), @("res_id", "=", $taskId))
-                    fields = @("date", "body")
-                    order = "date desc"
-                }
-            }
-        }
-        $msgResp = Invoke-RestMethod -Uri "$ODOO_URL/web/dataset/call_kw" -Method Post -Body ($msgPayload | ConvertTo-Json -Depth 20) -ContentType "application/json" -WebSession $sessionVar
-
-        $messageLines = foreach ($msg in $msgResp.result) {
-            $cleanBody = Clean-HtmlToText $msg.body
-            if (-not [string]::IsNullOrWhiteSpace($cleanBody)) { "[$($msg.date)] $cleanBody" }
-        }
-        $allMessagesText = if ($null -ne $messageLines -and $messageLines.Count -gt 0) { $messageLines -join "`n" } else { "無訊息內容" }
-
-        $fileContent = @"
----id---
-$taskId
----title---
-$taskName
----description---
-$cleanDesc
----message---
-$allMessagesText
-"@
-        $fileContent | Out-File $filePath -Encoding utf8 -Force
-        Write-Host "[ODOO TASK DETECTED] Created task_$taskId.txt: $taskName"
+    $pyOut = python $pyScriptPath $ODOO_URL $DB_NAME $USERNAME $PASSWORD $USER_ID $startDir $_skipIds 2>&1
+    $pyOut | ForEach-Object { Write-Host $_ }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[WARN] Odoo 任務同步失敗，Python exit code: $LASTEXITCODE" -ForegroundColor Yellow
     }
 }
 catch {

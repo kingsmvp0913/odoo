@@ -17,7 +17,7 @@ class SaleOrderOCR1(models.Model):
     gender = fields.Selection([("male", "男"),("female", "女")], string="性別")
     medical_no = fields.Char(string="病歷號碼")
     inspect_number = fields.Char(string="送檢流水編號")
-    inspection_date = fields.Date(string="檢測日期")
+    inspection_date = fields.Date(string="採檢日期")
     birth_date = fields.Date(string="出生年月日")
     sample_type = fields.Selection([("serum", "血清"), ("plasma", "血漿"), ("whole_blood", "全血")], string="樣本種類")
     product_template_id = fields.Many2one("product.template", string="檢測項目", required=True)

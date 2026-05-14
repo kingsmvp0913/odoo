@@ -2,7 +2,7 @@
 
 需求規格已確認（MODE_B），等待生成測試骨架並驗證紅燈的案件。
 
-## 執行流程（寫測試.ps1）
+## 執行流程（test_coding.ps1）
 
 1. 讀取 `analysis.json`
 2. 確認 `odoo_version` 已填寫，否則跳過

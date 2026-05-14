@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:systematic-debugging)",
+      "Bash(python -c \"import requests; import bs4; print\\('OK'\\)\")",
+      "Bash(echo \"exit:$?\")",
+      "PowerShell(if \\($env:ODOO_PASSWORD\\) { \"SET \\(length=$\\($env:ODOO_PASSWORD.Length\\)\\)\" } else { \"UNSET\" })",
+      "Bash(python *)"
+    ]
+  }
+}

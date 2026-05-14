@@ -1,5 +1,5 @@
 # =========================================================
-# SHARED PIPELINE FUNCTIONS - sourced by 分析.ps1 / 寫測試.ps1 / 寫程式.ps1
+# SHARED PIPELINE FUNCTIONS - sourced by analysis.ps1 / test_coding.ps1 / coding.ps1
 # =========================================================
 
 function Acquire-Lock {

@@ -6,12 +6,12 @@
 Odoo Task API
      │
      ▼
-┌─────────┐   分析.ps1    ┌─────────┐   分析.ps1    ┌────────────┐
+┌─────────┐   analysis.ps1    ┌─────────┐   analysis.ps1    ┌────────────┐
 │  start/ │ ────────────► │ confirm/ │ ────────────► │ testcoding/ │
 └─────────┘               └─────────┘               └────────────┘
-                          (等待填答)                       │ 寫測試.ps1
+                          (等待填答)                       │ test_coding.ps1
                                                            ▼
-                          ┌─────────┐   寫程式.ps1  ┌─────────┐
+                          ┌─────────┐   coding.ps1  ┌─────────┐
                           │  final/ │ ◄──────────── │ coding/ │
                           └─────────┘               └─────────┘
 ```
@@ -20,9 +20,9 @@ Odoo Task API
 
 | 腳本 | 觸發時機 | 功能 |
 |------|----------|------|
-| `分析.ps1` | 手動執行 | 從 Odoo 抓任務 → start/；呼叫 requirements-analyst → confirm/；確認 MODE_B 後推進 testcoding/ |
-| `寫測試.ps1` | 手動執行 | 呼叫 test-agent 生成測試骨架；驗證紅燈後推進 coding/ |
-| `寫程式.ps1` | 手動執行 | 呼叫 senior-software-engineer 實作；綠燈後推進 final/ |
+| `analysis.ps1` | 手動執行 | 從 Odoo 抓任務 → start/；呼叫 requirements-analyst → confirm/；確認 MODE_B 後推進 testcoding/ |
+| `test_coding.ps1` | 手動執行 | 呼叫 test-agent 生成測試骨架；驗證紅燈後推進 coding/ |
+| `coding.ps1` | 手動執行 | 呼叫 senior-software-engineer 實作；綠燈後推進 final/ |
 
 ## 共用函式庫
 

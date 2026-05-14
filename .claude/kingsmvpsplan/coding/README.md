@@ -2,7 +2,7 @@
 
 測試骨架已就位且紅燈確認，等待 AI 實作程式碼使測試通過的案件。
 
-## 執行流程（寫程式.ps1）
+## 執行流程（coding.ps1）
 
 1. 讀取 `analysis.json` 與 `logs/error.log`（traceback）
 2. 確認 `odoo_version` 已填寫，否則跳過

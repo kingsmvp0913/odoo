@@ -54,7 +54,7 @@
                 <field name="patient_name" string="姓名"/>
                 <field name="gender" string="性別"/>
                 <field name="medical_no" string="病歷號碼"/>
-                <field name="inspection_date" string="檢測日期" widget="date" options="{'format': 'yyyy:MM:dd'}"/>
+                <field name="inspection_date" string="採檢日期" widget="date" options="{'format': 'yyyy:MM:dd'}"/>
                 <field name="birth_date" string="出生年月日" widget="date" options="{'format': 'yyyy/MM/dd'}"/>
                 <field name="sample_type" string="樣本種類"/>
                 <field name="product_template_id" string="檢測項目" options="{'no_create': True, 'no_edit': True}" domain="[('category', '=', '0'), ('detailed_type', '=', 'service')]"/>

@@ -22,6 +22,6 @@ task_<task_id>.txt
 
 ## 流程
 
-`分析.ps1` 讀取此目錄 → 呼叫 requirements-analyst → 移至 `confirm/<case_id>/`。
+`analysis.ps1` 讀取此目錄 → 呼叫 requirements-analyst → 移至 `confirm/<case_id>/`。
 
 已處理的任務不會重複建立（跨所有管線目錄檢查）。

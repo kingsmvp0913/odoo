@@ -28,7 +28,7 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
 
     request_inspection_date = fields.Date(string="收件日期")
-    inspection_date = fields.Date(string="檢測日期")
+    inspection_date = fields.Date(string="採檢日期")
     wf_confirmation_status = fields.Selection(
         [("Y", "已確認"), ("N", "未確認"), ("V", "作廢")],
         string="WF確認碼",
