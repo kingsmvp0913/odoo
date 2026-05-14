@@ -9,24 +9,12 @@
 - Use Skill tool: `graphify query/path/explain`. Wiki: `graphify-out/wiki/index.md`.
 - After edits: run `/graphify . --update`.
 
-## 1.5 Tool Restrictions
-- `mcp__serena__initial_instructions`: requirements-analyst (A), senior-software-engineer (C), test-agent (T) only.
-- `brainstorming` skill: senior-software-engineer C1 only.
-- `code-review / pr-review-toolkit / security-guidance`: test-agent only.
-
-## 2. Agent Routing
-- "分析" / "開始分析" (exact) → invoke `requirements-analyst`.
-- "開發" / "開始開發" (exact) → invoke `senior-software-engineer`.
-- Any other phrasing → stay in Main Agent (even containing "分析" or "開發").
-
-### Dev Workflow
-1. `senior-software-engineer` reads `coding/<task>/analysis.md`. Do not re-invoke `requirements-analyst`.
-2. Develop strictly per spec. Do not add beyond `analysis.md`.
-3. On any ambiguity: append to `❓ 待釐清問題`, move `coding/<task>/` → `confirm/<task>/`, output questions only, stop.
-4. Unanswered `❓` = blocker. Move back to `confirm/`, stop.
+## 2. Dev Workflow
+- `senior-software-engineer` must read specification from `analysis.json`. Do not guess intent.
+- Develop strictly per spec. Do not add fields, models, or logic beyond `analysis.json`.
+- On any ambiguity or blocker discovered during coding, immediately write the query to a new file named `blocker.txt` inside the task root directory, then STOP execution immediately.
 
 ## 3. Edit Protocol
-- Use Write/Edit tools only. Shell for directory creation (`mkdir`, `New-Item`) only.
 - Store task plans/logs in `.claude/kingsmvpsplan/`.
 - Match existing code style exactly. Zero drive-by refactoring.
 - Strict `[Step] → [Verify]` flow. Pass before proceeding.
@@ -34,7 +22,7 @@
 ## 4. Odoo Constraints
 - Custom modules in `custom_addons/` only. Never modify core files.
 - Models: `_inherit`. Views: `inherit_id` + `xpath`. Controllers: `super()`.
-- Cannot achieve via standard extension → escalate as Hard Blocker immediately.
+- Cannot achieve via standard extension → escalate as Hard Blocker immediately via blocker.txt.
 
 ## 5. Output
 - Think in English. Output Traditional Chinese (Taiwan).

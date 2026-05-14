@@ -1,44 +1,56 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
     <data>
+        <!-- 修正 1：移除對根選單 action 的干涉，避免整個選單樹崩潰 -->
         <record model="ir.ui.menu" id="calendar.mail_menu_calendar">
-            <field name="action" ref="idx_calendar.action_idx_meeting"/>
+            <field name="name">日曆</field>
         </record>
 
+        <!-- 第一層子選單：會議（載入時預設停留頁面） -->
+        <menuitem
+                id="menu_meeting"
+                name="會議"
+                parent="calendar.mail_menu_calendar"
+                action="idx_calendar.action_idx_meeting"
+                sequence="1"/>
+
+        <!-- 第一層子選單：日曆 -->
         <menuitem
                 id="menu_calendar"
                 name="日曆"
                 parent="calendar.mail_menu_calendar"
                 action="action_idx_calendar"
                 sequence="2"/>
-        <menuitem
-                id="menu_meeting"
-                name="會議"
-                parent="calendar.mail_menu_calendar"
-                action="action_idx_meeting"
-                sequence="1"/>
 
+        <!-- 修正 2：將「會議室」直接拉到第一層，與會議、日曆並列，徹底避開配置權限卡關 -->
+        <menuitem 
+                id="meeting_room_menu" 
+                name="會議室" 
+                parent="calendar.mail_menu_calendar"
+                action="idx_calendar_meeting_room_action"
+                sequence="3"/>
+
+        <!-- 第一層子選單：配置（移除 groups 屬性，僅保留原廠預留功能） -->
         <menuitem
                 id="menu_calendar_configuration_root"
                 name="配置"
                 parent="calendar.mail_menu_calendar"
-                sequence="3"
-                groups="calendar_administrator"/>
-            <menuitem name="會議室" id="meeting_room_menu" parent="menu_calendar_configuration_root"
-                      action="idx_calendar_meeting_room_action"
-                      sequence="1"/>
+                sequence="4"/>
+
+            <!-- 第二層子選單：會議標籤 -->
             <menuitem
                     id="menu_calendar_event_type"
                     name="會議標籤"
                     parent="menu_calendar_configuration_root"
                     action="calendar.action_calendar_event_type"
-                    sequence="2"
-            />
+                    sequence="1"/>
+
+            <!-- 第二層子選單：會議提醒 -->
             <menuitem
                     id="menu_calendar_alarm"
                     name="會議提醒"
                     parent="menu_calendar_configuration_root"
                     action="calendar.action_calendar_alarm"
-                    sequence="3"/>
+                    sequence="2"/>
     </data>
 </odoo>

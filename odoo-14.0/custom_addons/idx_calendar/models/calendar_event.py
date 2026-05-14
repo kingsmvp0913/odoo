@@ -121,7 +121,7 @@ class CalendarEvent(models.Model):
                     result[meeting.id] = cal.serialize().encode('utf-8')
                 except Exception:
                     _logger.warning(
-                        "idx_notify_when_del_calendar: failed to inject UID into ICS for event %d",
+                        "idx_calendar: failed to inject UID into ICS for event %d",
                         meeting.id, exc_info=True,
                     )                
 
@@ -411,12 +411,12 @@ class CalendarEvent(models.Model):
     # 產生會議取消通知內容
     def _prepare_cancellation_mails(self):
         template = self.env.ref(
-            'idx_notify_when_del_calendar.email_template_meeting_cancelled',
+            'idx_calendar.email_template_meeting_cancelled',
             raise_if_not_found=False,
         )
         if not template:
             _logger.warning(
-                "idx_notify_when_del_calendar: template 'email_template_meeting_cancelled' not found."
+                "idx_calendar: template 'email_template_meeting_cancelled' not found."
             )
             return []
 
@@ -462,7 +462,6 @@ class CalendarEvent(models.Model):
                 try:
                     mail_id = template.send_mail(
                         attendee.id,
-                        force_send=False,
                         email_values=email_values,
                     )
                     mail_ids.append(mail_id)
@@ -489,7 +488,7 @@ class CalendarEvent(models.Model):
         
         # 發送會議取消通知
         if mail_ids:
-            self.env['mail.mail'].sudo().browse(mail_ids or []).write({'state': 'outgoing'})
+            self.env['mail.mail'].sudo().browse(mail_ids or []).send()
         
         return result
 
