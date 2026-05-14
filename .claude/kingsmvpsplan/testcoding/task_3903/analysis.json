@@ -1,0 +1,79 @@
+﻿{
+  "case_id": "3903",
+  "timestamp": "2026-05-14T15:49:32",
+  "execution_mode": "MODE_B",
+  "inferred_target": {
+    "project": "Odoo",
+    "odoo_version": "17.0",
+    "module": "idx_ebs",
+    "confidence": 0.95
+  },
+  "state_summary": {
+    "is_complete": true,
+    "has_blocking_unknowns": false
+  },
+  "clarification_channel": [
+    {
+      "id": 1,
+      "category": "active",
+      "question": "國定假日資料來源為何？現有系統尚無儲存假日的 Model。請選擇偏好方式：(A) 在 res.config.settings 新增假日日期 Many2many，由管理員手動維護每年台灣國定假日清單；(B) 使用 Python 程式碼固定寫入台灣法定假日（農曆彈性放假除外，僅涵蓋固定假日），每年需工程師更新；(C) 新建自訂 Model（例如 idx.public.holiday）讓管理員從後台 CRUD 維護；(D) 依賴 Odoo resource.calendar.leaves（需人工在「工作日曆」中建立公假記錄）。",
+      "user_answer": "(D) 依賴 Odoo resource.calendar.leaves（需人工在「工作日曆」中建立公假記錄）"
+    }
+  ],
+  "technical_specification": {
+    "odoo_models": [
+      {
+        "model_name": "sale.order.report",
+        "inherit": "sale.order.report",
+        "description": "修改既有 compute_expected_date 及 create 方法，改以工作日（排除 weekday 5/6 與 resource.calendar.leaves 中 resource_id=False 的全域公假）計算 expected_date。新增兩個私有 helper：_get_public_holiday_dates（instance method，需 env）與 _add_working_days（純函式，無 env 依賴）。不新增 Field，不新增 Model，不變動 View。",
+        "fields": []
+      }
+    ],
+    "odoo_views_and_actions": [],
+    "core_logic": [
+      {
+        "model": "sale.order.report",
+        "function_signature": "_get_public_holiday_dates(self, year: int) -> set",
+        "trigger": "compute",
+        "pseudocode": "from datetime import timedelta\nfrom odoo import fields\n\ncompany = self.env.company\ncalendar = company.resource_calendar_id\nif not calendar:\n    return set()\n\nleaves = self.env['resource.calendar.leaves'].search([\n    ('calendar_id', '=', calendar.id),\n    ('resource_id', '=', False),\n    ('date_from', '>=', fields.Datetime.to_datetime(str(year) + '-01-01 00:00:00')),\n    ('date_from', '<',  fields.Datetime.to_datetime(str(year + 1) + '-01-01 00:00:00')),\n])\n\nholiday_dates = set()\nfor leave in leaves:\n    d   = leave.date_from.date()\n    end = leave.date_to.date()\n    while d <= end:\n        holiday_dates.add(d)\n        d += timedelta(days=1)\nreturn holiday_dates\n\n# 備註：resource.calendar.leaves.date_from 為 UTC Datetime。\n# 若公司時區為 UTC+8，管理員應在「工作日曆 > 全域假日」以當地午夜（即 UTC 前一日 16:00）建立記錄，\n# 或確認 Odoo 系統時區設定正確以避免差一天問題。"
+      },
+      {
+        "model": "sale.order.report",
+        "function_signature": "_add_working_days(self, start_date, days: int, holiday_dates: set)",
+        "trigger": "compute",
+        "pseudocode": "from datetime import timedelta\n\ncurrent = start_date\ncount   = 0\nwhile count < days:\n    current += timedelta(days=1)\n    if current.weekday() not in (5, 6) and current not in holiday_dates:\n        count += 1\nreturn current\n\n# start_date 預期為 datetime.date 物件（Odoo Date Field 回傳值）。\n# weekday() 5 = 星期六，6 = 星期日。"
+      },
+      {
+        "model": "sale.order.report",
+        "function_signature": "compute_expected_date(self)",
+        "trigger": "compute",
+        "pseudocode": "for rec in self:\n    base = rec.order_id.request_inspection_date  # Date field → datetime.date\n    if not base:\n        rec.expected_date = False\n        continue\n\n    holiday_dates = self._get_public_holiday_dates(base.year)\n\n    if rec.category == '1':\n        days = 4\n    elif rec.default_code == '4611001':\n        days = 3\n    else:\n        days = 5\n\n    rec.expected_date = self._add_working_days(base, days, holiday_dates)"
+      },
+      {
+        "model": "sale.order.report",
+        "function_signature": "create(self, vals_list)",
+        "trigger": "api_route",
+        "pseudocode": "# 既有 create 方法 lines 353-367 含重複的 relativedelta(days=N) 日期計算區塊。\n# 手術式替換步驟：\n#\n# 原始程式碼（偽代碼）：\n#   expected_date = base_date + relativedelta(days=N)\n#\n# 替換為：\n#   holiday_dates = self._get_public_holiday_dates(base_date.year)\n#   expected_date = self._add_working_days(base_date, N, holiday_dates)\n#\n# 分類邏輯與 compute_expected_date 完全一致：\n#   vals 中 category == '1'       → N = 4\n#   vals 中 default_code == '4611001' → N = 3\n#   其他                          → N = 5\n#\n# base_date 來源：vals.get('request_inspection_date') 或透過 order_id 反查，\n# 依既有 create 取值方式保持不變，僅替換 relativedelta 計算部分。\n#\n# 若 base_date 為 None/False，維持既有 create 的跳過或 False 賦值行為，不改動。\n#\n# 其餘 create 邏輯（super() 呼叫、其他 vals 處理）保持原樣，零 side-effect 修改。"
+      }
+    ],
+    "security_model": {
+      "access_rights_csv": [],
+      "record_rules": []
+    },
+    "project_structure": [
+      "odoo-17.0/custom_addons/idx_ebs/models/sale_order_report.py"
+    ]
+  },
+  "repo_context": {
+    "available_modules": [
+      "export_invo_csv",
+      "idx_test",
+      "idx_calendar",
+      ".claude",
+      "idx_ebs",
+      "idx_wf_sync",
+      "queue_job",
+      "my_module"
+    ]
+  }
+}

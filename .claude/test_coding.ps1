@@ -12,7 +12,7 @@ $agentPath     = "$root\.claude\agents\test-agent.md"
 # 環境檢查函數
 # =========================================================
 function Test-Environment {
-    param([string]$projectType, [string]$module)
+    param([string]$projectType, [string]$module, [hashtable]$dbConf = $null)
     $ok = $true
     $errors = @()
     if ($projectType.ToUpper() -eq "ODOO") {
@@ -20,10 +20,15 @@ function Test-Environment {
             $ok = $false
             $errors += "python 命令不在 PATH 中"
         }
-        $dbCheck = python -c "import psycopg2; psycopg2.connect(dbname='odoo', user='odoo', password='odoo', host='localhost')" 2>&1
+        $dbName = if ($dbConf) { $dbConf.db_name } else { 'odoo' }
+        $dbUser = if ($dbConf) { $dbConf.db_user } else { 'odoo' }
+        $dbPwd  = if ($dbConf) { $dbConf.db_password } else { '' }
+        $dbHost = if ($dbConf) { $dbConf.db_host } else { 'localhost' }
+        $dbPort = if ($dbConf) { $dbConf.db_port } else { '5432' }
+        $dbCheck = python -c "import psycopg2; psycopg2.connect(dbname='$dbName', user='$dbUser', password='$dbPwd', host='$dbHost', port=$dbPort)" 2>&1
         if ($LASTEXITCODE -ne 0) {
             $ok = $false
-            $errors += "無法連線到 Odoo 資料庫，請確認資料庫配置"
+            $errors += "無法連線到資料庫 '$dbName' ($dbHost`:$dbPort)，請確認 odoo.conf 設定"
         }
     } else {
         if (-not (Get-Command "pytest" -ErrorAction SilentlyContinue)) {
@@ -32,6 +37,36 @@ function Test-Environment {
         }
     }
     return @{ ok = $ok; errors = $errors }
+}
+
+# =========================================================
+# ODOO CONF READER
+# =========================================================
+function Get-IniVal($text, $key, $default = $null) {
+    if ($text -match "(?m)^\s*$([regex]::Escape($key))\s*=\s*(.+?)\s*$") { return $matches[1].Trim() }
+    return $default
+}
+
+function Get-OdooConf($odooVersion) {
+    $candidates = @(
+        "$root\odoo-$odooVersion\odoo.conf",
+        "$root\odoo-$odooVersion\debian\odoo.conf",
+        "$root\odoo-$odooVersion\server\odoo.conf"
+    )
+    $confPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $confPath) {
+        throw "找不到 odoo.conf，已搜尋：$($candidates -join ' | ')"
+    }
+    Write-Host "[CONF] 讀取 $confPath" -ForegroundColor DarkCyan
+    $raw = Get-Content $confPath -Raw -Encoding UTF8
+    return @{
+        path        = $confPath
+        db_host     = (Get-IniVal $raw 'db_host'     'localhost')
+        db_port     = (Get-IniVal $raw 'db_port'     '5432')
+        db_user     = (Get-IniVal $raw 'db_user'     'odoo')
+        db_password = (Get-IniVal $raw 'db_password' '')
+        db_name     = (Get-IniVal $raw 'test_db_name' $null)
+    }
 }
 
 # =========================================================
@@ -117,8 +152,23 @@ try {
                 continue
             }
 
+            # 從 analysis.json 的 odoo_version 找對應資料夾的 odoo.conf
+            $odooConf = $null
+            if ($projectType.ToUpper() -eq "ODOO") {
+                try {
+                    $odooConf = Get-OdooConf $odooVersion
+                } catch {
+                    Write-Host "[ERROR] $($case.Name) – $_" -ForegroundColor Red
+                    continue
+                }
+                if (-not $odooConf.db_name) {
+                    Write-Host "[ERROR] $($case.Name) – odoo-$odooVersion\odoo.conf 缺少 test_db_name，請補上後重試" -ForegroundColor Red
+                    continue
+                }
+            }
+
             # 環境檢查
-            $envCheck = Test-Environment -projectType $projectType -module $module
+            $envCheck = Test-Environment -projectType $projectType -module $module -dbConf $odooConf
             if (-not $envCheck.ok) {
                 $errMsg = "環境檢查失敗: $($envCheck.errors -join ', ')"
                 Write-Host "[ENV ERROR] $($case.Name) - $errMsg" -ForegroundColor Red
@@ -159,7 +209,8 @@ try {
                 switch ($projectType.ToUpper()) {
                     "ODOO" {
                         $odooBin = "odoo-$odooVersion/odoo-bin"
-                        $result = Run-TestProcess "python" @($odooBin, "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", "odoo") $root
+                        $dbName  = $odooConf.db_name
+                        $result = Run-TestProcess "python" @($odooBin, "-c", "odoo-$odooVersion/odoo.conf", "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", $dbName) $root
                     }
                     default {
                         $result = Run-TestProcess "pytest" @() $root
