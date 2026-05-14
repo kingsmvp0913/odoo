@@ -9,7 +9,7 @@ $agentPath     = "$root\.claude\agents\senior-software-engineer.md"
 . "$root\.claude\_common.ps1"
 
 # =========================================================
-# CLAUDE CALL (HAIKU, 300s timeout, 3-retry with exponential backoff)
+# CLAUDE CALL (HAIKU, 串流模式)
 # =========================================================
 function Invoke-ClaudeHaiku($prompt) {
     return Invoke-ClaudeStream -prompt $prompt -model "claude-haiku-4-5-20251001" -maxAttempts 3
@@ -28,7 +28,7 @@ function Save-DebugArtifact {
 }
 
 # =========================================================
-# MAIN PIPELINE (支援重試)
+# MAIN PIPELINE
 # =========================================================
 $globalLockFile = "$root\.claude\kingsmvpsplan\global_coding.lock"
 if (-not (Acquire-Lock $globalLockFile 300)) {
@@ -65,110 +65,93 @@ try {
                 continue
             }
 
-            $maxAttempts = 3
-            $success = $false
-
-            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-                Write-Host "[CODING] $($case.Name) attempt $attempt/$maxAttempts"
-
-                $tracebackPath = Join-Path $case.FullName "logs\error.log"
-                $tracebackContent = ""
-                if (Test-Path $tracebackPath) {
-                    $tracebackContent = Get-Content $tracebackPath -Raw
-                }
-                $slimSpec = python "$root\.claude\slim_spec.py" $analysisPath 2>&1
-                if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
-                $prompt = (Get-Content $agentPath -Raw) +
-                          "`n`nSPEC:`n" + $slimSpec +
-                          "`n`n<traceback_log>`n$tracebackContent`n</traceback_log>"
-
-                $rawOutput = ""
+            # 讀取 odoo.conf（含 test_db_name）
+            $odooConf = $null
+            if ($projectType.ToUpper() -eq "ODOO") {
                 try {
-                    $rawOutput = Invoke-ClaudeHaiku $prompt
-                }
-                catch {
-                    Write-Host "[ERROR] Claude 呼叫失敗: $_"
-                    Save-DebugArtifact -caseDir $case.FullName -prompt $prompt -rawOutput $rawOutput -attempt $attempt
+                    $odooConf = Get-OdooConf $odooVersion
+                } catch {
+                    Write-Host "[ERROR] $($case.Name) – $_" -ForegroundColor Red
                     continue
                 }
-
-                $files = Convert-MultiFileTags $rawOutput $case.FullName
-                Save-DebugArtifact -caseDir $case.FullName -prompt $prompt -rawOutput $rawOutput -attempt $attempt
-
-                if ($files.Count -eq 0) {
-                    Write-Host "[EMPTY OUTPUT] 跳過此嘗試" -ForegroundColor Yellow
+                if (-not $odooConf.db_name) {
+                    Write-Host "[ERROR] $($case.Name) – odoo-$odooVersion\odoo.conf 缺少 test_db_name，請補上後重試" -ForegroundColor Red
                     continue
-                }
-
-                # 寫入檔案（含路徑安全守衛）
-                $anyWriteFail = $false
-                foreach ($k in $files.Keys) {
-                    if ($k -match "\.\." -or $k -match "^/" -or $k -match "^[A-Za-z]:\\") {
-                        Write-Host "[SECURITY] 拒絕非法路徑: $k" -ForegroundColor Red
-                        $anyWriteFail = $true
-                        break
-                    }
-                    if (-not (Out-AtomicFile $files[$k] $k $projectType $module $odooVersion)) {
-                        Write-Host "[WRITE FAIL] $k" -ForegroundColor Red
-                        $anyWriteFail = $true
-                        break
-                    }
-                    Write-Host "[FILE] $k"
-                }
-                if ($anyWriteFail) { continue }
-
-                # 執行測試
-                try {
-                    switch ($projectType.ToUpper()) {
-                        "ODOO" {
-                            $odooBin = "odoo-$odooVersion/odoo-bin"
-                            $result = Run-TestProcess "python" @($odooBin, "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", "odoo") $root
-                        }
-                        default {
-                            $result = Run-TestProcess "pytest" @() $root
-                        }
-                    }
-                }
-                catch {
-                    Write-Host "[TEST ERROR] $_" -ForegroundColor Red
-                    Write-PipelineFile "$_" "$($case.FullName)\logs\error.log"
-                    continue
-                }
-
-                # 判斷是否綠燈
-                $isGreen = ($result.ExitCode -eq 0) -and ($result.Output -notmatch "FAIL|ERROR|Traceback")
-                if ($isGreen) {
-                    Write-Host "[GREEN] $($case.Name) 測試通過！" -ForegroundColor Green
-                    $success = $true
-                    break
-                } else {
-                    Write-Host "[RED] 測試仍失敗，準備重試" -ForegroundColor Red
-                    $logDir = Join-Path $case.FullName "logs"
-                    if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force $logDir | Out-Null }
-                    Write-PipelineFile $result.Output "$logDir\error.log"
                 }
             }
 
-            if (-not $success) {
-                $blockerMsg = "經過 $maxAttempts 次嘗試，測試仍未通過。請確認 analysis.json 規格或手動介入。"
-                Write-PipelineFile $blockerMsg "$($case.FullName)\blocker.txt"
-                Write-Host "[BLOCKER] $($case.Name) – $blockerMsg" -ForegroundColor Red
+            Write-Host "[CODING] $($case.Name)"
 
-                Release-Lock $lockPath
-                $isLockReleased = $true
+            $tracebackPath = Join-Path $case.FullName "logs\error.log"
+            $tracebackContent = ""
+            if (Test-Path $tracebackPath) {
+                $tracebackContent = Get-Content $tracebackPath -Raw
+            }
+            $slimSpec = python "$root\.claude\slim_spec.py" $analysisPath 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
+            $prompt = (Get-Content $agentPath -Raw) +
+                      "`n`nSPEC:`n" + $slimSpec +
+                      "`n`n<traceback_log>`n$tracebackContent`n</traceback_log>"
 
-                $dest = Join-Path $confirmDir $case.Name
-                if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
-                Move-Item -LiteralPath $case.FullName -Destination $confirmDir -Force
-                Write-Host "[ROLLBACK] $($case.Name) → confirm/" -ForegroundColor Yellow
+            $rawOutput = Invoke-ClaudeHaiku $prompt
+            $files = Convert-MultiFileTags $rawOutput $case.FullName
+            Save-DebugArtifact -caseDir $case.FullName -prompt $prompt -rawOutput $rawOutput -attempt 1
+
+            if ($files.Count -eq 0) {
+                Write-Host "[EMPTY OUTPUT] AI 未產生任何檔案，請手動確認 debug/ 後重新執行" -ForegroundColor Red
                 continue
             }
 
-            # 測試通過，移至 final
-            $dest = Join-Path $finalDir $case.Name
-            if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
-            Move-Item -LiteralPath $case.FullName -Destination $finalDir -Force
-            Write-Host "[FINISH] $($case.Name) 完成開發並通過測試" -ForegroundColor Green
+            # 寫入檔案（含路徑安全守衛）
+            $anyWriteFail = $false
+            foreach ($k in $files.Keys) {
+                if ($k -match "\.\." -or $k -match "^/" -or $k -match "^[A-Za-z]:\\") {
+                    Write-Host "[SECURITY] 拒絕非法路徑: $k" -ForegroundColor Red
+                    $anyWriteFail = $true
+                    break
+                }
+                if (-not (Out-AtomicFile $files[$k] $k $projectType $module $odooVersion)) {
+                    Write-Host "[WRITE FAIL] $k" -ForegroundColor Red
+                    $anyWriteFail = $true
+                    break
+                }
+                Write-Host "[FILE] $k"
+            }
+            if ($anyWriteFail) { continue }
+
+            # 執行測試
+            $result = $null
+            try {
+                switch ($projectType.ToUpper()) {
+                    "ODOO" {
+                        $odooBin = "odoo-$odooVersion/odoo-bin"
+                        $dbName  = $odooConf.db_name
+                        $result = Run-TestProcess "python" @($odooBin, "-c", "odoo-$odooVersion/odoo.conf", "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", $dbName) $root
+                    }
+                    default {
+                        $result = Run-TestProcess "pytest" @() $root
+                    }
+                }
+            }
+            catch {
+                Write-Host "[TEST ERROR] $_" -ForegroundColor Red
+                Write-PipelineFile "$_" "$($case.FullName)\logs\error.log"
+                continue
+            }
+
+            $isGreen = ($result.ExitCode -eq 0) -and ($result.Output -notmatch "FAIL|ERROR|Traceback")
+            if ($isGreen) {
+                Write-Host "[GREEN] $($case.Name) 測試通過！" -ForegroundColor Green
+                $dest = Join-Path $finalDir $case.Name
+                if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
+                Move-Item -LiteralPath $case.FullName -Destination $finalDir -Force
+                Write-Host "[FINISH] $($case.Name) 完成開發並通過測試" -ForegroundColor Green
+            } else {
+                Write-Host "[RED] $($case.Name) 測試未通過，請確認後手動重新執行" -ForegroundColor Red
+                $logDir = Join-Path $case.FullName "logs"
+                if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force $logDir | Out-Null }
+                Write-PipelineFile $result.Output "$logDir\error.log"
+            }
         }
         catch {
             Write-Host "[ERROR] 處理 $($case.Name) 時發生例外: $_" -ForegroundColor Red
