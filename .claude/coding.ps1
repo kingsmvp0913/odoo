@@ -103,6 +103,21 @@ try {
                 continue
             }
 
+            # 讀取 odoo.conf（含 test_db_name）
+            $odooConf = $null
+            if ($projectType.ToUpper() -eq "ODOO") {
+                try {
+                    $odooConf = Get-OdooConf $odooVersion
+                } catch {
+                    Write-Host "[ERROR] $($case.Name) – $_" -ForegroundColor Red
+                    continue
+                }
+                if (-not $odooConf.db_name) {
+                    Write-Host "[ERROR] $($case.Name) – odoo-$odooVersion\odoo.conf 缺少 test_db_name，請補上後重試" -ForegroundColor Red
+                    continue
+                }
+            }
+
             $maxAttempts = 3
             $success = $false
 
@@ -158,7 +173,8 @@ try {
                     switch ($projectType.ToUpper()) {
                         "ODOO" {
                             $odooBin = "odoo-$odooVersion/odoo-bin"
-                            $result = Run-TestProcess "python" @($odooBin, "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", "odoo") $root
+                            $dbName  = $odooConf.db_name
+                            $result = Run-TestProcess "python" @($odooBin, "-c", "odoo-$odooVersion/odoo.conf", "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", $dbName) $root
                         }
                         default {
                             $result = Run-TestProcess "pytest" @() $root
