@@ -229,7 +229,6 @@ function Invoke-ClaudeStream {
     param(
         [string]$prompt,
         [string]$model,
-        [int]$timeoutMs = 300000,
         [int]$maxAttempts = 3
     )
     $attempt = 1
@@ -258,18 +257,9 @@ function Invoke-ClaudeStream {
             # Async stderr prevents deadlock while we stream stdout
             $stderrTask = $p.StandardError.ReadToEndAsync()
 
-            # Stream stdout with deadline enforcement
             $stdoutSb = New-Object System.Text.StringBuilder
-            $sw = [System.Diagnostics.Stopwatch]::StartNew()
             while (-not $p.StandardOutput.EndOfStream) {
-                $remaining = [Math]::Max(1, $timeoutMs - [int]$sw.ElapsedMilliseconds)
-                $readTask = $p.StandardOutput.ReadLineAsync()
-                if (-not $readTask.Wait($remaining)) {
-                    $p.Kill()
-                    try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
-                    throw "timeout"
-                }
-                $line = $readTask.Result
+                $line = $p.StandardOutput.ReadLine()
                 if ($null -ne $line) {
                     Write-Host $line
                     $stdoutSb.AppendLine($line) | Out-Null

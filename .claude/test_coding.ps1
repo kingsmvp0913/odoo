@@ -1,6 +1,5 @@
 $root = "C:\odoo"
 
-$confirmDir    = "$root\.claude\kingsmvpsplan\confirm"
 $testcodingDir = "$root\.claude\kingsmvpsplan\testcoding"
 $codingDir     = "$root\.claude\kingsmvpsplan\coding"
 
