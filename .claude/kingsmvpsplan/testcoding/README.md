@@ -6,12 +6,13 @@
 
 1. 讀取 `analysis.json`
 2. 確認 `odoo_version` 已填寫，否則跳過
-3. 環境檢查（Python / psycopg2 / pytest）
-4. 呼叫 `test-agent`（Sonnet）生成測試骨架與 skeleton 實作檔
-5. 寫入 `odoo-{version}/custom_addons/{module}/`
-6. 執行測試，驗證**紅燈**（exit ≠ 0 且有 FAIL/ERROR/Traceback）
-7. **紅燈確認** → 移至 `coding/`（附 `logs/error.log`）
-8. **未達紅燈** → 寫入 `blocker.txt` → rollback 至 `confirm/`
+3. 呼叫 `Get-OdooConf` 讀取 `odoo.conf`，確認 `test_db_name` 存在，否則跳過
+4. 環境檢查（Python / psycopg2 / 資料庫連線）
+5. 呼叫 `test-agent`（Sonnet）生成測試骨架與 skeleton 實作檔
+6. 寫入 `odoo-{version}/custom_addons/{module}/`
+7. 執行測試，驗證**紅燈**（exit ≠ 0 且有 FAIL/ERROR/Traceback）
+8. **紅燈確認** → 移至 `coding/`（附 `logs/error.log`）
+9. **未達紅燈** → 寫入 `blocker.txt` → rollback 至 `confirm/`
 
 ## 紅燈有效條件
 

@@ -14,11 +14,15 @@ task_<task_id>.txt
 <task_id>
 ---title---
 <任務標題>
+---project---
+<Odoo 專案名稱（對應 project_version_map.json）>
 ---description---
 <需求描述（HTML 圖片已移除）>
 ---message---
 <Chatter 歷史訊息（由新到舊）>
 ```
+
+> `---project---` 欄位缺少時，`analysis.ps1` 會跳過該任務並顯示 `[SKIP]`。
 
 ## 流程
 

@@ -31,9 +31,11 @@ confirm/
 
 填完存檔後，再次執行 `analysis.ps1`，AI 將驗證答案並嘗試升級至 MODE_B。
 
-### Odoo 版本為必填項目
+### Odoo 版本（通常自動填入）
 
 `inferred_target.odoo_version` 必須有值，否則案件無法晉升 testcoding/。
+
+`analysis.ps1` 會依據任務的 `---project---` 欄位查詢 `project_version_map.json` 自動注入版本號，**通常不需手動填寫**。若仍顯示 MODE_A 且問題涉及 `odoo_version`，請確認 `project_version_map.json` 已設定對應專案。
 
 ### 當 `execution_mode == "MODE_B"` 且 `is_complete == true` 時
 
