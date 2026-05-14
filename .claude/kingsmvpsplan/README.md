@@ -205,6 +205,25 @@ testcoding/ (紅燈驗證)                 coding/ (綠燈驗證)
 
 ---
 
+## 人工操作時機一覽
+
+| 階段 | 觸發條件 | 人工動作 |
+|------|---------|---------|
+| **初始化** | 首次使用 | 設定 `project_version_map.json`；設定環境變數 `ODOO_PASSWORD` |
+| **start →** | 任何時候 | 執行 `analysis.ps1` 拉取新任務並推進管線 |
+| **confirm（MODE_A）** | `[WAIT]` 出現 | 開啟 `analysis.json`，填寫 `clarification_channel` 的 `user_answer`，再跑 `analysis.ps1` |
+| **confirm（INCOMPLETE）** | AI 驗證答案不足 | 補充更具體的答案，再跑 `analysis.ps1` |
+| **confirm（blocker）** | 後段回滾回來 | 閱讀 `blocker.txt`，修正 `analysis.json` 規格，再跑 `analysis.ps1` |
+| **testcoding →** | 任何時候 | 執行 `test_coding.ps1` |
+| **testcoding（ENV ERROR）** | 環境不符 | 修復 Python/DB 環境（見 testcoding/README.md） |
+| **testcoding（BLOCKER）** | 紅燈未達標 | 案件回滾至 confirm/，依 `blocker.txt` 修正後重跑 |
+| **coding →** | 任何時候 | 執行 `coding.ps1` |
+| **coding（RED）** | 測試未通過 | 閱讀 `logs/error.log` 後重跑 `coding.ps1`（可多次）|
+| **coding（持續 RED）** | 多次失敗無進展 | 查看 `debug/` → 手動移回 confirm/ 修正規格 |
+| **final →** | 進入 final/ | 程式碼審查 → 安裝測試 → git commit → 標記 Odoo 任務完成 |
+
+---
+
 ## 快速排查
 
 | 現象 | 可能原因 | 解法 |
