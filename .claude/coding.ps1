@@ -53,7 +53,7 @@ function Save-DebugArtifact {
 }
 
 # =========================================================
-# MAIN PIPELINE (支援重試)
+# MAIN PIPELINE
 # =========================================================
 $globalLockFile = "$root\.claude\kingsmvpsplan\global_coding.lock"
 if (-not (Acquire-Lock $globalLockFile 300)) {
@@ -126,17 +126,21 @@ try {
             }
 
             # 寫入檔案（含路徑安全守衛）
+            $anyWriteFail = $false
             foreach ($k in $files.Keys) {
                 if ($k -match "\.\." -or $k -match "^/" -or $k -match "^[A-Za-z]:\\") {
                     Write-Host "[SECURITY] 拒絕非法路徑: $k" -ForegroundColor Red
-                    continue
+                    $anyWriteFail = $true
+                    break
                 }
                 if (-not (Out-AtomicFile $files[$k] $k $projectType $module $odooVersion)) {
                     Write-Host "[WRITE FAIL] $k" -ForegroundColor Red
-                    continue
+                    $anyWriteFail = $true
+                    break
                 }
                 Write-Host "[FILE] $k"
             }
+            if ($anyWriteFail) { continue }
 
             # 執行測試
             $result = $null
