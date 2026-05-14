@@ -1,0 +1,408 @@
+<odoo>
+    <!-- 擴充 Portal 用戶查看訂單的權限，讓 partner_id 符合的訂單也能顯示 -->
+    <record id="sale_order_portal_rule" model="ir.rule">
+        <field name="name">Portal: 所有自己的訂單 (idx_ebs)</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="domain_force">[('partner_id', 'child_of', [user.commercial_partner_id.id])]</field>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- 覆蓋 website_sale 模組的產品相關公開使用者權限，全部設為無權限 -->
+    <!-- 注意：product.template 保持讀取權限以讓 URL routing 正常工作，但在 controller 層攔截 -->
+    <record id="website_sale.access_product_product_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <!-- product.template 保留原始的讀取權限（僅用於 URL routing），controller 會攔截未登入訪問 -->
+    <record id="website_sale.access_product_template_public_public" model="ir.model.access">
+        <field name="perm_read" eval="True"/>
+    </record>
+    <record id="website_sale.access_product_category_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_tag_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_public_category_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_pricelist_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_pricelist_item_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_attribute_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_attribute_value_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_product_attribute_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_product_attribute_custom_value_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_template_attribute_exclusion_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_template_attribute_line_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="website_sale.access_product_image_public_public" model="ir.model.access">
+        <field name="perm_read" eval="False"/>
+    </record>
+
+    <record id="sale.sale_order_personal_rule" model="ir.rule">
+        <field name="domain_force">[('user_id','=',user.id)]</field>
+    </record>
+
+    <record id="sale.sale_order_line_personal_rule" model="ir.rule">
+        <field name="domain_force">[('salesman_id','=',user.id)]</field>
+    </record>
+
+    <record id="crm.crm_rule_personal_lead" model="ir.rule">
+        <field name="domain_force">[('user_id','=',user.id)]</field>
+    </record>
+
+    <record id="rule_group_sale_salesman_res_partner" model="ir.rule">
+        <field name="name">銷售僅自己文件聯絡人</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+        <field name="domain_force">['|', '|', '|', ('user_ids', '!=', False), ('id', 'in', [1,3]), ('create_uid', '=', user.id), ('user_id', '=', user.id)]</field>
+    </record>
+
+    <record id="module_category_back" model="ir.module.category">
+        <field name="name">後台群組權限</field>
+    </record>
+
+    <record id="group_back_sale" model="res.groups">
+        <field name="name">業務</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('survey.group_survey_user'))]"/>
+    </record>
+
+    <record id="group_back_doctor_sale_manager" model="res.groups">
+        <field name="name">人醫業務主管群</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('survey.group_survey_user'))]"/>
+    </record>
+
+    <record id="group_back_international_sale_manager" model="res.groups">
+        <field name="name">國際業務主管群</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('survey.group_survey_user'))]"/>
+    </record>
+
+    <record id="group_back_animal_sale_manager" model="res.groups">
+        <field name="name">小動物業務主管群</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('survey.group_survey_user'))]"/>
+    </record>
+
+    <record id="group_back_economic_animal_sale_manager" model="res.groups">
+        <field name="name">經濟動物業務主管群</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('survey.group_survey_user'))]"/>
+    </record>
+
+    <record id="rule_back_doctor_sale_manager" model="ir.rule">
+        <field name="name">人醫業務主管群規則</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_doctor_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm1'), ref('idx_ebs.categ_crm2'),
+        ref('idx_ebs.categ_crm4'), ref('idx_ebs.categ_crm5'), ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm7'),
+        ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12'), ref('idx_ebs.categ_crm13'),
+        ref('idx_ebs.categ_crm14'), ref('idx_ebs.categ_crm22'), ref('idx_ebs.categ_crm23'), ref('idx_ebs.categ_crm24'),
+        ref('idx_ebs.categ_crm25'), ref('idx_ebs.categ_crm26'), ref('idx_ebs.categ_crm27'),ref('idx_ebs.categ_crm28')])]"/>
+    </record>
+
+    <record id="rule_back_doctor_sale_manager_res_partner" model="ir.rule">
+        <field name="name">人醫業務主管群規則聯絡人</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_doctor_sale_manager'))]"/>
+        <field name="domain_force">[('user_ids', '!=', False)]</field>
+    </record>
+
+    <record id="rule_back_doctor_sale_manager_order_line" model="ir.rule">
+        <field name="name">人醫業務主管群規則訂單明細</field>
+        <field name="model_id" ref="model_sale_order_line"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_doctor_sale_manager'))]"/>
+        <field name="domain_force" eval="[('order_id.tag_ids', 'in', [ref('idx_ebs.categ_crm1'), ref('idx_ebs.categ_crm2'),
+        ref('idx_ebs.categ_crm4'), ref('idx_ebs.categ_crm5'), ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm7'),
+        ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12'), ref('idx_ebs.categ_crm13'),
+        ref('idx_ebs.categ_crm14'), ref('idx_ebs.categ_crm22'), ref('idx_ebs.categ_crm23'), ref('idx_ebs.categ_crm24'),
+        ref('idx_ebs.categ_crm25'), ref('idx_ebs.categ_crm26'), ref('idx_ebs.categ_crm27'),ref('idx_ebs.categ_crm28')])]"/>
+    </record>
+
+    <record id="rule_back_doctor_sale_manager_crm" model="ir.rule">
+        <field name="name">人醫業務主管群規則crm</field>
+        <field name="model_id" ref="model_crm_lead"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_doctor_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm1'), ref('idx_ebs.categ_crm2'),
+        ref('idx_ebs.categ_crm4'), ref('idx_ebs.categ_crm5'), ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm7'),
+        ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12'), ref('idx_ebs.categ_crm13'),
+        ref('idx_ebs.categ_crm14'), ref('idx_ebs.categ_crm22'), ref('idx_ebs.categ_crm23'), ref('idx_ebs.categ_crm24'),
+        ref('idx_ebs.categ_crm25'), ref('idx_ebs.categ_crm26'), ref('idx_ebs.categ_crm27'),ref('idx_ebs.categ_crm28')])]"/>
+    </record>
+
+    <record id="rule_back_doctor_sale_manager_partner" model="ir.rule">
+        <field name="name">人醫業務主管群規則客戶主檔</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_doctor_sale_manager'))]"/>
+        <field name="domain_force" eval="[('category_id', 'in', [ref('idx_ebs.categ_res_partner1'), ref('idx_ebs.categ_res_partner2'),
+        ref('idx_ebs.categ_res_partner4'), ref('idx_ebs.categ_res_partner5'), ref('idx_ebs.categ_res_partner6'), ref('idx_ebs.categ_res_partner7'),
+        ref('idx_ebs.categ_res_partner8'), ref('idx_ebs.categ_res_partner11'), ref('idx_ebs.categ_res_partner12'), ref('idx_ebs.categ_res_partner13'),
+        ref('idx_ebs.categ_res_partner14'), ref('idx_ebs.categ_res_partner22'), ref('idx_ebs.categ_res_partner23'), ref('idx_ebs.categ_res_partner24'),
+        ref('idx_ebs.categ_res_partner25'), ref('idx_ebs.categ_res_partner26'), ref('idx_ebs.categ_res_partner27'), ref('idx_ebs.categ_res_partner28')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_back_international_sale_manager_res_partner" model="ir.rule">
+        <field name="name">國際業務主管群規則聯絡人</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_international_sale_manager'))]"/>
+        <field name="domain_force">[('user_ids', '!=', False)]</field>
+    </record>
+
+    <record id="rule_back_international_sale_manager" model="ir.rule">
+        <field name="name">國際業務主管群規則</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_international_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm3'), ref('idx_ebs.categ_crm4'),
+        ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm7'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12')])]"/>
+    </record>
+
+    <record id="rule_back_international_sale_manager_order_line" model="ir.rule">
+        <field name="name">國際業務主管群規則訂單明細</field>
+        <field name="model_id" ref="model_sale_order_line"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_international_sale_manager'))]"/>
+        <field name="domain_force" eval="[('order_id.tag_ids', 'in', [ref('idx_ebs.categ_crm3'), ref('idx_ebs.categ_crm4'),
+        ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm7'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12')])]"/>
+    </record>
+
+    <record id="rule_back_international_sale_manager_crm" model="ir.rule">
+        <field name="name">國際業務主管群規則crm</field>
+        <field name="model_id" ref="model_crm_lead"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_international_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm3'), ref('idx_ebs.categ_crm4'),
+        ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm7'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12')])]"/>
+    </record>
+
+    <record id="rule_back_international_sale_manager_res_partner" model="ir.rule">
+        <field name="name">國際業務主管群規則客戶主檔</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_international_sale_manager'))]"/>
+        <field name="domain_force" eval="[('category_id', 'in', [ref('idx_ebs.categ_res_partner17'), ref('idx_ebs.categ_res_partner18'),
+        ref('idx_ebs.categ_res_partner19'), ref('idx_ebs.categ_res_partner20'), ref('idx_ebs.categ_res_partner21'), ref('idx_ebs.categ_res_partner22')])]"/>
+    </record>
+
+    <record id="rule_back_animal_sale_manager_res_partner" model="ir.rule">
+        <field name="name">小動物業務主管群規則聯絡人</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_animal_sale_manager'))]"/>
+        <field name="domain_force">[('user_ids', '!=', False)]</field>
+    </record>
+
+    <record id="rule_back_animal_sale_manager" model="ir.rule">
+        <field name="name">小動物業務主管群規則</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm3'), ref('idx_ebs.categ_crm4'),
+        ref('idx_ebs.categ_crm5'), ref('idx_ebs.categ_crm7'), ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm9'),
+        ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12'), ref('idx_ebs.categ_crm13'), ref('idx_ebs.categ_crm29'),
+        ref('idx_ebs.categ_crm30'), ref('idx_ebs.categ_crm31'), ref('idx_ebs.categ_crm32'), ref('idx_ebs.categ_crm33'),
+        ref('idx_ebs.categ_crm34'), ref('idx_ebs.categ_crm35')])]"/>
+    </record>
+
+    <record id="rule_back_animal_sale_manager_order_line" model="ir.rule">
+        <field name="name">小動物業務主管群規則訂單明細</field>
+        <field name="model_id" ref="model_sale_order_line"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('order_id.tag_ids', 'in', [ref('idx_ebs.categ_crm3'), ref('idx_ebs.categ_crm4'),
+        ref('idx_ebs.categ_crm5'), ref('idx_ebs.categ_crm7'), ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm9'),
+        ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12'), ref('idx_ebs.categ_crm13'), ref('idx_ebs.categ_crm29'),
+        ref('idx_ebs.categ_crm30'), ref('idx_ebs.categ_crm31'), ref('idx_ebs.categ_crm32'), ref('idx_ebs.categ_crm33'),
+        ref('idx_ebs.categ_crm34'), ref('idx_ebs.categ_crm35')])]"/>
+    </record>
+
+    <record id="rule_back_animal_sale_manager_crm" model="ir.rule">
+        <field name="name">小動物業務主管群規則crm</field>
+        <field name="model_id" ref="model_crm_lead"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm3'), ref('idx_ebs.categ_crm4'),
+        ref('idx_ebs.categ_crm5'), ref('idx_ebs.categ_crm7'), ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm9'),
+        ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm12'), ref('idx_ebs.categ_crm13'), ref('idx_ebs.categ_crm29'),
+        ref('idx_ebs.categ_crm30'), ref('idx_ebs.categ_crm31'), ref('idx_ebs.categ_crm32'), ref('idx_ebs.categ_crm33'),
+        ref('idx_ebs.categ_crm34'), ref('idx_ebs.categ_crm35')])]"/>
+    </record>
+
+    <record id="rule_back_animal_sale_manager_res_partner" model="ir.rule">
+        <field name="name">小動物業務主管群規則客戶主檔</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('category_id', 'in', [ref('idx_ebs.categ_res_partner3'), ref('idx_ebs.categ_res_partner4'),
+        ref('idx_ebs.categ_res_partner5'), ref('idx_ebs.categ_res_partner7'), ref('idx_ebs.categ_res_partner8'), ref('idx_ebs.categ_res_partner9'),
+        ref('idx_ebs.categ_res_partner11'), ref('idx_ebs.categ_res_partner12'), ref('idx_ebs.categ_res_partner13'), ref('idx_ebs.categ_res_partner29'),
+        ref('idx_ebs.categ_res_partner30'), ref('idx_ebs.categ_res_partner31'), ref('idx_ebs.categ_res_partner32'), ref('idx_ebs.categ_res_partner33'),
+        ref('idx_ebs.categ_res_partner34'), ref('idx_ebs.categ_res_partner35')])]"/>
+    </record>
+
+    <record id="rule_back_economic_animal_sale_manager_res_partner" model="ir.rule">
+        <field name="name">經濟動物主管群規則聯絡人</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_economic_animal_sale_manager'))]"/>
+        <field name="domain_force">[('user_ids', '!=', False)]</field>
+    </record>
+
+    <record id="rule_back_economic_animal_sale_manager" model="ir.rule">
+        <field name="name">經濟動物主管群規則</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_economic_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm4'), ref('idx_ebs.categ_crm5'),
+        ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm18'),
+        ref('idx_ebs.categ_crm19'), ref('idx_ebs.categ_crm20'), ref('idx_ebs.categ_crm21'), ref('idx_ebs.categ_crm22')])]"/>
+    </record>
+
+    <record id="rule_back_economic_animal_sale_manager_order_line" model="ir.rule">
+        <field name="name">經濟動物主管群規則訂單明細</field>
+        <field name="model_id" ref="model_sale_order_line"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_economic_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('order_id.tag_ids', 'in', [ref('idx_ebs.categ_crm4'), ref('idx_ebs.categ_crm5'),
+        ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm18'),
+        ref('idx_ebs.categ_crm19'), ref('idx_ebs.categ_crm20'), ref('idx_ebs.categ_crm21'), ref('idx_ebs.categ_crm22')])]"/>
+    </record>
+
+    <record id="rule_back_economic_animal_sale_manager_crm" model="ir.rule">
+        <field name="name">經濟動物主管群規則crm</field>
+        <field name="model_id" ref="model_crm_lead"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_economic_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('tag_ids', 'in', [ref('idx_ebs.categ_crm4'), ref('idx_ebs.categ_crm5'),
+        ref('idx_ebs.categ_crm6'), ref('idx_ebs.categ_crm8'), ref('idx_ebs.categ_crm11'), ref('idx_ebs.categ_crm18'),
+        ref('idx_ebs.categ_crm19'), ref('idx_ebs.categ_crm20'), ref('idx_ebs.categ_crm21'), ref('idx_ebs.categ_crm22')])]"/>
+    </record>
+
+    <record id="rule_back_economic_animal_sale_manager_partner" model="ir.rule">
+        <field name="name">經濟動物主管群規則客戶主檔</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_economic_animal_sale_manager'))]"/>
+        <field name="domain_force" eval="[('category_id', 'in', [ref('idx_ebs.categ_res_partner4'), ref('idx_ebs.categ_res_partner5'),
+        ref('idx_ebs.categ_res_partner6'), ref('idx_ebs.categ_res_partner8'), ref('idx_ebs.categ_res_partner11'), ref('idx_ebs.categ_res_partner18'),
+        ref('idx_ebs.categ_res_partner19'), ref('idx_ebs.categ_res_partner20'), ref('idx_ebs.categ_res_partner21'), ref('idx_ebs.categ_res_partner22')])]"/>
+    </record>
+
+    <record id="rule_crm_team" model="ir.rule">
+        <field name="name">crm銷售團隊</field>
+        <field name="model_id" ref="crm.model_crm_team"/>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('sales_team.group_sale_salesman_all_leads')),
+        (4, ref('idx_ebs.group_back_doctor_sale_manager')), (4, ref('idx_ebs.group_back_international_sale_manager')),
+        (4, ref('idx_ebs.group_back_animal_sale_manager')), (4, ref('idx_ebs.group_back_economic_animal_sale_manager'))]"/>
+        <field name="domain_force">['|', ('user_id','=',user.id), ('member_ids','in',[user.id])]</field>
+    </record>
+
+    <record id="group_back_inspect_ocr1" model="res.groups">
+        <field name="name">檢驗所(人醫)</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+    </record>
+
+    <record id="rule_back_inspect_ocr1_survey_survey" model="ir.rule">
+        <field name="name">檢驗所(人醫)問卷</field>
+        <field name="model_id" ref="model_survey_survey"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr1'))]"/>
+        <field name="domain_force">[('category', '=', '0')]
+        </field>
+    </record>
+
+    <record id="rule_back_inspect_ocr1_sale_order" model="ir.rule">
+        <field name="name">檢驗所(人醫)銷售訂單</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr1'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_back_inspect_ocr1_sale_order_line" model="ir.rule">
+        <field name="name">檢驗所(人醫)銷售訂單明細</field>
+        <field name="model_id" ref="model_sale_order_line"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr1'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_back_inspect_ocr1_res_partner" model="ir.rule">
+        <field name="name">檢驗所(人醫)聯絡人</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr1'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="group_back_inspect_ocr2" model="res.groups">
+        <field name="name">檢驗課(小動物)</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+    </record>
+
+    <record id="rule_back_inspect_ocr2_survey_survey" model="ir.rule">
+        <field name="name">檢驗課(小動物)問卷</field>
+        <field name="model_id" ref="model_survey_survey"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr2'))]"/>
+        <field name="domain_force">[('category', '=', '1')]
+        </field>
+    </record>
+
+    <record id="rule_back_inspect_ocr2_sale_order" model="ir.rule">
+        <field name="name">檢驗所(小動物)銷售訂單</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr2'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_back_inspect_ocr2_sale_order_line" model="ir.rule">
+        <field name="name">檢驗所(人醫)銷售訂單明細</field>
+        <field name="model_id" ref="model_sale_order_line"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr2'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_back_inspect_ocr2_res_partner" model="ir.rule">
+        <field name="name">檢驗所(小動物)聯絡人</field>
+        <field name="model_id" ref="model_res_partner"/>
+        <field name="groups" eval="[(4, ref('idx_ebs.group_back_inspect_ocr2'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="group_back_document_management" model="res.groups">
+        <field name="name">文件管理</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('sales_team.group_sale_salesman_all_leads')), (4, ref('survey.group_survey_manager'))]"/>
+    </record>
+
+    <record id="group_back_it" model="res.groups">
+        <field name="name">IT</field>
+        <field name="category_id" ref="idx_ebs.module_category_back"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman')), (4, ref('sales_team.group_sale_manager')), (4, ref('survey.group_survey_manager'))]"/>
+    </record>
+
+    <record id="module_category_front" model="ir.module.category">
+        <field name="name">前台群組權限</field>
+    </record>
+
+    <record id="group_front_clinic_manager" model="res.groups">
+        <field name="name">醫生/院長/會計(診所)</field>
+        <field name="category_id" ref="idx_ebs.module_category_front"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+    <record id="group_front_clinic_assistant" model="res.groups">
+        <field name="name">助理(診所)</field>
+        <field name="category_id" ref="idx_ebs.module_category_front"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+</odoo>

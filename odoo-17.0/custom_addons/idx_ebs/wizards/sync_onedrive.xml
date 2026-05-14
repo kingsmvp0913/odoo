@@ -1,0 +1,23 @@
+<!-- 對帳單選擇年月 form -->
+<odoo>
+    <record id="idx_sync_onedrive_wizard_form" model="ir.ui.view">
+        <field name="name">idx.sync.onedrive.wizard.form</field>
+        <field name="model">idx.sync.onedrive.wizard</field>
+        <field name="arch" type="xml">
+            <form string="對帳單同步">
+                <group>
+                    <group>
+                        <field name="per_year"/>
+                    </group>
+                    <group>
+                        <field name="per_month"/>
+                    </group>
+                </group>
+                <footer>
+                    <button string="同步" type="object" name="action_sync_onedrive" class="btn-primary"/>
+                    <button string="取消" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

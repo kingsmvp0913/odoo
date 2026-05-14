@@ -105,9 +105,9 @@ OUTPUT JSON ONLY (Strict Schema)
       "record_rules": []
     },
     "project_structure": [
-      "odoo-14.0/custom_addons/<module>/__init__.py",
-      "odoo-14.0/custom_addons/<module>/__manifest__.py",
-      "odoo-14.0/custom_addons/<module>/models/__init__.py"
+      "odoo-<inferred_target.odoo_version>/custom_addons/<module>/__init__.py",
+      "odoo-<inferred_target.odoo_version>/custom_addons/<module>/__manifest__.py",
+      "odoo-<inferred_target.odoo_version>/custom_addons/<module>/models/__init__.py"
     ]
   }
 }
@@ -131,13 +131,12 @@ MODE_B:
 ODOO RULES
 --------------------------------------------------
 
-- Infer target odoo version from context. If cannot determine, leave as "".
+- Infer target odoo version from context. MUST be determined before MODE_B. If cannot determine, add a clarification question to clarification_channel and stay in MODE_A.
 - Infer target module name from requirement.
 - Prefer matching existing modules from repo_context.available_modules. Do not hallucinate.
 - If no match exists in repo_context.available_modules, set module = "custom_odoo_module" and lower confidence.
 - project_structure is a flat string array of file paths.
-- If odoo_version is known: paths MUST follow "odoo-<inferred_target.odoo_version>/custom_addons/<inferred_target.module>/..."
-- If odoo_version is empty: paths follow "custom_addons/<inferred_target.module>/..."
+- paths MUST follow "odoo-<inferred_target.odoo_version>/custom_addons/<inferred_target.module>/..."
 
 --------------------------------------------------
 QUESTION LIFECYCLE & ANSWER VALIDATION
@@ -156,6 +155,7 @@ FINAL VALIDATION
 --------------------------------------------------
 
 Before shifting execution_mode to "MODE_B" and setting is_complete=true, a specification is considered INCOMPLETE if ANY of the following is missing:
+- odoo_version in inferred_target is non-empty (for Odoo projects)
 - field type defined for all fields in odoo_models
 - model_name defined for all models in odoo_models
 - at least one view defined per model in odoo_views_and_actions

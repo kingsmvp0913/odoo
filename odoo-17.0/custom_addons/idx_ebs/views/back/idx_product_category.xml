@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="product_category_consumable" model="idx.product.category">
+            <field name="name">耗材</field>
+        </record>
+    </data>
+
+    <!-- 電子商務_商品類別 tree view -->
+    <record id="idx_view_product_category_tree" model="ir.ui.view">
+        <field name="name">idx.product.category.tree</field>
+        <field name="model">idx.product.category</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 電子商務_商品類別 action -->
+    <record id="idx_action_product_category" model="ir.actions.act_window">
+        <field name="name">商品類別</field>
+        <field name="res_model">idx.product.category</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <!-- 電子商務_商品類別 menuitem -->
+    <menuitem
+        id="idx_menu_product_category"
+        name="商品類別"
+        parent="website_sale.menu_catalog"
+        action="idx_action_product_category"
+        sequence="20"
+    />
+
+</odoo>

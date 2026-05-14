@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_wf_mapping_tree" model="ir.ui.view">
+        <field name="name">wf.mapping.tree</field>
+        <field name="model">wf.mapping</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="wf_model_id"/>
+                <field name="wf_model_name"/>
+                <field name="odoo_model_id"/>
+                <field name="odoo_model_model"/>
+            </tree>
+        </field>
+    </record>
+    <!-- From View -->
+    <record id="view_wf_mapping_form" model="ir.ui.view">
+        <field name="name">wf.mapping.form</field>
+        <field name="model">wf.mapping</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="wf_model_id"/>
+                            <field name="wf_model_name"/>
+                            <field name="wf_prid"/>
+                            <field name="main_type"/>
+                        </group>
+                        <group>
+                            <field name="odoo_model_id" options="{'no_create': True}"/>
+                            <field name="odoo_model_model"/>
+                            <field name="extra_domain" placeholder="odoo資料額外domain，輸入舉例 [('code', '=', '123456')]"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="主欄位對照">
+                            <field name="line_ids">
+                                <tree editable="bottom" delete="true">
+                                    <field name="wf_field_code"/>
+                                    <field name="wf_field_name"/>
+                                    <field name="wf_key"/>
+                                    <field name="snyc_type"/>
+                                    <field name="odoo_model_id" column_invisible="1"/>
+                                    <field name="odoo_field_id" readonly="snyc_type != 'F'" required="snyc_type == 'F'" options="{'no_create': True}" domain="[('model_id', '=', odoo_model_id)]"/>
+                                    <field name="odoo_field_name" column_invisible="1"/>
+                                    <field name="odoo_field_ttype"/>
+                                    <field name="odoo_field_relation" column_invisible="1"/>
+                                    <field name="odoo_related_id" required="odoo_field_ttype in ('many2many','many2one')" readonly="snyc_type != 'F' or odoo_field_ttype not in ('many2many','many2one')" options="{'no_create': True}" domain="[('model_id.model', '=', odoo_field_relation), ('ttype', 'not in', ('one2many', 'many2many','many2one'))]"/>
+                                    <field name="odoo_related_model_id" column_invisible="1"/>
+                                    <field name="odoo_lookup_id" readonly="snyc_type != 'F' or odoo_field_ttype not in ('many2many','many2one')" domain="[('model_id', '=', odoo_related_model_id), ('ttype', 'not in', ('many2many','one2many'))]"   options="{'no_create': True}"/>
+                                    <field name="odoo_lookup_main_id" readonly="snyc_type != 'F' or odoo_field_ttype not in ('many2many','many2one')"  required="odoo_lookup_id" domain="[('model_id', '=', odoo_model_id), ('ttype', 'not in', ('many2many','one2many'))]" options="{'no_create': True}"/>
+                                    <field name="wf_def_c" readonly="snyc_type != 'C'" required="snyc_type == 'C'"/>
+                                    <field name="wf_def_n" readonly="snyc_type != 'N'" required="snyc_type == 'N'"/>
+                                    <field name="wf_orign_field" readonly="snyc_type != 'W'" required="snyc_type == 'W'"/>
+                                    <field name="wf_related_model" readonly="snyc_type != 'W'" required="snyc_type == 'W'"/>
+                                    <field name="wf_related_key" readonly="snyc_type != 'W'" required="snyc_type == 'W'"/>
+                                    <field name="wf_related_field" readonly="snyc_type != 'W'" required="snyc_type == 'W'"/>
+                                    <field name="wf_def_d" readonly="snyc_type != 'D'" required="snyc_type == 'D'"/>
+                                    <field name="wf_def_b" readonly="snyc_type != 'B'" required="snyc_type == 'B'"/>
+                                    <field name="wf_def_a" readonly="snyc_type != 'A'" required="snyc_type == 'A'" laceholder="指定字串欄位(填入WF欄位代號)用空格串起，ex:銷貨單別-銷貨單號 [TG001]+'-'+[TG002]"/>
+                                    <field name="x_reserved"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="副表清單" invisible="main_type not in ['1','3']">
+                            <field name="sub_ids">
+                                <tree editable="bottom" delete="true">
+                                    <field name="mapping_model_id" column_invisible="1"/>
+                                    <field name="wf_model_id"/>
+                                    <field name="wf_parent_field" placeholder="若多欄位請用逗號分隔"/>
+                                    <field name="wf_body_field" placeholder="若多欄位請用逗號分隔"/>
+                                    <field name="is_same_parent" readonly="odoo_field_id"/>
+                                    <field name="odoo_field_id" readonly="is_same_parent" options="{'no_create': True}"  domain="[('model_id', '=', mapping_model_id), ('ttype', '=', 'one2many')]"/>
+                                    <field name="odoo_field_model" column_invisible="1"/>
+                                    <field name="odoo_sub_id" options="{'no_create': True}" domain="[('model_id', '=', odoo_field_model), ('ttype', '=', 'many2one')]"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="單號自動編碼規則" invisible="main_type != '3'">
+                            <group>
+                                <group>
+                                    <field name="code_type" required="main_type == '3'"/>
+                                    <field name="year_digits" required="main_type == '3'"/>
+                                    <field name="serial_digits" required="main_type == '3'"/>
+                                    <field name="code_format" force_save="1"/>
+                                </group>
+                                <group>
+                                    <field name="wf_slip" required="main_type == '3'"/>
+                                    <field name="wf_s_field" required="main_type == '3'"/>
+                                    <field name="odoo_s_field" required="main_type == '3'" options="{'no_create': True}" domain="[('model_id', '=', odoo_model_id), ('ttype', '=', 'char')]"/>
+                                    <field name="wf_b_field" required="main_type == '3'"/>
+                                    <field name="odoo_b_field" required="main_type == '3'" options="{'no_create': True}" domain="[('model_id', '=', odoo_model_id), ('ttype', '=', 'char')]"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="WF同步資訊設定" invisible="main_type != '3' and main_type != '1'">
+                            <field name="sync_info_ids">
+                                <tree editable="bottom">
+                                    <field name="mapping_model_id" column_invisible="1"/>
+                                    <field name="odoo_field_id" options="{'no_create': True}" domain="[('model_id', '=', mapping_model_id), ('ttype', 'not in', ('one2many', 'many2many'))]"/>
+                                    <field name="value_type"/>
+                                    <field name="value_text" readonly="value_type != 'fixed_text'"/>
+                                    <field name="value_number" readonly="value_type != 'fixed_number'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- Search -->
+    <record id="view_wf_mapping_search" model="ir.ui.view">
+        <field name="name">wf.mapping.search</field>
+        <field name="model">wf.mapping</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="odoo_model_id"/>
+                <field name="odoo_model_name"/>
+                <field name="wf_model_name"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+    <!-- Action -->
+    <record id="action_wf_mapping" model="ir.actions.act_window">
+        <field name="name">MSSQL檔案對照表</field>
+        <field name="res_model">wf.mapping</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

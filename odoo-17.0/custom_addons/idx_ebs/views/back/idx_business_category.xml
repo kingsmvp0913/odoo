@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- 電子商務_業務類別 tree view -->
+    <record id="idx_view_business_category_tree" model="ir.ui.view">
+        <field name="name">idx.business.category.tree</field>
+        <field name="model">idx.business.category</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 電子商務_業務類別 action -->
+    <record id="idx_action_business_category" model="ir.actions.act_window">
+        <field name="name">業務類別</field>
+        <field name="res_model">idx.business.category</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <!-- 電子商務_業務類別 menuitem -->
+    <menuitem
+        id="idx_menu_business_category"
+        name="業務類別"
+        parent="website_sale.menu_catalog"
+        action="idx_action_business_category"
+        sequence="10"
+    />
+
+</odoo>

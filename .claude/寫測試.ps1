@@ -6,69 +6,7 @@ $codingDir     = "$root\.claude\kingsmvpsplan\coding"
 
 $agentPath     = "$root\.claude\agents\test-agent.md"
 
-# =========================================================
-# 鎖函數 (與分析.ps1 共用介面)
-# =========================================================
-function Acquire-Lock {
-    param([string]$lockPath, [int]$ttlSeconds = 600)
-    $lockObj = @{
-        pid        = $PID
-        host       = $env:COMPUTERNAME
-        created    = (Get-Date).ToString("o")
-        ttlSeconds = $ttlSeconds
-    }
-
-    $maxAttempts = 3
-    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-        $stream = $null
-        try {
-            $stream = [System.IO.File]::Open($lockPath, 'CreateNew', 'Write', 'None')
-            $writer = New-Object System.IO.StreamWriter($stream)
-            $writer.Write(($lockObj | ConvertTo-Json -Depth 5))
-            $writer.Flush()
-            return $true
-        }
-        catch [System.IO.IOException] {
-            if (-not (Test-Path $lockPath)) { continue }
-            try {
-                $existing = Get-Content $lockPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-                $age = (Get-Date) - [DateTime]::Parse($existing.created)
-                $isExpired    = $age.TotalSeconds -gt $existing.ttlSeconds
-                $isDeadProcess = -not (Get-Process -Id $existing.pid -ErrorAction SilentlyContinue)
-                if ($isExpired -or $isDeadProcess) {
-                    Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-                    continue
-                }
-                return $false
-            }
-            catch {
-                Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-                continue
-            }
-        }
-        catch {
-            return $false
-        }
-        finally {
-            if ($null -ne $stream) { $stream.Close() }
-        }
-    }
-    return $false
-}
-
-function Release-Lock {
-    param([string]$lockPath)
-    if (-not (Test-Path $lockPath)) { return }
-    try {
-        $lock = Get-Content $lockPath -Raw | ConvertFrom-Json
-        if ($lock.pid -eq $PID -and $lock.host -eq $env:COMPUTERNAME) {
-            Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-        }
-    }
-    catch {
-        Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-    }
-}
+. "$root\.claude\_common.ps1"
 
 # =========================================================
 # 環境檢查函數
@@ -97,7 +35,7 @@ function Test-Environment {
 }
 
 # =========================================================
-# CLAUDE CALL (SAFE WITH PROCESS TREE KILL)
+# CLAUDE CALL (300s timeout, 3-retry with exponential backoff)
 # =========================================================
 function Invoke-ClaudeWithTimeout($prompt) {
     $maxAttempts = 3; $attempt = 1; $waitSec = 2
@@ -121,9 +59,8 @@ function Invoke-ClaudeWithTimeout($prompt) {
             $writer.Write($prompt)
             $writer.Close()
 
-            if (-not $p.WaitForExit(30000)) {
+            if (-not $p.WaitForExit(300000)) {
                 $p.Kill()
-                # 只殺此進程樹，不影響其他 claude 實例
                 try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
                 throw "timeout"
             }
@@ -141,131 +78,6 @@ function Invoke-ClaudeWithTimeout($prompt) {
         }
     }
     throw "Claude failed"
-}
-
-# =========================================================
-# SAFE PARSER (LINE BY LINE) + 格式錯誤處理
-# =========================================================
-function Convert-MultiFileTags($aiOutput, $caseDir) {
-    $files = @{}
-    $currentFile = $null
-    $buffer = New-Object System.Text.StringBuilder
-
-    $lines = $aiOutput -split "`r?`n"
-    foreach ($line in $lines) {
-        $t = $line.Trim()
-        if ($t -match '^@FILE:(.+)$') {
-            if ($currentFile) {
-                $files[$currentFile] = $buffer.ToString().Trim()
-                $buffer.Clear() | Out-Null
-            }
-            $currentFile = $Matches[1].Trim()
-            continue
-        }
-        if ($t -eq '@FILE_END') {
-            if ($currentFile) {
-                $files[$currentFile] = $buffer.ToString().Trim()
-                $currentFile = $null
-                $buffer.Clear() | Out-Null
-            }
-            continue
-        }
-        if ($currentFile) { $buffer.AppendLine($line) | Out-Null }
-    }
-    if ($currentFile) { $files[$currentFile] = $buffer.ToString().Trim() }
-
-    # 🔴 若解析出 0 個檔案，儲存 AI 原始輸出並印出明確錯誤
-    if ($files.Count -eq 0) {
-        $rawOutputPath = Join-Path $caseDir "ai_raw_output_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
-        $aiOutput | Out-File $rawOutputPath -Encoding utf8 -Force
-        Write-Host "[FATAL] AI 輸出格式錯誤，未產生任何檔案。原始輸出已儲存至: $rawOutputPath" -ForegroundColor Red
-        Write-Host "[FATAL] 請檢查 AI 是否遵循 @FILE: / @FILE_END 格式" -ForegroundColor Red
-    }
-    return $files
-}
-
-# =========================================================
-# PIPELINE INTERNAL FILE WRITE (絕對路徑，僅供內部日誌)
-# =========================================================
-function Write-PipelineFile($content, $absolutePath) {
-    try {
-        $tmp = "$absolutePath.tmp"
-        $dir = Split-Path $absolutePath
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
-        [System.IO.File]::WriteAllText($tmp, $content, [System.Text.Encoding]::UTF8)
-        Move-Item -Force $tmp $absolutePath
-    }
-    catch {
-        if (Test-Path "$absolutePath.tmp") { Remove-Item "$absolutePath.tmp" -Force -ErrorAction SilentlyContinue }
-    }
-}
-
-# =========================================================
-# ATOMIC WRITE (AI 產出檔案，支援路徑白名單自動修正)
-# =========================================================
-function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion = "") {
-    $normPath = $path.Replace("\", "/")
-    $fixedPath = $normPath
-
-    if ($projectType.ToUpper() -eq "ODOO") {
-        $expectedPrefix = "custom_addons/$module/"
-        if ($normPath -notlike "$expectedPrefix*") {
-            $stripped = $normPath -replace '^(custom_addons/[^/]+/|custom_addons/)', ''
-            $fixedPath = "$expectedPrefix$stripped"
-            Write-Host "[PATH FIX] $normPath → $fixedPath" -ForegroundColor Yellow
-        }
-        $projectDir = if ($odooVersion) { "odoo-$odooVersion" } else { "odoo-14.0" }
-        $baseDir = Join-Path $root $projectDir
-    } else {
-        if ($normPath -notlike "tests/*" -and $normPath -notlike "src/*" -and $normPath -ne "requirements.txt" -and $normPath -ne "package.json") {
-            $fixedPath = "tests/$normPath"
-            Write-Host "[PATH FIX] $normPath → $fixedPath" -ForegroundColor Yellow
-        }
-        $baseDir = $root
-    }
-
-    $finalAbsolute = Join-Path $baseDir $fixedPath
-    try {
-        $tmp = "$finalAbsolute.tmp"
-        $dir = Split-Path $finalAbsolute
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
-        $content | Out-File $tmp -Encoding utf8 -Force
-        Move-Item -Force $tmp $finalAbsolute
-        return $true
-    }
-    catch {
-        if (Test-Path "$finalAbsolute.tmp") { Remove-Item "$finalAbsolute.tmp" -Force -ErrorAction SilentlyContinue }
-        return $false
-    }
-}
-
-# =========================================================
-# TEST EXECUTION
-# =========================================================
-function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $exe
-    $psi.WorkingDirectory = $workDir
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
-
-    foreach ($arg in $argsArray) { $psi.ArgumentList.Add($arg) }
-
-    $p = New-Object System.Diagnostics.Process
-    $p.StartInfo = $psi
-    $p.Start() | Out-Null
-
-    if (-not $p.WaitForExit($timeoutSec * 1000)) {
-        $p.Kill()
-        throw "test timeout"
-    }
-
-    return @{
-        ExitCode = $p.ExitCode
-        Output   = $p.StandardOutput.ReadToEnd() + $p.StandardError.ReadToEnd()
-    }
 }
 
 # =========================================================
@@ -287,6 +99,8 @@ try {
             continue
         }
 
+        $isLockReleased = $false
+
         try {
             $analysisPath = "$($case.FullName)\analysis.json"
             if (-not (Test-Path $analysisPath)) { continue }
@@ -296,6 +110,12 @@ try {
             $module = $analysis.inferred_target.module
             $odooVersion = $analysis.inferred_target.odoo_version
             if ([string]::IsNullOrWhiteSpace($projectType)) { $projectType = "GENERIC" }
+
+            # 提前檢查 odoo_version
+            if ($projectType.ToUpper() -eq "ODOO" -and [string]::IsNullOrWhiteSpace($odooVersion)) {
+                Write-Host "[ERROR] $($case.Name) – odoo_version 未填寫，請返回 confirm/ 補充後重試。" -ForegroundColor Red
+                continue
+            }
 
             # 環境檢查
             $envCheck = Test-Environment -projectType $projectType -module $module
@@ -314,15 +134,12 @@ try {
                 $rawAiOutput = Invoke-ClaudeWithTimeout $prompt
                 $files = Convert-MultiFileTags $rawAiOutput $case.FullName
             }
-            catch { 
+            catch {
                 Write-Host "[ERROR] AI failed $($case.Name)"
-                continue 
-            }
-
-            if ($files.Count -eq 0) {
-                # 已在 Convert-MultiFileTags 中儲存原始輸出並印出錯誤，直接跳過
                 continue
             }
+
+            if ($files.Count -eq 0) { continue }
 
             $writeSuccess = $true
             foreach ($k in $files.Keys) {
@@ -341,23 +158,23 @@ try {
             try {
                 switch ($projectType.ToUpper()) {
                     "ODOO" {
-                        $odooBin = if ($odooVersion) { "odoo-$odooVersion/odoo-bin" } else { "odoo-bin" }
-                    $result = Run-TestProcess "python" @($odooBin, "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", "odoo") $root
+                        $odooBin = "odoo-$odooVersion/odoo-bin"
+                        $result = Run-TestProcess "python" @($odooBin, "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", "odoo") $root
                     }
                     default {
                         $result = Run-TestProcess "pytest" @() $root
                     }
                 }
             }
-            catch { 
+            catch {
                 Write-Host "[TEST EXEC ERROR] $_"
-                continue 
+                continue
             }
 
-            $isExitCodeFail = ($result.ExitCode -ne 0)
+            $isExitCodeFail       = ($result.ExitCode -ne 0)
             $isLogContainsFailure = ($result.Output -match "FAIL" -or $result.Output -match "ERROR" -or $result.Output -match "Traceback")
-            $hasTestRun = ($result.Output -match "Ran \d+ tests? in")
-            $isZeroTestsRun = ($projectType.ToUpper() -eq "ODOO" -and $result.Output -match "Ran 0 tests")
+            $hasTestRun           = ($result.Output -match "Ran \d+ tests? in")
+            $isZeroTestsRun       = ($projectType.ToUpper() -eq "ODOO" -and $result.Output -match "Ran 0 tests")
 
             $isValidRed = $isExitCodeFail -and $isLogContainsFailure -and (-not $isZeroTestsRun) -and $hasTestRun
 
@@ -373,7 +190,10 @@ try {
                 }
                 Write-Host "[BLOCKER] $($case.Name) – $blockerMsg" -ForegroundColor Red
                 Write-PipelineFile $blockerMsg "$($case.FullName)\blocker.txt"
+
                 Release-Lock $lockPath
+                $isLockReleased = $true
+
                 $dest = Join-Path $confirmDir $case.Name
                 if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
                 Move-Item -LiteralPath $case.FullName -Destination $confirmDir -Force
@@ -391,9 +211,7 @@ try {
 
             # 移動至 coding
             $dest = Join-Path $codingDir $case.Name
-            if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue
-            }
+            if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
             Move-Item -LiteralPath $case.FullName -Destination $codingDir -Force
             Write-Host "[ADVANCE] $($case.Name) (RED confirmed)" -ForegroundColor Green
 
@@ -407,7 +225,7 @@ try {
             Write-Host "[ERROR] 處理案件 $($case.Name) 時發生例外: $_" -ForegroundColor Red
         }
         finally {
-            Release-Lock $lockPath
+            if (-not $isLockReleased) { Release-Lock $lockPath }
         }
     }
 }

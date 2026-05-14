@@ -1,0 +1,25 @@
+<odoo>
+    <record id="view_partner_class_tree" model="ir.ui.view">
+        <field name="name">res.partner.class.tree</field>
+        <field name="model">res.partner.class</field>
+        <field name="arch" type="xml">
+            <tree string="客戶類別" editable="bottom">
+                <field name="name"/>
+                <field name="color" widget="color_picker"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_partner_class" model="ir.actions.act_window">
+        <field name="name">客戶類別</field>
+        <field name="res_model">res.partner.class</field>
+        <field name="view_mode">tree,form</field> 
+    </record>
+    
+    <menuitem id="menu_partner_classs_setting" 
+                  name="客戶類別" 
+                  action="action_partner_class" 
+                  parent="contacts.res_partner_menu_config" 
+                  sequence="3"/>
+
+</odoo>

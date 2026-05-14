@@ -1,0 +1,91 @@
+#. module: base
+#. odoo-python
+#: code:addons/base/models/ir_qweb_fields.py:0
+#: model:ir.model.fields,field_description:base.field_base_partner_merge_automatic_wizard__group_by_name
+#: model:ir.model.fields,field_description:base.field_ir_actions_todo__name
+#: model:ir.model.fields,field_description:base.field_ir_asset__name
+#: model:ir.model.fields,field_description:base.field_ir_attachment__name
+#: model:ir.model.fields,field_description:base.field_ir_cron__cron_name
+#: model:ir.model.fields,field_description:base.field_ir_logging__name
+#: model:ir.model.fields,field_description:base.field_ir_mail_server__name
+#: model:ir.model.fields,field_description:base.field_ir_model_access__name
+#: model:ir.model.fields,field_description:base.field_ir_model_fields_selection__name
+#: model:ir.model.fields,field_description:base.field_ir_module_category__name
+#: model:ir.model.fields,field_description:base.field_ir_module_module_dependency__name
+#: model:ir.model.fields,field_description:base.field_ir_module_module_exclusion__name
+#: model:ir.model.fields,field_description:base.field_ir_property__name
+#: model:ir.model.fields,field_description:base.field_ir_rule__name
+#: model:ir.model.fields,field_description:base.field_ir_sequence__name
+#: model:ir.model.fields,field_description:base.field_report_layout__name
+#: model:ir.model.fields,field_description:base.field_report_paperformat__name
+#: model:ir.model.fields,field_description:base.field_res_bank__name
+#: model:ir.model.fields,field_description:base.field_res_country_group__name
+#: model:ir.model.fields,field_description:base.field_res_currency__full_name
+#: model:ir.model.fields,field_description:base.field_res_groups__name
+#: model:ir.model.fields,field_description:base.field_res_lang__name
+#: model:ir.model.fields,field_description:base.field_res_partner__name
+#: model:ir.model.fields,field_description:base.field_res_partner_bank__bank_name
+#: model:ir.model.fields,field_description:base.field_res_partner_industry__name
+#: model:ir.model.fields,field_description:base.field_res_users__name
+#: model_terms:ir.ui.view,arch_db:base.ir_profile_view_search
+#: model_terms:ir.ui.view,arch_db:base.ir_property_view_search
+#: model_terms:ir.ui.view,arch_db:base.view_currency_form
+#: model_terms:ir.ui.view,arch_db:base.view_currency_tree
+#: model_terms:ir.ui.view,arch_db:base.view_partner_tree
+#: model_terms:ir.ui.view,arch_db:base.view_server_action_form
+#, python-format
+msgid "Name"
+msgstr "客戶簡稱"
+
+#. module: base
+#: model:ir.model.fields,field_description:base.field_res_company__vat
+#: model:ir.model.fields,field_description:base.field_res_partner__vat
+#: model:ir.model.fields,field_description:base.field_res_users__vat
+msgid "Tax ID"
+msgstr "統一編號"
+
+
+#. module: product
+#: model:ir.model.fields,field_description:product.field_product_product__default_code
+#: model:ir.model.fields,field_description:product.field_product_template__default_code
+msgid "Internal Reference"
+msgstr "品號"
+
+#. module: product
+#: model:ir.model.fields,field_description:product.field_product_attribute_custom_value__name
+#: model:ir.model.fields,field_description:product.field_product_category__name
+#: model:ir.model.fields,field_description:product.field_product_document__name
+#: model:ir.model.fields,field_description:product.field_product_pricelist_item__name
+#: model:ir.model.fields,field_description:product.field_product_product__name
+#: model:ir.model.fields,field_description:product.field_product_tag__name
+#: model:ir.model.fields,field_description:product.field_product_template__name
+msgid "Name"
+msgstr "品名"
+
+#. module: product
+#: model_terms:ir.ui.view,arch_db:product.product_template_form_view
+#: model_terms:ir.ui.view,arch_db:product.product_template_tree_view
+#: model_terms:ir.ui.view,arch_db:product.product_variant_easy_edit_view
+msgid "Product Name"
+msgstr "品名"
+
+#. module: sale
+#. odoo-python
+#: code:addons/sale/models/sale_order.py:0
+#: model:ir.model,name:sale.model_sale_order
+#: model:ir.model.fields,field_description:sale.field_res_partner__sale_order_ids
+#: model:ir.model.fields,field_description:sale.field_res_users__sale_order_ids
+#: model:ir.model.fields.selection,name:sale.selection__sale_order__state__sale
+#: model:ir.model.fields.selection,name:sale.selection__sale_report__order_reference__sale_order
+#: model:ir.model.fields.selection,name:sale.selection__sale_report__state__sale
+#: model_terms:ir.ui.view,arch_db:sale.product_document_search
+#: model_terms:ir.ui.view,arch_db:sale.sale_order_view_activity
+#: model_terms:ir.ui.view,arch_db:sale.view_order_form
+#, python-format
+msgid "Sales Order"
+msgstr "銷售訂單已成立"
+
+#. module: survey
+#: model_terms:ir.ui.view,arch_db:survey.survey_fill_form_start
+msgid "Start Survey"
+msgstr "開始填寫"

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="idx_qrcode_portal" name="檢測項目QR-code下載">
+        <t t-call="portal.portal_layout">
+            <t t-set="title">檢測項目 QR-code</t>
+            <div class="table-responsive">
+                <table class="table table-hover o_portal_table">
+                    <thead>
+                        <tr>
+                            <th>客戶</th>
+                            <th>產品</th>
+                            <th>QR-code</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="surveys" t-as="survey">
+                            <tr>
+                                <td>
+                                    <t t-esc="survey.partner_id.name"/>
+                                </td>
+                                <td>
+                                    <t t-esc="survey.product_template_id.display_name"/>
+                                </td>
+                                <td>
+                                    <t t-if="survey.qrcode_image">
+                                        <a t-att-href="'/my/qrcode/download/%s' % survey.id"
+                                           class="btn btn-outline-primary btn-sm">
+                                            下載 QR-code
+                                        </a>
+                                    </t>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </t>
+    </template>
+</odoo>

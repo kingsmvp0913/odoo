@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <!-- 小動物-OCR明細 search view -->
+        <record id="idx_view_sale_order_ocr2_search" model="ir.ui.view">
+                <field name="name">idx.sale.order.ocr2.search</field>
+                <field name="model">idx.sale.order.ocr2</field>
+                <field name="arch" type="xml">
+                        <search>
+                                <field name="order_id" string="全部"
+                       filter_domain="[
+                       '|','|','|','|','|','|','|',
+                       ('order_id', 'ilike', self),
+                       ('partner_id', 'ilike', self),
+                       ('patient_name', 'ilike', self),
+                       ('owner_name', 'ilike', self),
+                       ('product_template_id', 'ilike', self),
+                       ('detect_error', 'ilike', self),
+                       ('send_date', 'ilike', self),
+                       ('state', 'ilike', self)
+                   ]"/>
+                                <filter name="filter_animal_type_dog"
+                        string="物種：犬"
+                        domain="[('animal_type', '=', 'dog')]"/>
+                                <filter name="filter_animal_type_cat"
+                        string="物種：貓"
+                        domain="[('animal_type', '=', 'cat')]"/>
+                                <filter name="filter_gender_male"
+                        string="性別：公"
+                        domain="[('gender', '=', 'male')]"/>
+                                <filter name="filter_gender_female"
+                        string="性別：母"
+                        domain="[('gender', '=', 'female')]"/>
+                                <filter name="filter_neutered_yes"
+                        string="絕育：是"
+                        domain="[('neutered', '=', True)]"/>
+                                <filter name="filter_neutered_no"
+                        string="絕育：否"
+                        domain="[('neutered', '=', False)]"/>
+                                <filter name="filter_detect_error_has"
+                        string="偵測錯誤"
+                        domain="[('detect_error', '!=', False)]"/>
+                                <filter name="filter_state_confirmed"
+                        string="訂單待確認"
+                        domain="[('state', '=', 'confirmed')]"/>
+                                <group expand="0" string="群組">
+                                        <filter name="group_partner"
+                            string="送檢單位"
+                            context="{'group_by': 'partner_id'}"/>
+                                        <filter name="group_state"
+                            string="訂單狀態"
+                            context="{'group_by': 'state'}"/>
+                                        <filter name="group_product"
+                            string="檢測項目"
+                            context="{'group_by': 'product_template_id'}"/>
+                                </group>
+                        </search>
+                </field>
+        </record>
+        <!-- 小動物-OCR明細 tree view -->
+        <record id="idx_view_sale_order_ocr2_tree" model="ir.ui.view">
+                <field name="name">idx.sale.order.ocr2.tree</field>
+                <field name="model">idx.sale.order.ocr2</field>
+                <field name="arch" type="xml">
+                        <tree editable="bottom" js_class="idx_view_sale_order_ocr1_tree">
+                                <field name="order_id" string="訂單號碼"/>
+                                <field name="image_file_name" column_invisible="1"/>
+                                <field name="image_file" string="圖片檔" widget="binary" filename="image_file_name"/>
+                                <field name="product_template_id" string="檢測項目" options="{'no_create': True, 'no_edit': True}" domain="[('category', '=', '1'), ('detailed_type', '=', 'service')]"/>
+                                <field name="partner_id" string="送檢醫院" options="{'no_create': True, 'no_edit': True}"/>
+                                <field name="patient_name" string="病患名稱"/>
+                                <field name="owner_name" string="飼主姓名"/>
+                                <field name="animal_type" string="物種"/>
+                                <field name="breed" string="品系"/>
+                                <field name="medical_record_number" string="病歷號"/>
+                                <field name="gender" string="性別"/>
+                                <field name="detect_error" string="偵測錯誤" widget="badge" decoration-danger="detect_error"/>
+                                <field name="create_date" string="明細建立日期"/>
+                                <field name="send_date" string="收件日期"/>
+                                <field name="order_source" string="訂單來源"/>
+                                <field name="state" string="訂單狀態" widget="badge"/>
+                        </tree>
+                </field>
+        </record>
+        <!-- 小動物-OCR明細 action -->
+        <record id="idx_action_sale_order_ocr2" model="ir.actions.act_window">
+                <field name="name">小動物-OCR明細</field>
+                <field name="res_model">idx.sale.order.ocr2</field>
+                <field name="view_mode">tree</field>
+        </record>
+        <record id="idx_action_merge_order2" model="ir.actions.server">
+                <field name="name">合併成訂單</field>
+                <field name="model_id" ref="model_idx_sale_order_ocr2"/>
+                <field name="binding_model_id" ref="model_idx_sale_order_ocr2"/>
+                <field name="state">code</field>
+                <field name="code">action = env["idx.sale.order.ocr2"].browse(env.context.get("active_ids", [])).action_merge_order2()</field>
+        </record>
+        <!-- 小動物-OCR明細 menuitem -->
+        <menuitem
+        id="idx_menu_sale_order_ocr2"
+        name="小動物-OCR明細"
+        parent="website_sale.menu_orders"
+        action="idx_action_sale_order_ocr2"
+        sequence="4"
+    />
+</odoo>

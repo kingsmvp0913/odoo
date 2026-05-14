@@ -1,0 +1,38 @@
+// 購物車產品過濾樣式
+
+// 預設情況（/shop/cart）：隱藏沒有 category 的產品
+.oe_website_sale #cart_products .o_cart_product[data-has-category=""],
+.oe_website_sale #cart_products .o_cart_product[data-has-category="False"],
+.oe_website_sale #cart_products .o_cart_product[data-has-category="false"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+// 當 body 有 cart-general-mode 時（/shop/cart?general=true）：隱藏有 category 的產品
+body.cart-general-mode {
+    #cart_products .o_cart_product[data-has-category="True"],
+    #cart_products .o_cart_product[data-has-category="true"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    // 顯示沒有 category 的產品
+    #cart_products .o_cart_product[data-has-category=""],
+    #cart_products .o_cart_product[data-has-category="False"],
+    #cart_products .o_cart_product[data-has-category="false"] {
+        display: flex !important;
+        visibility: visible !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: revert !important;
+        margin: revert !important;
+    }
+}

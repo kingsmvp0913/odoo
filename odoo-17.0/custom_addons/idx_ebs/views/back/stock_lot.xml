@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- 庫存_批次/序號 treeview -->
+    <record id="idx_view_production_lot_tree" model="ir.ui.view">
+        <field name="name">idx.view.production.lot.tree</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="product_expiry.view_production_lot_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <attribute name="create">false</attribute>
+            </xpath>
+            <xpath expr="//field[@name='product_qty']" position="replace"/>
+            <xpath expr="//field[@name='alert_date']" position="replace"/>
+            <xpath expr="//field[@name='use_date']" position="replace"/>
+            <xpath expr="//field[@name='removal_date']" position="replace"/>
+            <xpath expr="//field[@name='expiration_date']" position="replace"/>
+            <xpath expr="//field[@name='create_date']" position="after">
+                <field name="product_qty" column_invisible="True" optional="show"/>
+                <field name="expiration_date" optional="show" string="有效日期" widget="date"/>
+                <field name="is_alert" column_invisible="True"/>
+                <field name="alert_date" optional="show" decoration-danger="is_alert"/>
+                <field name="is_valid_days_remaining" column_invisible="True"/>
+                <field name="valid_days_remaining" optional="show" decoration-danger="is_valid_days_remaining"/>
+                <field name="use_date" optional="hide"/>
+                <field name="removal_date" optional="hide"/>
+            </xpath>
+            <xpath expr="//field[@name='ref']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='create_date']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='company_id']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='last_delivery_partner_id']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='activity_ids']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 庫存_批次/序號 formview -->
+    <record id="idx_view_production_lot_form_inherit" model="ir.ui.view">
+        <field name="name">idx.view.production.lot.form.inherit</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="attributes">
+                <attribute name="create">false</attribute>
+            </xpath>
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="expiration_date" string="有效日期" widget="date"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 庫存_批次/序號 kanban -->
+    <record id="idx_view_production_lot_kanban_inherit" model="ir.ui.view">
+        <field name="name">idx.view.production.lot.kanban.inherit</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="create">false</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

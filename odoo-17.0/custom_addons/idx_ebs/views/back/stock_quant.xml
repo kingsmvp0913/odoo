@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- 產品_更新數量 treeview -->
+    <record id="idx_view_stock_quant_tree_editable" model="ir.ui.view">
+        <field name="name">idx.view.stock.quant.tree.editable</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree_editable"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <attribute name="create">false</attribute>
+            </xpath>
+            <xpath expr="//field[@name='expiration_date']" position="attributes">
+                <attribute name="string">有效日期</attribute>
+                <attribute name="widget">date</attribute>
+                <attribute name="optional">show</attribute>
+                <attribute name="invisible">0</attribute>
+                <attribute name="column_invisible">0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='expiration_date']" position="after">
+                <field name="alert_date" string="警示日期" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='inventory_quantity_auto_apply']" position="after">
+                <field name="valid_days_remaining" string="剩餘有效日期" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 產品_更新數量_庫存盤點 treeview -->
+    <record id="idx_view_stock_quant_tree_inventory_editable" model="ir.ui.view">
+        <field name="name">idx.view.stock.quant.tree.inventory.editable</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <attribute name="create">false</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

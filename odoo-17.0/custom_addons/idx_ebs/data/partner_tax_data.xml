@@ -1,0 +1,363 @@
+<odoo>
+    <data noupdate="1">
+
+        <!-- ===== P01 ~ P22 (進項) ===== -->
+        <record id="partner_tax_p01" model="res.partner.tax">
+            <field name="code">P01</field>
+            <field name="name">進項二聯式發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">1</field>
+        </record>
+
+        <record id="partner_tax_p02" model="res.partner.tax">
+            <field name="code">P02</field>
+            <field name="name">進項二聯式發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">1</field>
+        </record>
+
+        <record id="partner_tax_p03" model="res.partner.tax">
+            <field name="code">P03</field>
+            <field name="name">進項二聯式發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">1</field>
+        </record>
+
+        <record id="partner_tax_p04" model="res.partner.tax">
+            <field name="code">P04</field>
+            <field name="name">進項三聯式發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_p05" model="res.partner.tax">
+            <field name="code">P05</field>
+            <field name="name">進項三聯式發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_p06" model="res.partner.tax">
+            <field name="code">P06</field>
+            <field name="name">進項三聯式發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_p07" model="res.partner.tax">
+            <field name="code">P07</field>
+            <field name="name">進項二聯式收銀機發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">3</field>
+        </record>
+
+        <record id="partner_tax_p08" model="res.partner.tax">
+            <field name="code">P08</field>
+            <field name="name">進項二聯式收銀機發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">3</field>
+        </record>
+
+        <record id="partner_tax_p09" model="res.partner.tax">
+            <field name="code">P09</field>
+            <field name="name">進項三聯式收銀機發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_p10" model="res.partner.tax">
+            <field name="code">P10</field>
+            <field name="name">進項三聯式收銀機發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_p11" model="res.partner.tax">
+            <field name="code">P11</field>
+            <field name="name">進項三聯式收銀機發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_p12" model="res.partner.tax">
+            <field name="code">P12</field>
+            <field name="name">進項電子計算機發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">5</field>
+        </record>
+
+        <record id="partner_tax_p13" model="res.partner.tax">
+            <field name="code">P13</field>
+            <field name="name">進項電子計算機發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">5</field>
+        </record>
+
+        <record id="partner_tax_p14" model="res.partner.tax">
+            <field name="code">P14</field>
+            <field name="name">進項電子計算機發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">5</field>
+        </record>
+
+        <record id="partner_tax_p15" model="res.partner.tax">
+            <field name="code">P15</field>
+            <field name="name">進項免用發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">6</field>
+        </record>
+
+        <record id="partner_tax_p16" model="res.partner.tax">
+            <field name="code">P16</field>
+            <field name="name">進項免用發票-免稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">4</field>
+            <field name="invoice_count">6</field>
+        </record>
+
+        <record id="partner_tax_p17" model="res.partner.tax">
+            <field name="code">P17</field>
+            <field name="name">進項免用發票-不計稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">9</field>
+            <field name="invoice_count">6</field>
+        </record>
+
+        <record id="partner_tax_p18" model="res.partner.tax">
+            <field name="code">P18</field>
+            <field name="name">進項三聯式發票-免稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">4</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_p19" model="res.partner.tax">
+            <field name="code">P19</field>
+            <field name="name">進項三聯式收銀機發票-免稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">4</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_p20" model="res.partner.tax">
+            <field name="code">P20</field>
+            <field name="name">進項電子發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">7</field>
+        </record>
+
+        <record id="partner_tax_p21" model="res.partner.tax">
+            <field name="code">P21</field>
+            <field name="name">進項電子發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">7</field>
+        </record>
+
+        <record id="partner_tax_p22" model="res.partner.tax">
+            <field name="code">P22</field>
+            <field name="name">進項電子發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">7</field>
+        </record>
+
+
+
+
+        <!-- ===== S01 ~ S22 (銷項) ===== -->
+
+        <record id="partner_tax_s01" model="res.partner.tax">
+            <field name="code">S01</field>
+            <field name="name">銷項二聯式發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">1</field>
+        </record>
+
+        <record id="partner_tax_s02" model="res.partner.tax">
+            <field name="code">S02</field>
+            <field name="name">銷項二聯式發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">1</field>
+        </record>
+
+        <record id="partner_tax_s03" model="res.partner.tax">
+            <field name="code">S03</field>
+            <field name="name">銷項二聯式發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">1</field>
+        </record>
+
+        <record id="partner_tax_s04" model="res.partner.tax">
+            <field name="code">S04</field>
+            <field name="name">銷項三聯式發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_s05" model="res.partner.tax">
+            <field name="code">S05</field>
+            <field name="name">銷項三聯式發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_s06" model="res.partner.tax">
+            <field name="code">S06</field>
+            <field name="name">銷項三聯式發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_s07" model="res.partner.tax">
+            <field name="code">S07</field>
+            <field name="name">銷項二聯式收銀機發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">3</field>
+        </record>
+
+        <record id="partner_tax_s08" model="res.partner.tax">
+            <field name="code">S08</field>
+            <field name="name">銷項二聯式收銀機發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">3</field>
+        </record>
+
+        <record id="partner_tax_s09" model="res.partner.tax">
+            <field name="code">S09</field>
+            <field name="name">銷項三聯式收銀機發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_s10" model="res.partner.tax">
+            <field name="code">S10</field>
+            <field name="name">銷項三聯式收銀機發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_s11" model="res.partner.tax">
+            <field name="code">S11</field>
+            <field name="name">銷項三聯式收銀機發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_s12" model="res.partner.tax">
+            <field name="code">S12</field>
+            <field name="name">銷項電子計算機發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">5</field>
+        </record>
+
+        <record id="partner_tax_s13" model="res.partner.tax">
+            <field name="code">S13</field>
+            <field name="name">銷項電子計算機發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">5</field>
+        </record>
+
+        <record id="partner_tax_s14" model="res.partner.tax">
+            <field name="code">S14</field>
+            <field name="name">銷項電子計算機發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">5</field>
+        </record>
+
+        <record id="partner_tax_s15" model="res.partner.tax">
+            <field name="code">S15</field>
+            <field name="name">銷項免用發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">6</field>
+        </record>
+
+        <record id="partner_tax_s16" model="res.partner.tax">
+            <field name="code">S16</field>
+            <field name="name">銷項免用發票-免稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">4</field>
+            <field name="invoice_count">6</field>
+        </record>
+
+        <record id="partner_tax_s17" model="res.partner.tax">
+            <field name="code">S17</field>
+            <field name="name">銷項免用發票-不計稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">9</field>
+            <field name="invoice_count">6</field>
+        </record>
+
+        <record id="partner_tax_s18" model="res.partner.tax">
+            <field name="code">S18</field>
+            <field name="name">銷項三聯式發票-免稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">4</field>
+            <field name="invoice_count">2</field>
+        </record>
+
+        <record id="partner_tax_s19" model="res.partner.tax">
+            <field name="code">S19</field>
+            <field name="name">銷項三聯式收銀機發票-免稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">4</field>
+            <field name="invoice_count">4</field>
+        </record>
+
+        <record id="partner_tax_s20" model="res.partner.tax">
+            <field name="code">S20</field>
+            <field name="name">銷項電子發票-應稅內含</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">1</field>
+            <field name="invoice_count">7</field>
+        </record>
+
+        <record id="partner_tax_s21" model="res.partner.tax">
+            <field name="code">S21</field>
+            <field name="name">銷項電子發票-應稅外加</field>
+            <field name="rate">0.05</field>
+            <field name="tax_type">2</field>
+            <field name="invoice_count">7</field>
+        </record>
+
+        <record id="partner_tax_s22" model="res.partner.tax">
+            <field name="code">S22</field>
+            <field name="name">銷項電子發票-零稅</field>
+            <field name="rate">0.0</field>
+            <field name="tax_type">3</field>
+            <field name="invoice_count">7</field>
+        </record>
+
+    </data>
+</odoo>

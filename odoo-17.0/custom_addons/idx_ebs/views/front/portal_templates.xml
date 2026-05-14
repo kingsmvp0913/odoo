@@ -1,0 +1,1008 @@
+<odoo>
+    <!-- 隱藏 Portal 首頁的發票 / 帳單區塊 -->
+    <record id="account.portal_my_home_invoice" model="ir.ui.view">
+        <field name="active" eval="False"/>
+    </record>
+    <record id="payment.portal_my_home_payment" model="ir.ui.view">
+        <field name="active" eval="False"/>
+    </record>
+    <!-- 隱藏 /my/orders 頁面的排序依據功能，但保留搜尋框 -->
+    <template id="portal_my_orders_hide_sortby" name="隱藏排序依據" inherit_id="sale.portal_my_orders">
+        <xpath expr="//t[@t-call='portal.portal_searchbar']" position="attributes">
+            <attribute name="t-call">idx_ebs.portal_searchbar_no_sortby</attribute>
+        </xpath>
+    </template>
+    <!-- 自訂 searchbar 無排序依據但保留搜尋輸入框 -->
+    <template id="portal_searchbar_no_sortby" name="Portal Search Bar (無排序)" inherit_id="portal.portal_searchbar" primary="True">
+        <xpath expr="//div[@t-if='searchbar_sortings']" position="replace"/>
+    </template>
+    <!-- 原生分組顯示：覆寫 /my/orders 頁面的表格顯示 -->
+    <template id="portal_my_orders_grouped" name="訂單分組顯示" inherit_id="sale.portal_my_orders">
+        <xpath expr="//t[@t-if='orders']" position="replace">
+            <t t-if="orders">
+                <t t-set="source_labels" t-value="{
+                    'qrcode': 'QR code',
+                    'b2b': 'B2B',
+                    'ocr': 'OCR',
+                    'qt': '報價單',
+                    False: '未設定'
+                }"/>
+                <!-- 狀態分組：使用字典結構 -->
+                <t t-if="groupby == 'state' and grouped_orders_dict">
+                    <t t-foreach="grouped_orders_dict" t-as="state_label">
+                        <t t-set="orders_group" t-value="grouped_orders_dict[state_label]"/>
+                        <t t-if="orders_group">
+                            <h4 class="mt-4 mb-3">
+                                <i class="fa fa-folder-open"/>
+                                <t t-esc="state_label"/> 
+                                (
+                                <t t-esc="len(orders_group)"/>)
+                            </h4>
+                            <!-- 表格內容 -->
+                            <t t-call="portal.portal_table">
+                                <thead>
+                                    <tr class="active">
+                                        <th>
+                                            <span class='d-none d-md-inline'>銷售訂單 #</span>
+                                            <span class='d-block d-md-none'>參考</span>
+                                        </th>
+                                        <th class="text-center">報價日期</th>
+                                        <th class="text-center">收件日期</th>
+                                        <th class="text-center">訂單來源</th>
+                                        <th class="text-center"/>
+                                        <th class="text-end" groups="base.group_user,idx_ebs.group_front_clinic_manager">總計</th>
+                                    </tr>
+                                </thead>
+                                <t t-foreach="orders_group" t-as="order">
+                                    <tr>
+                                        <td>
+                                            <a t-att-href="order.get_portal_url()">
+                                                <t t-out="order.name"/>
+                                            </a>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-field="order.date_order" t-options='{"widget": "date"}'/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="order.request_inspection_date" t-options='{"widget": "date"}'/>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-if="order.order_source == 'qrcode'" class="badge rounded-pill text-bg-secondary">QR code</span>
+                                            <span t-elif="order.order_source == 'b2b'" class="badge rounded-pill text-bg-primary">B2B</span>
+                                            <span t-elif="order.order_source == 'ocr'" class="badge rounded-pill text-bg-secondary">OCR</span>
+                                            <span t-elif="order.order_source == 'qt'" class="badge rounded-pill text-bg-dark">報價單</span>
+                                            <span t-else="" class="badge rounded-pill text-bg-warning">未設定</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-if="order.locked" class="badge rounded-pill text-bg-success">
+                                                <i class="fa fa-fw fa-check" role="img" aria-label="Done" title="Done"/>已完成
+                                            </span>
+                                        </td>
+                                        <td class="text-end" groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                                            <span t-field="order.amount_total"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                        </t>
+                    </t>
+                </t>
+                <!-- 其他分組：使用列表結構 -->
+                <t t-else="">
+                    <t t-foreach="grouped_orders" t-as="orders_group">
+                        <t t-if="orders_group">
+                            <!-- 分組標題 -->
+                            <t t-if="groupby == 'order_source'">
+                                <h4 class="mt-4 mb-3">
+                                    <i class="fa fa-folder-open"/>
+                                    <t t-esc="source_labels.get(orders_group[0].order_source, '未設定')"/> 
+                                    (
+                                    <t t-esc="len(orders_group)"/>)
+                                </h4>
+                            </t>
+                            <!-- 表格內容 -->
+                            <t t-call="portal.portal_table">
+                                <thead>
+                                    <tr class="active">
+                                        <th>
+                                            <span class='d-none d-md-inline'>銷售訂單 #</span>
+                                            <span class='d-block d-md-none'>參考</span>
+                                        </th>
+                                        <th class="text-center">報價日期</th>
+                                        <th class="text-center">收件日期</th>
+                                        <th class="text-center" t-if="groupby != 'order_source'">訂單來源</th>
+                                        <th class="text-center" t-if="groupby != 'state'">訂單狀態</th>
+                                        <th class="text-center"/>
+                                        <th class="text-end" groups="base.group_user,idx_ebs.group_front_clinic_manager">總計</th>
+                                    </tr>
+                                </thead>
+                                <t t-foreach="orders_group" t-as="order">
+                                    <tr>
+                                        <td>
+                                            <a t-att-href="order.get_portal_url()">
+                                                <t t-out="order.name"/>
+                                            </a>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-field="order.date_order" t-options='{"widget": "date"}'/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="order.request_inspection_date" t-options='{"widget": "date"}'/>
+                                        </td>
+                                        <td class="text-center" t-if="groupby != 'order_source'">
+                                            <span t-if="order.order_source == 'qrcode'" class="badge rounded-pill text-bg-secondary">QR code</span>
+                                            <span t-elif="order.order_source == 'b2b'" class="badge rounded-pill text-bg-primary">B2B</span>
+                                            <span t-elif="order.order_source == 'ocr'" class="badge rounded-pill text-bg-secondary">OCR</span>
+                                            <span t-elif="order.order_source == 'qt'" class="badge rounded-pill text-bg-dark">報價單</span>
+                                            <span t-else="" class="badge rounded-pill text-bg-warning">未設定</span>
+                                        </td>
+                                        <td class="text-center" t-if="groupby != 'state'">
+                                            <span t-if="order.state == 'draft'" class="badge rounded-pill text-bg-secondary">報價中</span>
+                                            <span t-elif="order.state == 'sent'" class="badge rounded-pill text-bg-info">報價已送出</span>
+                                            <span t-elif="order.state == 'confirmed'" class="badge rounded-pill text-bg-warning">訂單待確認</span>
+                                            <span t-elif="order.state == 'received'" class="badge rounded-pill text-bg-primary">已收件</span>
+                                            <span t-elif="order.state == 'wf_confirm'" class="badge rounded-pill text-bg-success">訂單已成立</span>
+                                            <span t-elif="order.state == 'active'" class="badge rounded-pill text-bg-success">訂單已成立</span>
+                                            <span t-elif="order.state == 'inspected'" class="badge rounded-pill text-bg-dark">訂單已成立</span>
+                                            <span t-elif="order.state == 'reported'" class="badge rounded-pill text-bg-light">報告完成</span>
+                                            <span t-elif="order.state == 'sent_report'" class="badge rounded-pill text-bg-success">報告已寄出</span>
+                                            <span t-elif="order.state == 'cancel'" class="badge rounded-pill text-bg-danger">已取消</span>
+                                            <span t-else="" class="badge rounded-pill text-bg-warning">未設定</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-if="order.locked" class="badge rounded-pill text-bg-success">
+                                                <i class="fa fa-fw fa-check" role="img" aria-label="Done" title="Done"/>已完成
+                                            </span>
+                                        </td>
+                                        <td class="text-end" groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                                            <span t-field="order.amount_total"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </xpath>
+    </template>
+    <template id="portal_my_home_account_statement" name="對帳單下載" inherit_id="portal.portal_my_home" customize_show="True" priority="20">
+        <xpath expr="//div[@id='portal_client_category']" position="inside">
+            <t t-if="request.env.user.has_group('idx_ebs.group_front_clinic_manager') or request.env.user.has_group('base.group_user')">
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="config_card" t-value="True"/>
+                    <t t-set="icon" t-value="'/idx_ebs/static/src/img/account_statement.svg'"/>
+                    <t t-set="title">對帳單下載</t>
+                    <t t-set="url" t-value="'/my/account_statement'"/>
+                    <t t-set="text">下載您的對帳單</t>
+                </t>
+            </t>
+        </xpath>
+    </template>
+    <template id="portal_my_home_qrcode" name="檢測項目QR-code下載" inherit_id="portal.portal_my_home" customize_show="True" priority="30">
+        <xpath expr="//div[@id='portal_client_category']" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="config_card" t-value="True"/>
+                <t t-set="icon" t-value="'/idx_ebs/static/src/img/account_statement.svg'"/>
+                <t t-set="title">檢測項目QR-code下載</t>
+                <t t-set="url" t-value="'/my/qrcode'"/>
+                <t t-set="text">查看您的QR-code</t>
+            </t>
+        </xpath>
+    </template>
+    <template id="portal_my_account_statement_menu" inherit_id="portal.portal_breadcrumbs" priority="30">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'account_statement'" t-attf-class="breadcrumb-item #{'active ' if not account_statements else ''}">
+                <a t-if="account_statements" t-attf-href="/my/account_statement">對帳單下載</a>
+                <t t-else="">對帳單下載</t>
+            </li>
+        </xpath>
+    </template>
+    <template id="portal_my_account_statement" name="對帳單下載">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">對帳單下載</t>
+            </t>
+            <t t-if="not account_statements">
+                <p class="alert alert-warning">目前您的帳戶沒有對帳單資料。</p>
+            </t>
+            <t t-if="account_statements" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active text-center">
+                        <th name="per_month" class="d-md-table-cell">年月</th>
+                        <th name="pdf_download" class="d-md-table-cell">PDF 下載</th>
+                        <th name="excel_download" class="d-md-table-cell">Excel 下載</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="account_statements" t-as="account_statement" t-key="account_statement.id">
+                        <tr class="text-center">
+                            <td>
+                                <t t-esc="account_statement.per_month"/>
+                            </td>
+                            <td>
+                                <a t-if="account_statement.pdf_file" t-att-href="'/my/account_statement/%s/download/pdf' % account_statement.id" class="btn btn-primary btn-sm" target="_blank">
+                                下載 PDF
+                                </a>
+                            </td>
+                            <td>
+                                <a t-if="account_statement.excel_file" t-att-href="'/my/account_statement/%s/download/excel' % account_statement.id" class="btn btn-primary btn-sm" target="_blank">
+                                下載 Excel
+                                </a>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+            <!-- 分頁按鈕 -->
+            <t t-if="account_statements and pager and pager['page_count'] > 1"/>
+        </t>
+    </template>
+    <!-- 調整 class="o_portal_sale_sidebar" 的區塊 -->
+    <template id="portal_sale_order_sidebar_custom" inherit_id="sale.sale_order_portal_template">
+        <!-- 整個 sidebar 區塊 -->
+        <xpath expr="//div[hasclass('o_portal_sale_sidebar')]" position="replace">
+            <div class="row o_portal_sale_sidebar">
+                <t t-call="portal.portal_record_sidebar" id="sale_order_portal_sidebar">
+                    <t t-set="classes" t-value="'d-print-none col-lg-3'"/>
+                    <t t-set="title">
+                        <h2 t-field="sale_order.amount_total" data-id="total_amount"/>
+                    </t>
+                    <t t-set="entries">
+                        <div class="d-flex flex-column gap-4">
+                            <div class="d-flex flex-column gap-2" id="sale_order_sidebar_button">
+                                <a t-if="sale_order._has_to_be_signed()" role="button" class="btn btn-primary d-block" data-bs-toggle="modal" data-bs-target="#modalaccept" href="#">
+                                    <i class="fa fa-check"/>
+                                    <t t-if="sale_order._has_to_be_paid()"> 簽署並付款</t>
+                                    <t t-else=""> 接受並簽署</t>
+                                </a>
+                                <a t-elif="sale_order._has_to_be_paid()" role="button" id="o_sale_portal_paynow" data-bs-toggle="modal" data-bs-target="#modalaccept" href="#" t-att-class="'d-block %s' % ('btn btn-light' if sale_order.transaction_ids else 'btn btn-primary')" >
+                                    <i class="fa fa-check"/>
+                                    <t t-if="not sale_order.signature">接受並付款</t>
+                                    <t t-else="">立即付款</t>
+                                </a>
+                                <div class="o_download_pdf d-flex gap-1 flex-lg-column flex-xl-row">
+                                    <div class="flex-grow-1">
+                                        <a class="btn btn-secondary o_print_btn o_portal_invoice_print d-block" t-att-href="sale_order.get_portal_url(report_type='pdf')" id="print_invoice_report" title="View Details" target="_blank">
+                                            <i class="fa fa-print"/> 查看詳情
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="navspy flex-grow-1 ps-0" t-ignore="true" role="complementary">
+                                <ul class="nav flex-column bs-sidenav"></ul>
+                            </div>
+                            <t t-if="not sale_order.is_expired and sale_order.state in ['draft', 'sent']">
+                                <div t-if="sale_order.amount_undiscounted - sale_order.amount_untaxed &gt; 0.01" class="list-group-item flex-grow-1">
+                                    <small>
+                                        <b class="text-muted">你的優勢</b>
+                                    </small>
+                                    <small>
+                                        <b t-field="sale_order.amount_undiscounted"
+                                                t-options='{"widget": "monetary", "display_currency": sale_order.currency_id}'
+                                                style="text-decoration: line-through"
+                                                class="d-block mt-1"
+                                                data-id="amount_undiscounted" />
+                                    </small>
+                                    <t t-if="sale_order.amount_untaxed == sale_order.amount_total">
+                                        <h4 t-field="sale_order.amount_total" class="text-success" data-id="total_amount"/>
+                                    </t>
+                                    <t t-else="">
+                                        <h4 t-field="sale_order.amount_untaxed" class="text-success mb-0" data-id="total_untaxed"/>
+                                        <small>(
+                                            <span t-field="sale_order.amount_total" data-id="total_amount"/> 含稅)
+                                        </small>
+                                    </t>
+                                </div>
+                            </t>
+                            <div t-if="sale_order.user_id">
+                                <h6>
+                                    <small class="text-muted">聯繫方式</small>
+                                </h6>
+                                <div class="o_portal_contact_details d-flex flex-column gap-2">
+                                    <div class="d-flex justify-content-start align-items-center gap-2">
+                                        <img class="o_avatar o_portal_contact_img rounded" t-att-src="image_data_uri(sale_order.user_id.avatar_128)" alt="Contact"/>
+                                        <div>
+                                            <h6 class="mb-0" t-out="sale_order.user_id.name"/>
+                                            <a href="#discussion" class="d-flex align-items-center gap-2 small fw-bold">
+                                                傳送訊息
+                                                </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+                <!-- Page content -->
+                <div id="quote_content" class="col-12 col-lg-9 mt-5 mt-lg-0">
+                    <!-- modal relative to the actions sign and pay -->
+                    <div role="dialog" class="modal fade" id="modalaccept">
+                        <div class="modal-dialog" t-if="sale_order._has_to_be_signed()">
+                            <form id="accept" method="POST" t-att-data-order-id="sale_order.id" t-att-data-token="sale_order.access_token" class="js_accept_json modal-content js_website_submit_form">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <header class="modal-header">
+                                    <h4 class="modal-title">驗證訂單</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </header>
+                                <main class="modal-body" id="sign-dialog">
+                                    <p>
+                                        <span>通過簽訂該提議，我同意以下條款:</span>
+                                        <ul>
+                                            <li>
+                                                <span>接受代表:</span>
+                                                <b t-field="sale_order.partner_id.commercial_partner_id"/>
+                                            </li>
+                                            <li>
+                                                <span>對於一定數量的:</span>
+                                                <b data-id="total_amount" t-field="sale_order.amount_total"/>
+                                            </li>
+                                            <li t-if="sale_order.payment_term_id">
+                                                <span>付款條件:</span>
+                                                <b t-field="sale_order.payment_term_id.note"/>
+                                            </li>
+                                        </ul>
+                                    </p>
+                                    <t t-call="portal.signature_form">
+                                        <t t-set="call_url" t-value="sale_order.get_portal_url(suffix='/accept')"/>
+                                        <t t-set="default_name" t-value="sale_order.partner_id.name or sale_order.partner_id.commercial_partner_id.name"/>
+                                    </t>
+                                </main>
+                            </form>
+                        </div>
+                        <div class="modal-dialog" t-if="not sale_order._has_to_be_signed() and sale_order._has_to_be_paid()">
+                            <div class="modal-content">
+                                <header class="modal-header">
+                                    <h4 class="modal-title">驗證訂單</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </header>
+                                <main class="modal-body" id="sign-dialog">
+                                    <t t-set="prepayment_amount" t-value="sale_order._get_prepayment_required_amount()"/>
+                                    <t t-set="prepayment_available" t-value="sale_order.prepayment_percent and sale_order.prepayment_percent != 1.0"/>
+                                    <!-- Display choices only if a pre payment can confirm the order. -->
+                                    <div t-if="prepayment_available"
+                                         id="o_sale_portal_prepayment_buttons"
+                                         class="d-flex justify-content-center d-grid gap-2 btn-group"
+                                    >
+                                        <button name="o_sale_portal_amount_prepayment_button" class="btn btn-primary rounded">
+                                            首期付款
+                                            <br/>
+                                            <span t-esc="prepayment_amount" class="fw-bold"
+                                                  t-options="{'widget': 'monetary', 'display_currency': sale_order.currency_id}"/>
+                                        </button>
+                                        <button name="o_sale_portal_amount_total_button" class="btn btn-primary rounded">
+                                            全額
+                                            <br/>
+                                            <span t-field="sale_order.amount_total"/>
+                                        </button>
+                                    </div>
+                                    <p>
+                                        <!-- The widget associated with this modal will hide and show divs in function of the amount selected. -->
+                                        <div id="o_sale_portal_use_amount_total">
+                                            若對此提案付款，即表示我同意以下條款：
+                                        </div>
+                                        <div t-if="prepayment_available"
+                                             id="o_sale_portal_use_amount_prepayment"
+                                        >
+                                            若支付這筆
+                                            <u>首期付款</u>，金額為
+                                            <span t-esc="prepayment_amount" class="fw-bold"
+                                                  t-options="{'widget': 'monetary', 'display_currency': sale_order.currency_id}"/>
+                                            (
+                                            <b t-esc="sale_order.prepayment_percent * 100"/> %)
+                                            對於此提案,我同意以下條款:
+                                        </div>
+                                        <ul>
+                                            <li>
+                                                <span>接受代表:</span>
+                                                <b t-field="sale_order.partner_id.commercial_partner_id"/>
+                                            </li>
+                                            <li>
+                                                <span>對於一定數量的:</span>
+                                                <b data-id="total_amount" t-field="sale_order.amount_total"/>
+                                            </li>
+                                            <li t-if="sale_order.payment_term_id">
+                                                <span>付款條件:</span>
+                                                <b t-field="sale_order.payment_term_id.note"/>
+                                            </li>
+                                        </ul>
+                                    </p>
+                                    <div t-if="company_mismatch">
+                                        <t t-call="payment.company_mismatch_warning"/>
+                                    </div>
+                                    <div t-elif="not sale_order._has_to_be_paid()" class="alert alert-danger">
+                                        訂單並非處於需要客戶付款的狀態。
+                                    </div>
+                                    <div t-elif="not payment_methods_sudo and not tokens_sudo" class="alert alert-warning">
+                                        <strong>找不到合適的付款方式。</strong>
+                                        <br/>
+                                        如果您認為這是一個異常事項，請聯繫網站管理員。
+                                    </div>
+                                    <div t-else="" id="payment_method" class="text-start">
+                                        <h3 class="mb-3">使用以下方式付款</h3>
+                                        <t t-call="payment.form">
+                                            <!-- Inject the order ID to allow Stripe to check if tokenization is required. -->
+                                            <t t-set="sale_order_id" t-value="sale_order.id"/>
+                                        </t>
+                                    </div>
+                                </main>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- modal relative to the action reject -->
+                    <div role="dialog" class="modal fade" id="modaldecline">
+                        <div class="modal-dialog">
+                            <form id="decline" method="POST" t-attf-action="/my/orders/#{sale_order.id}/decline?access_token=#{sale_order.access_token}" class="modal-content">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <header class="modal-header">
+                                    <h4 class="modal-title">拒絕這個報價單</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </header>
+                                <main class="modal-body">
+                                    <p>
+                                        請告訴我們您為什麼拒絕這個報價單，這將幫助我們改進我們的服務。
+                                    </p>
+                                    <textarea rows="4" name="decline_message" required="" placeholder="您的反饋..." class="form-control" />
+                                </main>
+                                <footer class="modal-footer">
+                                    <button type="submit" t-att-id="sale_order.id" class="btn btn-danger">
+                                        <i class="fa fa-times"></i> 拒絕
+                                    </button>
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                                        取消
+                                    </button>
+                                </footer>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- status messages -->
+                    <div t-if="message == 'sign_ok'" class="alert alert-success alert-dismissible d-print-none" role="status">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <strong>Thank You!</strong>
+                        <br/>
+                        <t t-if="message == 'sign_ok' and sale_order.state == 'sale'">
+                            你的付款已成功處理。
+                        </t>
+                        <t t-elif="message == 'sign_ok' and sale_order._has_to_be_paid()">
+                            你的訂單已簽名，但仍需付款才獲確認。
+                        </t>
+                        <t t-else="">您的訂單已簽訂。</t>
+                    </div>
+                    <div t-if="message == 'cant_reject'" class="alert alert-danger alert-dismissible d-print-none" role="alert">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        您的訂單不在被拒絕的狀態。
+                    </div>
+                    <t t-if="sale_order.get_portal_last_transaction()">
+                        <t t-call="payment.transaction_status">
+                            <t t-set="tx" t-value="sale_order.get_portal_last_transaction()"/>
+                        </t>
+                    </t>
+                    <div t-if="sale_order.state == 'cancel'" class="alert alert-danger alert-dismissible d-print-none" role="alert">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+                        <strong>報價已取消.</strong>
+                        <a role="button" href="#discussion">
+                            <i class="fa fa-comment"/> 聯繫我們獲得新報價.
+                        </a>
+                    </div>
+                    <div t-if="sale_order.is_expired" class="alert alert-warning alert-dismissible d-print-none" role="alert">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+                        <strong>報價逾期！</strong>
+                        <a role="button" href="#discussion">
+                            <i class="fa fa-comment"/> 聯繫我們獲得新報價.
+                        </a>
+                    </div>
+                    <!-- main content -->
+                    <div t-attf-class="#{'pb-5' if report_type == 'html' else ''}" id="portal_sale_content">
+                        <!-- Intro -->
+                        <div id="introduction" t-attf-class="#{'border-bottom-0 pt-0 pb-3 bg-white' if report_type == 'html' else ''}">
+                            <div class="row" id="intro_row">
+                                <h2 class="my-0 col-12 col-lg flex-grow-1 mb-1 mb-lg-0">
+                                    <t t-out="sale_order.type_name"/> -
+                                    <em t-out="sale_order.name"/>
+                                </h2>
+                            </div>
+                        </div>
+                        <div id="content">
+                            <div id="informations" class="row">
+                                <span id="transaction_info">
+                                    <div t-if="sale_order.get_portal_last_transaction() and not invoices and sale_order.state in ('sent', 'sale') and portal_confirmation == 'pay' and not success and not error" t-att-data-order-id="sale_order.id">
+                                        <t t-if="sale_order.transaction_ids">
+                                            <t t-call="payment.transaction_status">
+                                                <t t-set="tx" t-value="sale_order.get_portal_last_transaction()"/>
+                                            </t>
+                                        </t>
+                                    </div>
+                                </span>
+                                <!-- Information -->
+                                <div id="sale_info" class="col-12 col-lg-6 mb-4">
+                                    <span id="sale_info_title">
+                                        <h4 class="mb-1">銷售資料</h4>
+                                        <hr class="mt-1 mb-2"/>
+                                    </span>
+                                    <table class="table table-borderless table-sm">
+                                        <tbody style="white-space:nowrap" id="sale_info_table">
+                                            <tr>
+                                                <th t-if="sale_order.state in ['sale', 'cancel']" class="ps-0 pb-0">訂購日期:</th>
+                                                <th t-else="" class="ps-0 pb-0">日期:</th>
+                                                <td class="w-100 pb-0 text-wrap">
+                                                    <span t-field="sale_order.date_order" t-options='{"widget": "date"}'/>
+                                                </td>
+                                            </tr>
+                                            <tr t-if="sale_order.validity_date and sale_order.state in ['draft', 'sent']">
+                                                <th class="ps-0 pb-0">到期日:</th>
+                                                <td class="w-100 pb-0 text-wrap">
+                                                    <span t-field="sale_order.validity_date" t-options='{"widget": "date"}'/>
+                                                </td>
+                                            </tr>
+                                            <tr t-if="sale_order.client_order_ref">
+                                                <th class="ps-0 pb-0">你的參考:</th>
+                                                <td class="w-100 pb-0 text-wrap">
+                                                    <span t-field="sale_order.client_order_ref"/>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- ======  Customer Information  ====== -->
+                                <div id="customer_info" class="col-12 col-lg-6 mb-4">
+                                    <h4 class="mb-1">
+                                        <t t-if="sale_order.partner_shipping_id == sale_order.partner_invoice_id">
+                            開立發票和送貨地址：
+                        </t>
+                                        <t t-else="">
+                            開立發票地址:
+                        </t>
+                                        <small t-if="sale_order.partner_id == sale_order.partner_invoice_id == sale_order.env.user.partner_id">
+                                            <a class="small" t-attf-href="/my/account?redirect={{sale_order.get_portal_url()}}">
+                                                <i class="fa fa-fw fa-pencil"/>
+                                            </a>
+                                        </small>
+                                    </h4>
+                                    <hr class="mt-1 mb-2"/>
+                                    <div t-field="sale_order.partner_invoice_id" t-options="{'widget': 'contact', 'fields': ['name', 'address', 'phone', 'email']}"/>
+                                    <span t-if="sale_order.partner_shipping_id != sale_order.partner_invoice_id"
+                            id="shipping_address"
+                            class="col-lg-6">
+                                        <br/>
+                                        <h4 class="mb-1">
+                            送貨地址
+                        </h4>
+                                        <hr class="mt-1 mb-2"/>
+                                        <div t-field="sale_order.partner_shipping_id" t-options='{ "widget": "contact", "fields": [ "name", "address"]}'/>
+                                    </span>
+                                </div>
+                                <t t-set="invoices" t-value="sale_order.invoice_ids.filtered(lambda i: i.state not in ['draft', 'cancel']).sorted('date', reverse=True)[:3]"/>
+                                <div id="sale_invoices" t-if="invoices and sale_order.state in ['sale', 'cancel']" class="col-12 col-lg-6 mb-4">
+                                    <h4 class="mb-1">最新發票</h4>
+                                    <hr class="mt-1 mb-2"/>
+                                    <t t-foreach="invoices" t-as="i">
+                                        <t t-set="report_url" t-value="i.get_portal_url()"/>
+                                        <t t-set="authorized_tx_ids" t-value="i.authorized_transaction_ids"/>
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <a t-att-href="report_url">
+                                                    <span t-out="i.name"/>
+                                                </a>
+                                                <div t-if="i.payment_state in ('paid', 'in_payment')" class="small badge text-bg-success orders_label_text_align">
+                                                    <i class="fa fa-fw fa-check"/> 已付款
+                                                </div>
+                                                <div t-elif="i.payment_state == 'reversed'" class="small badge text-bg-success orders_label_text_align">
+                                                    <i class="fa fa-fw fa-check"/> 已撤銷
+                                                </div>
+                                                <div t-elif="authorized_tx_ids" class="small badge text-bg-success orders_label_text_align">
+                                                    <i class="fa fa-fw fa-check"/> 授權
+                                                </div>
+                                                <div t-else="" class="small badge text-bg-info orders_label_text_align">
+                                                    <i class="fa fa-fw fa-clock-o"/> 等待付款
+                                                </div>
+                                            </div>
+                                            <div class="small d-lg-inline-block">日期:
+                                                <span class="text-muted" t-field="i.invoice_date"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- chatter -->
+                    <!-- <hr/>
+                    <div id="sale_order_communication">
+                        <h3>Communication history</h3>
+                        <t t-call="portal.message_thread"/>
+                    </div> -->
+                </div>
+                <!-- // #quote_content -->
+                <div class="col-12 mt-5">
+                    <!-- main content -->
+                    <div t-attf-class="#{'pb-5' if report_type == 'html' else ''}" id="portal_sale_content">
+                        <div id="content">
+                            <section id="details" style="page-break-inside: auto;">
+                                <t t-if="product_documents">
+                                    <h4 id="details">文件</h4>
+                                    <div class="d-flex flex-grow-1 flex-wrap gap-1 mb32">
+                                        <t t-foreach="product_documents" t-as="document_sudo">
+                                            <div class="bg-light p-2 rounded">
+                                                <div class="position-relative text-center">
+                                                    <t t-set="attachment_sudo" t-value="document_sudo.ir_attachment_id"/>
+                                                    <t t-set="target" t-value="attachment_sudo.type == 'url' and '_blank' or '_self'"/>
+                                                    <a t-att-href="sale_order.get_portal_url('/document/' + str(document_sudo.id))" t-att-target="target" class="d-flex flex-row">
+                                                        <div class="o_image"
+                                                t-att-title="attachment_sudo.name"
+                                                t-att-data-mimetype="attachment_sudo.mimetype"
+                                                t-attf-data-src="/web/image/#{attachment_sudo.id}/100x80?access_token=#{attachment_sudo.access_token}"/>
+                                                        <div class="o_portal_product_document align-self-center" t-out="attachment_sudo.name"/>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </t>
+                                <t t-set="display_discount" t-value="True in [line.discount > 0 for line in sale_order.order_line]"/>
+                                <div class="table-responsive">
+                                    <table t-att-data-order-id="sale_order.id" t-att-data-token="sale_order.access_token" class="table table-sm" id="sales_order_table">
+                                        <thead class="bg-100">
+                                            <tr>
+                                                <th class="text-start" id="product_name_header">產品</th>
+                                                <th class="text-end" id="product_qty_header">數量</th>
+                                                <th groups="base.group_user,idx_ebs.group_front_clinic_manager" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                                    單價
+                                                </th>
+                                                <th groups="base.group_user,idx_ebs.group_front_clinic_manager" t-if="display_discount" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                                    <span>折扣率%</span>
+                                                </th>
+                                                <th groups="base.group_user,idx_ebs.group_front_clinic_manager" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}" id="taxes_header">
+                                                    <span>稅</span>
+                                                </th>
+                                                <th groups="base.group_user,idx_ebs.group_front_clinic_manager" class="text-end" id="subtotal_header">
+                                                    <span>金額</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="sale_tbody">
+                                            <t t-set="current_subtotal" t-value="0"/>
+                                            <t t-set="lines_to_report" t-value="sale_order._get_order_lines_to_report()"/>
+                                            <t t-foreach="lines_to_report" t-as="line">
+                                                <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+                                                <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+                                                    <t t-if="not line.display_type">
+                                                        <td id="product_name">
+                                                            <span t-field="line.name"/>
+                                                        </td>
+                                                        <td class="text-end" id="quote_qty_td">
+                                                            <div id="quote_qty">
+                                                                <span t-field="line.product_uom_qty"/>
+                                                                <span t-field="line.product_uom"/>
+                                                            </div>
+                                                        </td>
+                                                        <td groups="base.group_user,idx_ebs.group_front_clinic_manager" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                                            <div
+                                                t-if="line.discount &gt;= 0"
+                                                t-field="line.price_unit"
+                                                t-att-style="line.discount and 'text-decoration: line-through' or None"
+                                                t-att-class="(line.discount and 'text-danger' or '') + ' text-end'"/>
+                                                            <div t-if="line.discount">
+                                                                <t t-out="(1-line.discount / 100.0) * line.price_unit" t-options='{"widget": "float", "decimal_precision": "Product Price"}'/>
+                                                            </div>
+                                                        </td>
+                                                        <td groups="base.group_user,idx_ebs.group_front_clinic_manager" t-if="display_discount" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                                            <strong t-if="line.discount &gt; 0" class="text-info">
+                                                                <t t-out="((line.discount % 1) and '%s' or '%d') % line.discount"/>%
+                                                            </strong>
+                                                        </td>
+                                                        <td groups="base.group_user,idx_ebs.group_front_clinic_manager" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}" id="taxes">
+                                                            <span t-out="', '.join(map(lambda x: (x.description or x.name), line.tax_id))"/>
+                                                        </td>
+                                                        <td groups="base.group_user,idx_ebs.group_front_clinic_manager" t-if="not line.is_downpayment" class="text-end" id="subtotal">
+                                                            <span class="oe_order_line_price_subtotal" t-field="line.price_subtotal"/>
+                                                        </td>
+                                                    </t>
+                                                    <t t-if="line.display_type == 'line_section'">
+                                                        <td colspan="99">
+                                                            <span t-field="line.name"/>
+                                                        </td>
+                                                        <t t-set="current_section" t-value="line"/>
+                                                        <t t-set="current_subtotal" t-value="0"/>
+                                                    </t>
+                                                    <t t-if="line.display_type == 'line_note'">
+                                                        <td colspan="99">
+                                                            <span t-field="line.name"/>
+                                                        </td>
+                                                    </t>
+                                                </tr>
+                                                <tr t-if="current_section and (line_last or lines_to_report[line_index+1].display_type == 'line_section') and not line.is_downpayment" class="is-subtotal text-end">
+                                                    <td colspan="99">
+                                                        <strong class="mr16">小計</strong>
+                                                        <span t-out="current_subtotal" t-options='{"widget": "monetary", "display_currency": sale_order.currency_id}'/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div groups="base.group_user,idx_ebs.group_front_clinic_manager" id="total" name="total" style="page-break-inside: avoid;">
+                                    <div class="col-xs-7 col-md-5 ms-auto">
+                                        <t t-call="sale.sale_order_portal_content_totals_table"/>
+                                    </div>
+                                </div>
+                            </section>
+                            <t t-set="has_any_reports" t-value="any(line.report_ids for line in lines_to_report)"/>
+                            <section t-if="has_any_reports" id="reports_data_block" class="mt-4" style="page-break-inside: auto;">
+                                <t t-set="user_downloads" t-value="request.env.user.partner_id.available_download_ids"/>
+                                <t t-set="has_pdf" t-value="'PDF' in user_downloads.mapped('name')"/>
+                                <t t-set="has_excel" t-value="'Excel' in user_downloads.mapped('name')"/>
+                                <t t-set="download_count" t-value="(1 if has_pdf else 0) + (1 if has_excel else 0)"/>
+                                <!-- 顯示最近的批次下載任務 -->
+                                <t t-set="batch_tasks" t-value="request.env['report.batch.download'].sudo().search([('order_id', '=', sale_order.id)], order='create_date desc', limit=5)"/>
+                                <t t-if="batch_tasks">
+                                    <div class="alert alert-primary mb-3">
+                                        <h6>批次下載報告(近五筆)</h6>
+                                        <ul class="list-unstyled mb-0">
+                                            <t t-foreach="batch_tasks" t-as="task">
+                                                <li class="mb-2">
+                                                    <span t-field="task.create_date" t-options='{"widget": "datetime", "format": "yyyy-MM-dd HH:mm"}'/>
+                                                    <t t-if="task.state == 'pending'">
+                                                        <span class="badge bg-secondary">等待中</span>
+                                                    </t>
+                                                    <t t-elif="task.state == 'processing'">
+                                                        <span class="badge bg-info">處理中 (
+                                                            <t t-esc="task.progress"/>%)
+                                                        </span>
+                                                    </t>
+                                                    <t t-elif="task.state == 'done'">
+                                                        <span class="badge bg-success">完成</span>
+                                                        <a t-att-href="'/my/orders/report/batch_download/download/%s' % task.id" class="btn btn-sm btn-primary ms-2">下載</a>
+                                                    </t>
+                                                    <t t-elif="task.state == 'failed'">
+                                                        <span class="badge bg-danger">失敗</span>
+                                                    </t>
+                                                </li>
+                                            </t>
+                                        </ul>
+                                    </div>
+                                </t>
+                                <div class="mb-1 d-flex gap-2">
+                                    <button type="button" id="btn_batch_report_download" class="btn btn-primary" t-att-data-has-pdf="has_pdf" t-att-data-has-excel="has_excel">批次下載報告</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table t-att-data-order-id="sale_order.id" t-att-data-token="sale_order.access_token" class="table table-sm" id="reports_data_table">
+                                        <thead class="bg-100">
+                                            <tr>
+                                                <th class="text-center">
+                                                    <input type="checkbox" id="check_all_reports" class="form-check-input"/>
+                                                </th>
+                                                <th class="text-start d-none d-xl-table-cell">訂單序號</th>
+                                                <th class="text-start">產品</th>
+                                                <th class="text-start">姓名</th>
+                                                <th t-if="download_count > 0" class="text-center" t-att-colspan="download_count if download_count > 1 else None">檢測報告書下載</th>
+                                                <th t-if="user_downloads" class="text-start d-none d-xl-table-cell">下載日期</th>
+                                                <th t-if="has_pdf" class="text-start">電子書報告</th>
+                                                <th class="text-start">親取</th>
+                                                <th class="text-start d-none d-xl-table-cell">親取日期</th>
+                                                <th class="text-start d-none d-xl-table-cell">備註</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="lines_to_report" t-as="line">
+                                                <t t-foreach="line.report_ids" t-as="report">
+                                                    <tr t-att-data-id="report.id" 
+                                                        t-att-data-upload-date="report.upload_date.strftime('%Y%m%d') if report.upload_date else ''"
+                                                        t-att-data-year="report.upload_date.year if report.upload_date else ''"
+                                                        t-att-data-month="str(report.upload_date.month).zfill(2) if report.upload_date else ''"
+                                                        t-att-data-report-name="report.name"
+                                                        t-att-data-inspect-number="report.inspect_number">
+                                                        <td class="text-center">
+                                                            <input type="checkbox" class="form-check-input report-checkbox" t-att-data-report-id="report.id"/>
+                                                        </td>
+                                                        <td class="text-start d-none d-xl-table-cell">
+                                                            <span t-field="line.wf_sequence"/>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <span t-field="line.name"/>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <span t-field="report.name"/>
+                                                        </td>
+                                                        <td t-if="has_pdf" class="text-center">
+                                                            <a class="o_report_download" t-att-data-id="report.id" data-type="pdf" href="#">PDF下載</a>
+                                                        </td>
+                                                        <td t-if="has_excel" class="text-center">
+                                                            <a class="o_report_download" t-att-data-id="report.id" data-type="excel" href="#">Excel下載</a>
+                                                        </td>
+                                                        <td t-if="user_downloads" class="text-start d-none d-xl-table-cell">
+                                                            <span name="download_date" t-out="report.download_date.strftime('%Y年%m月%d日') if report.download_date else ''"/>
+                                                        </td>
+                                                        <td t-if="has_pdf" class="text-start">
+                                                            <a class="o_report_preview" t-att-data-id="report.id" data-type="flipbook" href="#">瀏覽</a>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <span t-if="report.pic_personally" class="text-success">已上傳</span>
+                                                            <a t-else="" class="o_pic_upload" t-att-data-report-id="report.id" href="#" data-bs-toggle="modal" data-bs-target="#modalPicUpload">照片上傳</a>
+                                                        </td>
+                                                        <td class="text-start  d-none d-xl-table-cell">
+                                                            <span t-field="report.pick_date" t-options='{"widget": "date", "format": "yyyy年MM月dd日"}'/>
+                                                        </td>
+                                                        <td class="text-start d-none d-xl-table-cell">
+                                                            <span t-field="report.note"/>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mb-1 d-flex justify-content-between gap-2">
+                                    <h4 class="mb-0 mt-auto">物流查詢</h4>
+                                    <div>
+                                        <button type="button" id="btn_save_carrier_reports" class="btn btn-primary me-2">儲存</button>
+                                        <a role="button" class="btn btn-secondary" href="https://neko.t-cat.com.tw/webchat/" target="_blank">呼叫黑貓</a>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table t-att-data-order-id="sale_order.id" t-att-data-token="sale_order.access_token" class="table table-sm" id="carrier_reports_table">
+                                        <thead class="bg-100">
+                                            <tr>
+                                                <th class="text-start">產品</th>
+                                                <th class="text-start d-none d-xxl-table-cell">品號</th>
+                                                <th class="text-start">姓名</th>
+                                                <th class="text-start">mail寄送</th>
+                                                <th class="text-center">物流</th>
+                                                <th class="text-start">預約單號</th>
+                                                <th class="text-start">物流編號</th>
+                                                <th class="text-start">物流狀態</th>
+                                                <th class="text-center">查詢物流狀態</th>
+                                                <th class="text-start">國外物流</th>
+                                                <th class="text-start">國外物流編號</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="lines_to_report" t-as="line">
+                                                <t t-foreach="line.report_ids" t-as="report">
+                                                    <tr>
+                                                        <td class="text-start">
+                                                            <span t-field="line.name"/>
+                                                        </td>
+                                                        <td class="text-start d-none d-xxl-table-cell">
+                                                            <span t-field="line.product_id.default_code"/>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <span t-field="report.name"/>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <input type="text" class="form-control border-primary carrier-mail-input" data-field="mail" t-att-value="report.mail"/>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <select class="form-select d-inline-block w-auto border-primary carrier-select" data-field="carrier" t-att-data-report-id="report.id" t-att-disabled="not report.order_id.carrier_number_flag and 'disabled' or None">
+                                                                <option value="">選擇物流</option>
+                                                                <option value="黑貓" t-att-selected="report.carrier == 'tcat' and 'selected' or None">黑貓</option>
+                                                                <option value="中華郵政" t-att-selected="report.carrier == 'post' and 'selected' or None">中華郵政</option>
+                                                            </select>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <input type="text" class="form-control border-primary carrier-resv-input" data-field="resv_number" t-att-value="report.resv_number"/>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <input type="text" class="form-control border-primary carrier-number-input" data-field="carrier_number" t-att-value="report.carrier_number" t-att-disabled="not report.order_id.carrier_number_flag and 'disabled' or None"/>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <span class="carrier-type-display" data-field="carrier_type" t-out="report.carrier_type or ''"/>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-primary ms-2 btn-fetch-carrier-type" t-att-data-order-id="line.order_id.id" t-att-data-report-id="report.id" t-att-disabled="not report.order_id.carrier_number_flag and 'disabled' or None">查詢</button>
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-select d-inline-block w-auto intl-carrier-select border-primary" t-att-data-report-id="report.id">
+                                                                <option value="">選擇國外物流</option>
+                                                                <t t-foreach="report._fields['intl_carrier'].selection" t-as="carrier">
+                                                                    <option t-att-value="carrier[0]"
+                                                                            t-att-selected="report.intl_carrier == carrier[0] and 'selected' or None">
+                                                                        <t t-esc="carrier[1]"/>
+                                                                    </option>
+                                                                </t>
+                                                            </select>
+                                                        </td>
+                                                        <td class="text-start">
+                                                            <input type="text" class="form-control border-primary intl-carrier-number-input" data-field="intl_carrier_number" t-att-value="report.intl_carrier_number"/>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                            <!-- <section t-if="sale_order.signature" id="signature" name="Signature">
+                                <div class="row mt-4" name="signature">
+                                    <div t-attf-class="#{'col-3' if report_type != 'html' else 'col-sm-7 col-md-4'} ms-auto text-center">
+                                        <h5>簽名</h5>
+                                        <img t-att-src="image_data_uri(sale_order.signature)" style="max-height: 6rem; max-width: 100%;"/>
+                                        <p t-field="sale_order.signed_by"/>
+                                    </div>
+                                </div>
+                            </section>
+                            <section t-if="not is_html_empty(sale_order.note)" id="terms" class="mt-4">
+                                <h4 class="">條款和條件</h4>
+                                <hr class="mt-0 mb-1"/>
+                                <t t-if="sale_order.terms_type == 'html'">
+                                    <t t-set="tc_url" t-value="'%s/terms' % (sale_order.get_base_url())"/>
+                                    <em>條款和條件:
+                                        <a href="/terms">
+                                            <t t-out="tc_url"/>
+                                        </a>
+                                    </em>
+                                </t>
+                                <t t-else="">
+                                    <em t-field="sale_order.note"/>
+                                </t>
+                            </section>
+                            <section t-if="sale_order.payment_term_id" class="mt-4">
+                                <h4 class="">付款條件</h4>
+                                <hr class="mt-0 mb-1"/>
+                                <span t-field="sale_order.payment_term_id.note"/>
+                            </section> -->
+                        </div>
+                    </div>
+                    <!-- bottom actions -->
+                    <!-- <div t-if="sale_order._has_to_be_signed() or sale_order._has_to_be_paid()" class="d-flex justify-content-center gap-1 d-print-none">
+                        <t t-if="sale_order._has_to_be_signed()">
+                            <div class="col-sm-auto mt8">
+                                <a role="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalaccept" href="#">
+                                    <i class="fa fa-check"/>
+                                    <t t-if="sale_order._has_to_be_paid()"> 簽署 並 付款</t>
+                                    <t t-else=""> 同意 並簽名</t>
+                                </a>
+                            </div>
+                            <div class="col-sm-auto mt8">
+                                <a role="button" class="btn btn-secondary" href="#discussion">
+                                    <i class="fa fa-comment"/> 回饋
+                                </a>
+                            </div>
+                            <div class="col-sm-auto mt8">
+                                <a role="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modaldecline" href="#">
+                                    <i class="fa fa-times"/> 拒絕
+                                </a>
+                            </div>
+                        </t>
+                        <div t-elif="sale_order._has_to_be_paid()" class="col-sm-auto mt8">
+                            <a role="button" data-bs-toggle="modal" data-bs-target="#modalaccept" href="#" t-att-class="'%s' % ('btn btn-light' if sale_order.transaction_ids else 'btn btn-primary')">
+                                <i class="fa fa-check"/>
+                                <t t-if="not sale_order.signature">同意 並 付款</t>
+                                <t t-else="">立即付款</t>
+                            </a>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+        </xpath>
+    </template>
+    <!-- 照片上傳 Modal -->
+    <template id="portal_pic_upload_modal" inherit_id="sale.sale_order_portal_template">
+        <xpath expr="//div[hasclass('o_portal_sale_sidebar')]" position="after">
+            <div class="modal fade" id="modalPicUpload" tabindex="-1" aria-labelledby="modalPicUploadLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalPicUploadLabel">上傳親取照片</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="picFileInput" class="form-label">選擇照片</label>
+                                <input type="file" class="form-control" id="picFileInput" accept="image/*"/>
+                                <div class="form-text">支援格式：JPG、JPEG、PNG、GIF、BMP、WEBP</div>
+                            </div>
+                            <div id="picPreviewContainer" class="text-center d-none">
+                                <img id="picPreview" class="img-fluid" style="max-height: 300px;" alt="預覽圖片"/>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-primary" id="btnUploadPic">上傳</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

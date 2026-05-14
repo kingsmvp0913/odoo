@@ -1,0 +1,48 @@
+<odoo>
+    <!-- 對帳單 tree -->
+    <record id="idx_view_account_statement_tree" model="ir.ui.view">
+        <field name="name">idx.account.statement.tree</field>
+        <field name="model">account.statement</field>
+        <field name="arch" type="xml">
+            <tree create="false" duplicate="false">
+                <field name="partner_code"/>
+                <field name="partner_id" options="{'no_create': True}"/>
+                <field name="per_month"/>
+                <field name="pdf_filename" column_invisible="1"/>
+                <field name="excel_filename" column_invisible="1"/>
+                <field name="pdf_file" widget="binary" filename="pdf_filename" force_save="1"/>
+                <field name="excel_file" widget="binary" filename="excel_filename" force_save="1"/>
+            </tree>
+        </field>
+    </record>
+    <!-- 對帳單 search -->
+    <record id="idx_view_account_statement_search" model="ir.ui.view">
+        <field name="name">idx.account.statement.search</field>
+        <field name="model">account.statement</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_code"/>
+                <field name="partner_id"/>
+                <field name="per_month"/>
+                <group expand="0" string="Group By">
+                    <filter string="客戶全名" name="groupy_by_partner" domain="[]" context="{'group_by': 'partner_id'}"/>
+                    <filter string="年月" name="groupy_by_per_month" context="{'group_by':'per_month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <!-- 對帳單 action -->
+    <record id="idx_action_account_statement" model="ir.actions.act_window">
+        <field name="name">對帳單</field>
+        <field name="res_model">account.statement</field>
+        <field name="view_mode">tree</field>
+    </record>
+    <!-- 對帳單 menuitem -->
+    <menuitem
+        id="idx_menu_account_statement"
+        name="對帳單"
+        parent="website_sale.menu_orders"
+        action="idx_action_account_statement"
+        sequence="20"
+    />
+</odoo>

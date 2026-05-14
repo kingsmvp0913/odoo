@@ -1,0 +1,22 @@
+<odoo>
+    <record id="view_related_company_tree" model="ir.ui.view">
+        <field name="name">related.company.tree</field>
+        <field name="model">related.company</field>
+        <field name="arch" type="xml">
+            <tree string="關係公司" editable="bottom">
+                <field name="name"/>
+                <field name="color" widget="color_picker"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_related_company" model="ir.actions.act_window">
+        <field name="name">關係公司</field>
+        <field name="res_model">related.company</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_related_company_setting" 
+                  name="關係公司主檔" 
+                  action="action_related_company" 
+                  parent="website_sale.menu_orders" 
+                  sequence="9"/>
+</odoo>

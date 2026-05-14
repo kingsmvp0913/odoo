@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 優惠券 form -->
+    <record id="loyalty_card_form_view_inherit" model="ir.ui.view">
+        <field name="name">loyalty.card.form.inherit</field>
+        <field name="model">loyalty.card</field>
+        <field name="inherit_id" ref="loyalty.loyalty_card_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <div class="oe_button_box" name="button_box">
+                    <button  class="oe_stat_button" name="action_open_leads" type="object" icon="fa-bullhorn" invisible="not lead_ids">
+                        <field name="lead_count" widget="statinfo" string="商機"/>
+                    </button>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='code']" position="attributes">
+                <attribute name="string">優惠代碼</attribute>
+            </xpath>
+            <xpath expr="//field[@name='code']" position="after">
+                <field name="lead_ids" invisible="1"/>
+                <field name="serial_number"/>
+                <field name="project_code" options="{'no_create': True}"/>
+                <field name="valid_days" decoration-danger="valid_days &lt;= 30"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- 優惠券 tree -->
+    <record id="loyalty_card_tree_view_inherit" model="ir.ui.view">
+        <field name="name">loyalty.card.tree.inherit</field>
+        <field name="model">loyalty.card</field>
+        <field name="inherit_id" ref="loyalty.loyalty_card_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree/field[@name='code']" position="attributes">
+                <attribute name="string">優惠代碼</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='partner_id']" position="attributes">
+                <attribute name="string">客戶名稱</attribute>
+            </xpath>
+            <xpath expr="//field[@name='points_display']" position="after">
+                <field name="serial_number"/>
+                <field name="project_code"/>
+                <field name="valid_days" decoration-danger="valid_days &lt;= 30"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

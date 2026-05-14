@@ -7,6 +7,8 @@ $codingDir     = "$root\.claude\kingsmvpsplan\coding"
 $finalDir      = "$root\.claude\kingsmvpsplan\final"
 $agentPath     = "$root\.claude\agents\requirements-analyst.md"
 
+. "$root\.claude\_common.ps1"
+
 # === 【公司 Odoo 連線設定】 ===
 $ODOO_URL = "https://ideaxpress.biz"
 $DB_NAME  = "odoo"
@@ -20,75 +22,6 @@ if (-not $PASSWORD) {
     exit 1
 }
 $USER_ID  = 79
-
-# =========================================================
-# 全域鎖函數
-# =========================================================
-function Acquire-Lock {
-    param([string]$lockPath, [int]$ttlSeconds = 600)
-    $hostName = $env:COMPUTERNAME
-    $processId = $PID
-    $now = Get-Date
-    $lockObj = @{
-        pid = $processId
-        host = $hostName
-        created = $now.ToString("o")
-        ttlSeconds = $ttlSeconds
-    }
-    
-    $maxAttempts = 3
-    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-        $stream = $null
-        try {
-            $stream = [System.IO.File]::Open($lockPath, 'CreateNew', 'Write', 'None')
-            $writer = New-Object System.IO.StreamWriter($stream)
-            $writer.Write(($lockObj | ConvertTo-Json -Depth 5))
-            $writer.Flush()
-            return $true
-        }
-        catch [System.IO.IOException] {
-            if (-not (Test-Path $lockPath)) { continue }
-            try {
-                $existing = Get-Content $lockPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-                $createdTime = [DateTime]::Parse($existing.created)
-                $age = (Get-Date) - $createdTime
-                
-                $isExpired = $age.TotalSeconds -gt $existing.ttlSeconds
-                $isDeadProcess = -not (Get-Process -Id $existing.pid -ErrorAction SilentlyContinue)
-                
-                if ($isExpired -or $isDeadProcess) {
-                    Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-                    continue
-                }
-                return $false
-            } catch {
-                Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-                continue
-            }
-        }
-        catch {
-            return $false
-        }
-        finally {
-            if ($null -ne $stream) { $stream.Close() }
-        }
-    }
-    return $false
-}
-
-function Release-Lock {
-    param([string]$lockPath)
-    if (-not (Test-Path $lockPath)) { return }
-    try {
-        $lock = Get-Content $lockPath -Raw | ConvertFrom-Json
-        if ($lock.pid -eq $PID -and $lock.host -eq $env:COMPUTERNAME) {
-            Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-        }
-    }
-    catch {
-        Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-    }
-}
 
 # =========================================================
 # CACHE
@@ -130,7 +63,7 @@ function Invoke-Claude($prompt) {
         catch {
             Write-Host "[RETRY] attempt $i failed. Retrying in $wait seconds... Error: $_" -ForegroundColor Yellow
             Start-Sleep -Seconds $wait
-            $wait *= 2 
+            $wait *= 2
             $i++
         }
     }
@@ -167,19 +100,14 @@ function Parse-ClaudeJson($response) {
 }
 
 # =========================================================
-# FILE SAFE WRITE
+# FILE SAFE WRITE (JSON object → file, atomic)
 # =========================================================
 function Atomic-WriteJson($obj, $path) {
     try {
         $tmp = "$path.tmp"
         $jsonText = $obj | ConvertTo-Json -Depth 100
         [System.IO.File]::WriteAllText($tmp, $jsonText, [System.Text.Encoding]::UTF8)
-        
-        if (Test-Path $path) {
-            Move-Item -Force $tmp $path
-        } else {
-            Rename-Item $tmp (Split-Path $path -Leaf) -Force
-        }
+        Move-Item -Force $tmp $path
         return $true
     }
     catch {
@@ -189,10 +117,8 @@ function Atomic-WriteJson($obj, $path) {
 }
 
 # =========================================================
-# 0. FETCH ODOO TASKS
+# HTML HELPERS
 # =========================================================
-Write-Host "[ODOO] Syncing tasks from $ODOO_URL ..."
-
 function Remove-HtmlImagesOnly($html) {
     if ([string]::IsNullOrWhiteSpace($html)) { return "" }
     return $html -replace '(?i)<img[^>]*>', ''
@@ -204,6 +130,11 @@ function Clean-HtmlToText($html) {
     $text = $noImg -replace '(?i)<br\s*/?>', "`n" -replace '(?i)</?p[^>]*>', "`n" -replace '<[^>]*>', ''
     return $text.Trim()
 }
+
+# =========================================================
+# 0. FETCH ODOO TASKS
+# =========================================================
+Write-Host "[ODOO] Syncing tasks from $ODOO_URL ..."
 
 if (-not (Test-Path $startDir)) { New-Item -ItemType Directory -Force $startDir | Out-Null }
 
@@ -231,7 +162,7 @@ try {
     }
     $taskResp = Invoke-RestMethod -Uri "$ODOO_URL/web/dataset/call_kw" -Method Post -Body ($taskPayload | ConvertTo-Json -Depth 20) -ContentType "application/json" -WebSession $sessionVar
     $tasks = $taskResp.result
-    
+
     if ($null -eq $tasks -or $tasks.Count -eq 0) {
         Write-Host "[INFO] 當前沒有指派給您的 Odoo 開發任務。管線安全結束。"
         return
@@ -245,7 +176,7 @@ try {
 
         $isAlreadyProcessed = $false
         $pipelineDirs = @($startDir, $confirmDir, $testcodingDir, $codingDir, $finalDir)
-        
+
         foreach ($dir in $pipelineDirs) {
             if (Test-Path $dir) {
                 $match = Get-ChildItem $dir -ErrorAction SilentlyContinue | Where-Object {
@@ -273,7 +204,7 @@ try {
             }
         }
         $msgResp = Invoke-RestMethod -Uri "$ODOO_URL/web/dataset/call_kw" -Method Post -Body ($msgPayload | ConvertTo-Json -Depth 20) -ContentType "application/json" -WebSession $sessionVar
-        
+
         $messageLines = foreach ($msg in $msgResp.result) {
             $cleanBody = Clean-HtmlToText $msg.body
             if (-not [string]::IsNullOrWhiteSpace($cleanBody)) { "[$($msg.date)] $cleanBody" }
@@ -378,7 +309,7 @@ try {
     foreach ($casePath in $caseDirs) {
         $caseName = Split-Path $casePath -Leaf
         $caseLockFile = Join-Path $casePath "process.lock"
-        
+
         if (-not (Acquire-Lock $caseLockFile 300)) {
             Write-Host "[SKIP] $caseName 已被其他進程鎖定" -ForegroundColor Yellow
             continue
@@ -413,7 +344,7 @@ try {
             Copy-Item -LiteralPath $analysisPath -Destination "$analysisPath.bak" -Force
 
             $updated = Parse-ClaudeJson (Invoke-Claude $prompt)
-            
+
             $cleanMode = if ($updated.execution_mode) { $updated.execution_mode.Trim().ToUpper() } else { "" }
             if ($cleanMode -notin @("MODE_A", "MODE_B")) { throw "invalid execution_mode enum: $cleanMode" }
 
@@ -421,7 +352,13 @@ try {
 
             if (-not (Atomic-WriteJson $updated $analysisPath)) { throw "failed writing updated analysis.json" }
 
-            $done = ($cleanMode -eq "MODE_B") -and ($updated.state_summary.is_complete -eq $true) -and ($updated.state_summary.has_blocking_unknowns -eq $false)
+            $isOdoo = ($updated.inferred_target.project -eq "Odoo")
+            $odooVersionMissing = $isOdoo -and [string]::IsNullOrWhiteSpace($updated.inferred_target.odoo_version)
+
+            $done = ($cleanMode -eq "MODE_B") -and
+                    ($updated.state_summary.is_complete -eq $true) -and
+                    ($updated.state_summary.has_blocking_unknowns -eq $false) -and
+                    (-not $odooVersionMissing)
 
             if ($done) {
                 Remove-Item "$analysisPath.bak" -Force -ErrorAction SilentlyContinue
@@ -439,12 +376,16 @@ try {
             }
             else {
                 Remove-Item "$analysisPath.bak" -Force -ErrorAction SilentlyContinue
-                Write-Host "[INCOMPLETE] $caseName - AI reviewed your answers, but marked them as insufficient." -ForegroundColor Cyan
+                if ($odooVersionMissing) {
+                    Write-Host "[WAIT] $caseName – odoo_version 未填寫，請在 analysis.json clarification_channel 中補充。" -ForegroundColor Yellow
+                } else {
+                    Write-Host "[INCOMPLETE] $caseName - AI reviewed your answers, but marked them as insufficient." -ForegroundColor Cyan
+                }
             }
         }
         catch {
             Write-Host "[ERROR] Recheck failed for $caseName : $_" -ForegroundColor Red
-            
+
             if (Test-Path "$analysisPath.bak") {
                 if (Test-Path $analysisPath) { Remove-Item $analysisPath -Force -ErrorAction SilentlyContinue }
                 Copy-Item -LiteralPath "$analysisPath.bak" -Destination $analysisPath -Force

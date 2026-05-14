@@ -1,0 +1,16 @@
+<odoo>
+
+    <record id="crm.res_partner_menu_customer" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <menuitem id="idx_sale_res_partner_menu_customer"
+              action="idx_sale_action_partner_form"
+              parent="crm.crm_menu_sales"
+              groups="idx_ebs.group_back_sale"
+              sequence="5"
+        />
+
+</odoo>

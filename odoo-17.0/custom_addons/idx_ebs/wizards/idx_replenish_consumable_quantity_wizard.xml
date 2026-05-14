@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_idx_replenish_consumable_quantity_wizard_form" model="ir.ui.view">
+        <field name="name">idx.replenish.consumable.quantity.wizard.form</field>
+        <field name="model">idx.replenish.consumable.quantity.wizard</field>
+        <field name="arch" type="xml">
+            <form string="耗材批次補充">
+                <sheet>
+                    <field name="line_ids" nolabel="1">
+                        <tree editable="bottom">
+                            <field name="product_id" column_invisible="1"/>
+                            <field name="lot_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="qty"/>
+                        </tree>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" string="確認補充庫存" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="取消" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_idx_replenish_consumable_quantity" model="ir.actions.act_window">
+        <field name="name">耗材批次補充</field>
+        <field name="res_model">idx.replenish.consumable.quantity.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

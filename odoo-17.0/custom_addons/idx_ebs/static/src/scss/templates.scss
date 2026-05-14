@@ -1,0 +1,345 @@
+#products_grid {
+
+    #sale_price,
+    #avg_recommended_qty,
+    #product_category {
+        font-weight: bold;
+        font-size: .8em;
+    }
+}
+
+#product_detail_main {
+    #product_details {
+        .title-section {
+            p {
+                margin-bottom: 0 !important;
+            }
+        }
+
+        .product-description {
+            text-align: justify;
+        }
+
+        #product_price {
+            display: flex !important;
+            align-items: center;
+            flex-wrap: wrap;
+            font-weight: bold;
+
+            #sale_price>div>span,
+            #avg_recommended_qty>div>span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+    }
+}
+
+.oe_cart {
+    #cart_title_block {
+        display: flex;
+        align-items: center;
+
+        >.title {
+            padding-right: 25px;
+        }
+
+        >.btn_block {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    }
+
+    @media screen and (max-width: 576px) {
+        #cart_title_block {
+            flex-wrap: wrap;
+
+            >.title,
+            >.btn_block {
+                width: 100%;
+            }
+
+            >.btn_block {
+                flex: auto;
+            }
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        #cart_title_block {
+            >.btn_block {
+
+                >.services_btn_block>a,
+                >.action_btn_block>a {
+                    padding: 0.3rem 0.5rem;
+                    font-size: 0.9rem;
+                }
+            }
+        }
+    }
+
+    #cart_products {
+        .prod_title_block {
+            display: flex;
+            align-items: center;
+
+            &>a {
+                color: #212529;
+                max-width: 60%;
+            }
+
+            &>.product_category {
+                margin-left: 10px;
+                font-size: 0.85em;
+            }
+        }
+
+        .detects_widget_container {
+            &>button {
+                font-size: 0.85em;
+                padding: 4px 6px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .prod_title_block {
+                flex-wrap: wrap;
+
+                &>a {
+                    max-width: 100%;
+                    width: 100%;
+                }
+
+                &>.product_category {
+                    margin: 5px 0;
+                }
+            }
+        }
+    }
+}
+
+.modal_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &>.detect_modal {
+        background-color: #eee;
+        width: 70%;
+        height: 550px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 9999;
+        margin: 0 20px;
+
+        @media screen and (max-width: 1024px) {
+            width: 700px;
+            height: 70%;
+        }
+
+        @media screen and (max-width: 576px) {
+            .modal-content-wrap {
+                .detect_table {
+                    width: 600px;
+                }
+            }
+        }
+
+        .modal-content-wrap {
+            width: 100%;
+            height: calc(100% - 60px);
+            position: absolute;
+            top: 50px;
+            left: 0px;
+            right: 0px;
+            padding: 10px 25px 50px;
+            overflow: auto;
+
+            .detect_table {
+                font-size: 0.8em;
+                cursor: pointer;
+
+                &>:not(caption)>*>* {
+                    padding: 0.35rem 0.25rem;
+                }
+
+            }
+
+            &>.form_template {
+                font-size: 0.85em;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 32px 24px;
+
+                &.animal_form_template {
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 20px;
+
+                    @media screen and (max-width: 1024px) {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+
+                    @media screen and (max-width: 768px) {
+                        grid-template-columns: repeat(1, 1fr);
+                    }
+                }
+
+                @media screen and (max-width: 768px) {
+                    grid-template-columns: repeat(1, 1fr);
+                    gap: 18px 24px;
+                }
+
+                .full {
+                    grid-column: 1 / -1;
+                }
+
+                &>.form-item {
+                    display: grid;
+                    grid-template-columns: 80px 1fr;
+                    align-items: center;
+
+                    .form-check-group {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 1rem;
+
+                        .form-check {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.25rem;
+
+
+                            &.multi {
+                                width: 10%;
+
+                                @media screen and (max-width: 1344px) {
+                                    width: calc(100% / 6);
+                                }
+
+                                @media screen and (max-width: 991px) {
+                                    width: calc(80% / 3);
+                                }
+
+                                @media screen and (max-width: 768px) {
+                                    width: 40%
+                                }
+
+                                @media screen and (max-width: 480px) {
+                                    width: 80%
+                                }
+
+                                .form-check-label {
+                                    max-width: 100%;
+                                }
+                            }
+                        }
+                    }
+
+                    .form-label {
+                        margin-bottom: 0;
+                        font-weight: 900;
+                    }
+
+                    .form-control,
+                    .form-select {
+                        font-size: 0.85em !important;
+                    }
+                }
+
+                &>.form-item.check-box-area {
+                    grid-template-columns: 160px 1fr;
+                    gap: 0 12px;
+
+                    &.has_under_input {
+                        grid-template-columns: 160px 240px 1fr;
+                    }
+
+                    &>.form-sub-item {
+                        display: grid;
+                        grid-template-columns: 160px 1fr;
+                        gap: 0 12px;
+                        align-items: center;
+                    }
+
+                    @media screen and (max-width: 1200px) {
+                        grid-template-columns: 160px 1fr;
+
+                        &>.form-sub-item {
+                            grid-column: 1 / -1;
+                        }
+                    }
+                }
+
+                &>.form-item.table-area {
+                    grid-template-columns: 110px 1fr 1fr 1fr;
+                    gap: 0 12px;
+                }
+            }
+        }
+
+        &>.modal_submit_btn_wrap {
+            background-color: #fff;
+            position: absolute;
+            z-index: 9999;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 15px;
+            text-align: end;
+        }
+
+        &>.modal_create_btn,
+        .modal_download_btn,
+        .modal_submit_btn {
+            font-size: 0.8em;
+            padding: 4px 8px;
+        }
+
+        &>.modal_create_btn,
+        &>.modal_download_btn {
+            position: absolute;
+            margin-top: 10px;
+        }
+
+        &>.modal_create_btn {
+            left: 15px;
+        }
+
+        &>.modal_download_btn {
+            left: 67px;
+        }
+
+        .modal_close_btn_wrap {
+            position: absolute;
+            background: #fff;
+            width: 100%;
+            text-align: end;
+            padding-right: 15px;
+
+            .modal_close_btn {
+                border: none;
+                font-size: 30px;
+                cursor: pointer;
+                color: #666;
+                background: inherit;
+            }
+        }
+
+    }
+
+    @media screen and (max-width: 768px) {
+        &>.modal_create_btn {
+            left: 5px;
+        }
+    }
+}

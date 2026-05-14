@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 折扣及會員計劃 form -->
+    <record id="loyalty_program_form_view_inherit" model="ir.ui.view">
+        <field name="name">loyalty.program.form.inherit</field>
+        <field name="model">loyalty.program</field>
+        <field name="inherit_id" ref="loyalty.loyalty_program_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <h1 style="max-width: 75%;">
+                    <group>
+                        <field name="project_code" options="{'no_create': True}"/>
+                    </group>
+                </h1>
+            </xpath>
+            <xpath expr="//field[@name='pricelist_ids']" position="after">
+                <field name="head" options="{'no_create': True}"/>
+            </xpath>
+            <xpath expr="//button[@name='%(loyalty.loyalty_generate_wizard_action)d'][1]" position="attributes">
+                <attribute name="groups">idx_ebs.group_back_document_management,idx_ebs.group_back_it</attribute>
+            </xpath>
+            <xpath expr="//button[@name='%(loyalty.loyalty_generate_wizard_action)d'][2]" position="attributes">
+                <attribute name="groups">idx_ebs.group_back_document_management,idx_ebs.group_back_it</attribute>
+            </xpath>
+            <xpath expr="//button[@name='%(loyalty.loyalty_generate_wizard_action)d'][3]" position="attributes">
+                <attribute name="groups">idx_ebs.group_back_document_management,idx_ebs.group_back_it</attribute>
+            </xpath>
+        </field>
+    </record>
+    <!-- 折扣及會員計畫 tree -->
+    <record id="loyalty_program_tree_view_inherit" model="ir.ui.view">
+        <field name="name">loyalty.program.tree.inherit</field>
+        <field name="model">loyalty.program</field>
+        <field name="inherit_id" ref="loyalty.loyalty_program_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree/field[@name='name']" position="after">
+                <field name="project_code"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- 折扣及會員計畫 search -->
+    <record id="loyalty_program_search_view_inherit" model="ir.ui.view">
+        <field name="name">loyalty.program.search.inherit</field>
+        <field name="model">loyalty.program</field>
+        <field name="inherit_id" ref="loyalty.loyalty_program_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="project_code"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <filter string="計劃類型" name="program_type" domain="[('program_type', '=', 'coupons')]"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- 折扣及會員計劃 menu action -->
+    <record id="loyalty.loyalty_program_discount_loyalty_action" model="ir.actions.act_window">
+        <field name="context">{'search_default_program_type': 1}</field>
+    </record>
+</odoo>

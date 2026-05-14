@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 專案代碼 tree view -->
+    <record id="idx_view_loyalty_program_code_tree" model="ir.ui.view">
+        <field name="name">idx.loyalty.program.code.tree</field>
+        <field name="model">loyalty.program.code</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" duplicate="false">
+                <field name="project_code"/>
+            </tree>
+        </field>
+    </record>
+    <!-- 專案代碼 action -->
+    <record id="idx_action_loyalty_program_code" model="ir.actions.act_window">
+        <field name="name">專案代碼</field>
+        <field name="res_model">loyalty.program.code</field>
+        <field name="view_mode">tree</field>
+    </record>
+    <!-- 專案代碼 menuitem -->
+    <menuitem
+        id="idx_menu_loyalty_program_code"
+        name="專案代碼"
+        parent="website_sale_loyalty.menu_loyalty"
+        action="idx_action_loyalty_program_code"
+        sequence="120"
+    />
+</odoo>

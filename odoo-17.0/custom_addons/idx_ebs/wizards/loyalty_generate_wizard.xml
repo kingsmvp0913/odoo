@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 生成優惠券 form -->
+    <record id="loyalty_generate_wizard_view_form_inherit" model="ir.ui.view">
+        <field name="name">loyalty.generate.wizard.view.form.inherit</field>
+        <field name="model">loyalty.generate.wizard</field>
+        <field name="inherit_id" ref="loyalty.loyalty_generate_wizard_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='customer_tag_ids']" position="attributes">
+                <attribute name="options">{'no_create_edit': True, 'no_create': True}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='mode']" position="attributes">
+                <attribute name="invisible">program_type == 'coupons'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='coupon_qty']" position="attributes">
+                <attribute name="invisible">program_type == 'coupons'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='customer_tag_ids']" position="after">
+                <field name="coupon_batch_qty" invisible="program_type != 'coupons'"/>
+                <field name="total_coupon_qty" invisible="program_type != 'coupons'"/>
+            </xpath>
+            <xpath expr="//field[@name='valid_until']" position="attributes">
+                <attribute name="required">program_type == 'coupons'</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

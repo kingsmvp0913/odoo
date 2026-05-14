@@ -1,0 +1,805 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- 銷售訂單 search -->
+        <record id="idx_sale_order_search" model="ir.ui.view">
+            <field name="name">idx.sale.order.search</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//search" position="inside">
+                    <field name="order_line" string="WF訂單編號" filter_domain="['|', ('order_line.wf_slip', 'ilike', self), ('order_line.wf_number', 'ilike', self)]"/>
+                    <field name="report_ids" string="檢體姓名"
+                           filter_domain="[('report_ids.name', 'ilike', self)]"/>
+                    <field name="partner_id" string="客戶名稱"
+                           filter_domain="[('partner_id.name', 'ilike', self)]"/>
+                    <filter name="filter_allow_inspection" string="已收檢"
+                            domain="[('allow_inspection', '=', 'Y')]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_wf_confirmation_status"
+                                string="WF確認碼"
+                                context="{'group_by': 'wf_confirmation_status'}"/>
+                        <filter name="group_order_source"
+                                string="訂單來源"
+                                context="{'group_by': 'order_source'}"/>
+                        <filter name="group_state"
+                                string="訂單狀態"
+                                context="{'group_by': 'state'}"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+        <!-- 銷售訂單 form view -->
+        <record id="idx_sale_order_inherit_form_view" model="ir.ui.view">
+            <field name="name">idx.sale.order.inherit.form.view</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="priority" eval="999"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <!-- 驗證字串 -->
+                    <field name="report_qty_equal" invisible="1"/>
+                    <field name="contains_consumables" invisible="1"/>
+                    <field name="only_consumables" invisible="1"/>
+                    <span role="alert" class="alert alert-danger" invisible="report_qty_equal">「送檢單報告數量」與對應的「單身明細數量」不符!!!</span>
+                </xpath>
+                <xpath expr="//button[@name='action_cancel']" position="before">
+                    <button name="action_received" type="object" string="已收件" class="btn-primary" invisible="state != 'confirmed' or contains_consumables or only_consumables"/>
+                    <button name="action_active_consumables" type="object" string="耗材已確認" class="btn-primary" invisible="state != 'confirmed' or not (contains_consumables and only_consumables)"/>
+                    <button name="action_active" type="object" string="商務確認" class="btn-primary" invisible="state != 'received'"
+                            groups="idx_ebs.group_back_doctor_sale_manager,idx_ebs.group_back_international_sale_manager,idx_ebs.group_back_animal_sale_manager,idx_ebs.group_back_economic_animal_sale_manager,idx_ebs.group_back_document_management,idx_ebs.group_back_it"/>
+                    <button name="action_sync_to_wf" type="object" string="同步到WF" class="btn-primary" invisible="state != 'active' or contains_consumables or only_consumables"/>
+                    <button name="action_wf_confirm" type="object" string="主管WF確認" class="btn-primary" invisible="state != 'active' or contains_consumables or only_consumables"/>
+                    <button name="action_get_wf_and_sale_info" type="object" string="取得WF訂單及出貨資訊" class="btn-primary" invisible="state not in ('wf_confirm', 'inspected', 'reported')"/>
+                    <button name="action_inspected" type="object" string="已檢驗" class="btn-primary" invisible="state != 'wf_confirm'"/>
+                    <button name="action_reported" type="object" string="報告完成" class="btn-primary" invisible="state != 'inspected'"/>
+                    <button name="action_sent_report" type="object" string="寄出報告" class="btn-primary" invisible="state != 'reported'"/>
+                    <div class="alert alert-danger" invisible="state != 'confirmed' or (contains_consumables == only_consumables)">
+                        請確保訂單明細只含有耗材or非耗材，才能進行「已收件」、「耗材已確認」或「商務確認」動作!!!
+                    </div>
+                </xpath>
+                <xpath expr="//button[@name='action_preview_sale_order']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@id='create_invoice_percentage']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@id='send_proforma']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@id='send_by_email']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@name='action_cancel']" position="attributes">
+                    <attribute name="invisible">
+                        (not contains_consumables and state in ('active', 'wf_confirm', 'inspected', 'reported', 'sent_report', 'cancel')) or (contains_consumables and state in ('wf_confirm', 'inspected', 'reported', 'sent_report', 'cancel'))
+                    </attribute>
+                    <attribute name="groups">
+                        idx_ebs.group_back_doctor_sale_manager,idx_ebs.group_back_international_sale_manager,idx_ebs.group_back_animal_sale_manager,idx_ebs.group_back_economic_animal_sale_manager,idx_ebs.group_back_document_management,idx_ebs.group_back_it
+                    </attribute>
+                </xpath>
+                <xpath expr="//button[@name='action_confirm']" position="attributes">
+                    <attribute name="class">btn-primary</attribute>
+                </xpath>
+                <xpath expr="//field[@name='state']" position="replace">
+                    <field name="state" widget="statusbar" statusbar_visible="draft,sent,confirmed,received,active,wf_confirm,inspected,reported,sent_report,cancel"/>
+                </xpath>
+                <xpath expr="//div[hasclass('oe_title')]/h1" position="replace">
+                    <div class="o_row">
+                        <div class="o_col o_col-6">
+                            <h1>
+                                <field name="name" nolabel="1" readonly="1" widget="label"/>
+                            </h1>
+                        </div>
+                        <div class="o_col o_col-6 d-flex align-items-center" style="gap:0.5rem; margin-left:36%;">
+                            <label class="form-label fw-bold mb-0" for="allow_inspection">可檢驗</label>
+                            <field name="allow_inspection" nolabel="1"/>
+                        </div>
+                    </div>
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="options">
+                        {'no_create': True, 'no_open': True}
+                    </attribute>
+                    <attribute name="readonly">
+                        state in ['cancel', 'sale', 'confirmed', 'received', 'active', 'wf_confirm', 'inspected', 'reported', 'sent_report']
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='partner_invoice_id']" position="attributes">
+                    <attribute name="options">
+                        {'no_create': True, 'no_open': True}
+                    </attribute>
+                    <attribute name="readonly">
+                        state in ['cancel', 'confirmed', 'received', 'active', 'wf_confirm', 'inspected', 'reported', 'sent_report'] or locked
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='partner_shipping_id']" position="attributes">
+                    <attribute name="options">
+                        {'no_create': True, 'no_open': True}
+                    </attribute>
+                    <attribute name="readonly">
+                        state in ['cancel', 'confirmed', 'received', 'active', 'wf_confirm', 'inspected', 'reported', 'sent_report'] or locked
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='validity_date']" position="attributes">
+                    <attribute name="readonly">
+                        state in ['cancel', 'sale', 'confirmed', 'received', 'active', 'wf_confirm', 'inspected', 'reported', 'sent_report']
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='date_order']" position="attributes">
+                    <attribute name="readonly">
+                        state in ['cancel', 'sale', 'confirmed', 'received', 'active', 'wf_confirm', 'inspected', 'reported', 'sent_report']
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='product_template_id']" position="attributes">
+                    <attribute name="options">
+                        {'no_create': True, 'no_open': True}
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='partner_shipping_id']" position="after">
+                    <field name="request_inspection_date"/>
+                    <field name="inspection_date"/>
+                    <field name="wf_confirmation_status" readonly="1"/>
+                    <field name="order_source"/>
+                </xpath>
+                <xpath expr="//field[@name='pricelist_id']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                    <attribute name="force_save">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='payment_term_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='payment_term_id']" position="after">
+                    <field name="wf_order_type" readonly="1"/>
+                    <field name="wf_order_number" readonly="1"/>
+                    <field name="wf_tax_id"
+                        readonly="1"
+                        context="{'form_view_ref': 'idx_ebs.view_partner_tax_form_readonly'}"/>
+                    <field name="wf_tax_type" readonly="1" />
+                </xpath>
+                <!-- 銷售明細 -->
+                <xpath expr="//field[@name='order_line']/tree/field[@name='price_unit']" position="replace"/>
+                <xpath expr="//field[@name='order_line']/tree/field[@name='tax_id']" position="replace"/>
+                <xpath expr="//field[@name='order_line']/tree/field[@name='price_subtotal']" position="replace"/>
+                <xpath expr="//field[@name='product_template_id']" position="before">
+                    <field name="wf_sequence" string="訂單序號" readonly="1" />
+                    <field name="wf_slip" string="WF前置單別" readonly="1" force_save="1"/>
+                    <field name="wf_number" string="WF前置單號" readonly="1" force_save="1"/>
+                    <field name="wf_serial" string="WF前置序號" readonly="1" force_save="1"/>
+                </xpath>
+                <xpath expr="//field[@name='product_template_id']" position="after">
+                    <field name="default_code" optional="show"/>
+                    <field name="partner_id" optional="hide"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/tree/field[@name='product_uom_qty']" position="after">
+                    <field name="price_unit" optional="show"/>
+                    <field name="tax_id" widget="many2many_tags"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/tree/field[@name='product_uom']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/tree/field[@name='product_uom'][@groups='uom.group_uom']" position="after">
+                    <field name="product_category_name" column_invisible="1"/>
+                    <field name="lot_id_domain" column_invisible="1"/>
+                    <field name="business_category_id" optional="show"/>
+                    <field name="product_category_id" optional="show"/>
+                    <field name="effective_date" optional="show"/>
+                    <field name="expiry_date" optional="show"/>
+                    <field name="lot_id" domain="lot_id_domain" options="{'no_create': True, 'no_open': True}" optional="show" readonly="product_category_name != '耗材'" force_save="1"/>
+                    <field name="expiration_date" optional="show"/>
+                    <field name="quantity" optional="show"/>
+                    <field name="note" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report'] or locked</attribute>
+                </xpath>
+                <!-- 選配產品 -->
+                <xpath expr="//page[@name='optional_products']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <!-- 客戶簽名 -->
+                <xpath expr="//page[@name='customer_signature']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <!-- 送檢單/報告 -->
+                <xpath expr="//page[@name='order_lines']" position="after">
+                    <page string="送檢單/報告">
+                        <field name="report_ids">
+                            <tree editable="bottom" duplicate="false" options="{'no_create': True, 'no_open': True}">
+                                <field name="order_id" column_invisible="1"/>
+                                <field name="state" column_invisible="1"/>
+                                <field name="order_line_id"
+                                    string="訂單序號"
+                                    domain="[('order_id', '=', order_id), ('product_template_id.detailed_type', '=', 'service')]"
+                                    context="{'use_wf_sequence': True, 'show_name': False}"
+                                    options="{
+                                            'no_create': True,
+                                            'no_open': True,
+                                            'no_quick_create': True,
+                                            'no_search': True,
+                                            'no_search_more': True
+                                        }"
+                                    readonly="state in ['wf_confirm', 'inspected', 'reported', 'sent_report']"
+                                />
+                                <field name="product_template_id"/>
+                                <field name="default_code"/>
+                                <field name="category"/>
+                                <field name="inspect_number"/>
+                                <field name="name"/>
+                                <field name="partner_id"/>
+                                <field name="inspection_unit"/>
+                                <button name="action_open_inspection_order"
+                                    type="object"
+                                    string="檢體資料"
+                                    class="btn-link"/>
+                                <field name="upload_date"/>
+                                <button name="action_download_pdf" type="object" string="PDF下載" class="btn-link"/>
+                                <button name="action_download_excel" type="object" string="Excel下載" class="btn-link"/>
+                                <field name="expected_date"/>
+                                <field name="note"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+                <!-- 其他資訊 -->
+                <xpath expr="//field[@name='client_order_ref']" position="after">
+                    <field name="partner_class_ids" widget="many2many_tags" readonly="state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']"/>
+                    <field name="expedite_date" readonly="state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']"/>
+                </xpath>
+                <xpath expr="//field[@name='picking_policy']" position="after">
+                    <field name="expected_delivery_date" readonly="state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']"/>
+                </xpath>
+                <xpath expr="//field[@name='shipping_weight']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='incoterm']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='incoterm_location']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='picking_policy']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//group[@name='sale_info']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='team_id']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='require_signature']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'sale', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='require_payment']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'sale', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='prepayment_percent']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'sale', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='client_order_ref']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='tag_ids']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='commitment_date']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report'] or locked</attribute>
+                </xpath>
+                <xpath expr="//field[@name='origin']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='campaign_id']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='medium_id']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='source_id']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='opportunity_id']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='incoterm']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='incoterm_location']" position="attributes">
+                    <attribute name="readonly">state in ['cancel', 'wf_confirm', 'inspected', 'reported', 'sent_report']</attribute>
+                </xpath>
+                <xpath expr="//page[@name='customer_signature']" position="after">
+                    <!-- WF出貨歷程 -->
+                    <page string="WF出貨歷程">
+                        <field name="delivery_ids" readonly="1">
+                            <tree create="false"
+                                delete="false"
+                                edit="false"
+                                open="false">
+                                <field name="order_id" column_invisible="1"/>
+                                <field name="wf_delivery_type"/>
+                                <field name="wf_delivery_number"/>
+                                <field name="wf_delivery_date"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <!-- 物流狀態 -->
+                    <page string="物流狀態" >
+                        <field name="report_ids">
+                            <tree create="false" delete="false" editable="bottom">
+                                <field name="product_template_id" string="商品"/>
+                                <field name="default_code" optional="show"/>
+                                <field name="name"/>
+                                <field name="mail" optional="show"/>
+                                <field name="carrier"/>
+                                <field name="resv_number"/>
+                                <field name="carrier_number"/>
+                                <field name="carrier_type" readonly="1" force_save="1"/>
+                                <field name="intl_carrier" optional="show"/>
+                                <field name="intl_carrier_number" optional="show"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <!-- 認列收入日期 -->
+                    <page string="認列收入日期" >
+                        <field name="report_ids">
+                            <tree create="false" delete="false" editable="bottom">
+                                <field name="state" column_invisible="1"/>
+                                <field name="product_template_id" string="商品"/>
+                                <field name="default_code" optional="show"/>
+                                <field name="delivery_date"/>
+                                <field name="download_date" readonly="1" force_save="1"/>
+                                <field name="partner_pick"/>
+                                <field name="pic_personally_filename" column_invisible="1"/>
+                                <field name="pic_personally" widget="binary" filename="pic_personally_filename" readonly="state in ['draft', 'sent', 'confirmed', 'received', 'active', 'wf_confirm', 'inspected', 'cancel']"/>
+                                <field name="pick_date" readonly="1" force_save="1"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+        <!-- 銷售訂單 tree view -->
+        <record id="idx_sale_order_tree_inherit" model="ir.ui.view">
+            <field name="name">idx.sale.order.tree.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//tree/field[@name='name']" position="after">
+                    <field name="wf_order_type" optional="show"/>
+                    <field name="wf_order_number" optional="show"/>
+                    <field name="create_date" string="建檔日期" optional="show"/>
+                    <field name="allow_inspection" column_invisible="True"/>
+                    <button name="action_toggle_allow_inspection" type="object"
+                            string="已收檢"
+                            icon="fa-check-square-o"
+                            title="已收檢（點擊取消）"
+                            invisible="not allow_inspection"/>
+                    <button name="action_toggle_allow_inspection" type="object"
+                            string="已收檢"
+                            icon="fa-square-o"
+                            title="未收檢（點擊確認）"
+                            invisible="allow_inspection"/>
+                    <field name="request_inspection_date" optional="show"/>
+                </xpath>
+                <xpath expr="//tree/field[@name='amount_total']" position="after">
+                    <field name="order_source" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='date_order']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='activity_ids']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='invoice_status']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='delivery_status']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='amount_to_invoice']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='client_order_ref']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+            </field>
+        </record>
+        <record id="action_sale_order_action_received" model="ir.actions.server">
+            <field name="name">批次已收件</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="binding_model_id" ref="sale.model_sale_order"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_received()
+            </field>
+        </record>
+        <record id="action_sale_order_batch_active" model="ir.actions.server">
+            <field name="name">批次商務確認</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="binding_model_id" ref="sale.model_sale_order"/>
+            <field name="binding_view_types">list</field>
+            <field name="groups_id" eval="[(4, ref('idx_ebs.group_back_doctor_sale_manager')), (4, ref('idx_ebs.group_back_international_sale_manager')),
+            (4, ref('idx_ebs.group_back_animal_sale_manager')), (4, ref('idx_ebs.group_back_economic_animal_sale_manager')),
+            (4, ref('idx_ebs.group_back_document_management')), (4, ref('idx_ebs.group_back_it'))]"/>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_active()
+            </field>
+        </record>
+        <record id="action_sale_order_batch_action_wf_confirm" model="ir.actions.server">
+            <field name="name">批次主管WF確認</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="binding_model_id" ref="sale.model_sale_order"/>
+            <field name="binding_view_types">list</field>
+            <field name="groups_id" eval="[(4, ref('idx_ebs.group_back_doctor_sale_manager')), (4, ref('idx_ebs.group_back_international_sale_manager')),
+            (4, ref('idx_ebs.group_back_animal_sale_manager')), (4, ref('idx_ebs.group_back_economic_animal_sale_manager')),
+            (4, ref('idx_ebs.group_back_document_management')), (4, ref('idx_ebs.group_back_it'))]"/>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_wf_confirm()
+            </field>
+        </record>
+        <record id="action_sale_order_action_reported" model="ir.actions.server">
+            <field name="name">批次報告已完成</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="binding_model_id" ref="sale.model_sale_order"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_reported()
+            </field>
+        </record>
+        <record id="action_sale_order_batch_inspected" model="ir.actions.server">
+            <field name="name">批次已檢驗</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="binding_model_id" ref="sale.model_sale_order"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_inspected()
+            </field>
+        </record>
+        <record id="action_sale_order_batch_sent_report" model="ir.actions.server">
+            <field name="name">批次報告已寄出</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="binding_model_id" ref="sale.model_sale_order"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_sent_report()
+            </field>
+        </record>
+        <!--檢驗所(人醫)的menu-->
+        <record id="idx_ocr1_quotations_with_onboarding" model="ir.actions.act_window">
+            <field name="name">報價單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_id" ref="sale.view_quotation_tree_with_onboarding"/>
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="search_view_id" ref="sale.sale_order_view_search_inherit_quotation"/>
+            <field name="context">{'search_default_my_quotation': 1}</field>
+            <field name="domain">[('report_ids.category', '=', '0')]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                建立一個報價是新銷售的第一步!
+                </p>
+                <p>
+                一旦客戶確認報價，報價單即變為銷售訂單
+                    <br/>您可以建立一張應收憑單來進行收款
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr1_action_orders" model="ir.actions.act_window">
+            <field name="name">訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="search_view_id" ref="sale.sale_order_view_search_inherit_sale"/>
+            <field name="context">{}</field>
+            <field name="domain">[('state', 'not in', ('draft', 'sent', 'cancel')), ('report_ids.category', '=', '0')]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    建立一個報價是新銷售的第一步!
+                </p>
+                <p>
+                    一旦報價確認，報價單即變為銷售訂單.
+                    <br/> 您可以建立一張應收憑單來進行收款.
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr1_sale_order_action_view_order_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="sale.view_order_tree"/>
+            <field name="act_window_id" ref="idx_ocr1_action_orders"/>
+        </record>
+        <record id="idx_ocr1_sale_order_action_view_order_kanban" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">kanban</field>
+            <field name="view_id" ref="sale.view_sale_order_kanban"/>
+            <field name="act_window_id" ref="idx_ocr1_action_orders"/>
+        </record>
+        <record id="idx_ocr1_sale_order_action_view_order_form" model="ir.actions.act_window.view">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="sale.view_order_form"/>
+            <field name="act_window_id" ref="idx_ocr1_action_orders"/>
+        </record>
+        <record id="idx_ocr1_sale_order_action_view_order_calendar" model="ir.actions.act_window.view">
+            <field name="sequence" eval="4"/>
+            <field name="view_mode">calendar</field>
+            <field name="view_id" ref="sale.view_sale_order_calendar"/>
+            <field name="act_window_id" ref="idx_ocr1_action_orders"/>
+        </record>
+        <record id="idx_ocr1_sale_order_action_view_order_pivot" model="ir.actions.act_window.view">
+            <field name="sequence" eval="5"/>
+            <field name="view_mode">pivot</field>
+            <field name="view_id" ref="sale.view_sale_order_pivot"/>
+            <field name="act_window_id" ref="idx_ocr1_action_orders"/>
+        </record>
+        <record id="idx_ocr1_sale_order_action_view_order_graph" model="ir.actions.act_window.view">
+            <field name="sequence" eval="6"/>
+            <field name="view_mode">graph</field>
+            <field name="view_id" ref="sale.view_sale_order_graph"/>
+            <field name="act_window_id" ref="idx_ocr1_action_orders"/>
+        </record>
+        <record id="idx_ocr1_action_orders_to_invoice" model="ir.actions.act_window">
+            <field name="name">待開立發票訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form,calendar,graph,pivot,kanban,activity</field>
+            <field name="context">{'create': False}</field>
+            <field name="domain">[('invoice_status','=','to invoice'), ('report_ids.category', '=', '0')]</field>
+            <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                沒有要開立應收憑單的訂單
+                </p>
+                <p>
+                您可以選擇所有訂單並批量開具應收憑單，
+                    <br/>
+                或檢查每個訂單並一張張地開具應收憑單.
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr1_action_orders_upselling" model="ir.actions.act_window">
+            <field name="name">追加銷售訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form,calendar,graph,pivot,kanban,activity</field>
+            <field name="domain">[('invoice_status','=','upselling'), ('report_ids.category', '=', '0')]</field>
+            <field name="context">{'create': False}</field>
+            <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                沒有找到超賣訂單.
+                </p>
+                <p>
+                當交付數量高於最初訂購數量時，訂單將追加銷售，並且應收憑單策略基於訂購數量.
+                </p>
+                <p>
+                舉個例子: 超市裡，客人從貨架拿了瓶茅台到前台買單結賬，而此時你收銀系統裡卻顯示茅台庫存為0，系統顯示沒庫存了，你不可能告訴客人說這瓶茅台不賣讓客人別買。當然53度飛天除外。賬實不符，庫存不准，這些都是真實存在的，存在即合理，odoo預設允許超賣，有個模組，可以禁止超賣。都是開放原始碼的，自己找吧.
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr1_action_orders_ecommerce" model="ir.actions.act_window">
+            <field name="name">訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form,kanban,activity</field>
+            <field name="domain">[('report_ids.category', '=', '0')]</field>
+            <field name="context">{'show_sale': True, 'search_default_order_confirmed': 1, 'search_default_from_website': 1}</field>
+            <field name="search_view_id" ref="website_sale.view_sales_order_filter_ecommerce"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    沒有來自網站的確認訂單
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr1_action_view_unpaid_quotation_tree" model="ir.actions.act_window">
+            <field name="name">未支付的訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,activity</field>
+            <field name="domain">[('state', '=', 'sent'), ('website_id', '!=', False), ('report_ids.category', '=', '0')]</field>
+            <field name="context" eval="{'show_sale': True, 'create': False}"/>
+            <field name="view_id" ref="sale.view_quotation_tree"/>
+            <field name="search_view_id" ref="website_sale.view_sales_order_filter_ecommerce_unpaid"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    網站上還沒有未付款的訂單
+                </p>
+                <p>
+                    收到付款後處理訂單。
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr1_action_view_abandoned_tree" model="ir.actions.act_window">
+            <field name="name">遺棄的購物車</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,activity</field>
+            <field name="domain">[('is_abandoned_cart', '=', 1), ('report_ids.category', '=', '0')]</field>
+            <field name="context" eval="{'show_sale': True, 'create': False, 'public_partner_id': ref('base.public_partner'), 'search_default_recovery_email': True}"/>
+            <field name="view_id" ref="sale.view_quotation_tree"/>
+            <field name="search_view_id" ref="website_sale.view_sales_order_filter_ecommerce_abondand"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    無遺棄購物車
+                </p>
+                <p>
+                    此處詳列所有遭網站訪客遺棄的購物車。
+                    若有關訪客有提供電郵地址，你應該考慮向他們發送提醒電郵！
+                </p>
+                <p>
+                    可以在設置中更改將購物車標記為放棄的時間。
+                </p>
+            </field>
+        </record>
+        <!--檢驗所(小動物)的action-->
+        <record id="idx_ocr2_quotations_with_onboarding" model="ir.actions.act_window">
+            <field name="name">報價單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_id" ref="sale.view_quotation_tree_with_onboarding"/>
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="search_view_id" ref="sale.sale_order_view_search_inherit_quotation"/>
+            <field name="context">{'search_default_my_quotation': 1}</field>
+            <field name="domain">[('report_ids.category', '=', '1')]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                建立一個報價是新銷售的第一步!
+                </p>
+                <p>
+                一旦客戶確認報價，報價單即變為銷售訂單
+                    <br/>您可以建立一張應收憑單來進行收款
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr2_action_orders" model="ir.actions.act_window">
+            <field name="name">訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="search_view_id" ref="sale.sale_order_view_search_inherit_sale"/>
+            <field name="context">{}</field>
+            <field name="domain">[('state', 'not in', ('draft', 'sent', 'cancel')), ('report_ids.category', '=', '1')]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    建立一個報價是新銷售的第一步!
+                </p>
+                <p>
+                    一旦報價確認，報價單即變為銷售訂單.
+                    <br/> 您可以建立一張應收憑單來進行收款.
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr2_sale_order_action_view_order_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="sale.view_order_tree"/>
+            <field name="act_window_id" ref="idx_ocr2_action_orders"/>
+        </record>
+        <record id="idx_ocr2_sale_order_action_view_order_kanban" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">kanban</field>
+            <field name="view_id" ref="sale.view_sale_order_kanban"/>
+            <field name="act_window_id" ref="idx_ocr2_action_orders"/>
+        </record>
+        <record id="idx_ocr2_sale_order_action_view_order_form" model="ir.actions.act_window.view">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="sale.view_order_form"/>
+            <field name="act_window_id" ref="idx_ocr2_action_orders"/>
+        </record>
+        <record id="idx_ocr2_sale_order_action_view_order_calendar" model="ir.actions.act_window.view">
+            <field name="sequence" eval="4"/>
+            <field name="view_mode">calendar</field>
+            <field name="view_id" ref="sale.view_sale_order_calendar"/>
+            <field name="act_window_id" ref="idx_ocr2_action_orders"/>
+        </record>
+        <record id="idx_ocr2_sale_order_action_view_order_pivot" model="ir.actions.act_window.view">
+            <field name="sequence" eval="5"/>
+            <field name="view_mode">pivot</field>
+            <field name="view_id" ref="sale.view_sale_order_pivot"/>
+            <field name="act_window_id" ref="idx_ocr2_action_orders"/>
+        </record>
+        <record id="idx_ocr2_sale_order_action_view_order_graph" model="ir.actions.act_window.view">
+            <field name="sequence" eval="6"/>
+            <field name="view_mode">graph</field>
+            <field name="view_id" ref="sale.view_sale_order_graph"/>
+            <field name="act_window_id" ref="idx_ocr2_action_orders"/>
+        </record>
+        <record id="idx_ocr2_action_orders_to_invoice" model="ir.actions.act_window">
+            <field name="name">待開立發票訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form,calendar,graph,pivot,kanban,activity</field>
+            <field name="context">{'create': False}</field>
+            <field name="domain">[('invoice_status','=','to invoice'), ('report_ids.category', '=', '1')]</field>
+            <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                沒有要開立應收憑單的訂單
+                </p>
+                <p>
+                您可以選擇所有訂單並批量開具應收憑單，
+                    <br/>
+                或檢查每個訂單並一張張地開具應收憑單.
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr2_action_orders_upselling" model="ir.actions.act_window">
+            <field name="name">追加銷售訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form,calendar,graph,pivot,kanban,activity</field>
+            <field name="domain">[('invoice_status','=','upselling'), ('report_ids.category', '=', '1')]</field>
+            <field name="context">{'create': False}</field>
+            <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                沒有找到超賣訂單.
+                </p>
+                <p>
+                當交付數量高於最初訂購數量時，訂單將追加銷售，並且應收憑單策略基於訂購數量.
+                </p>
+                <p>
+                舉個例子: 超市裡，客人從貨架拿了瓶茅台到前台買單結賬，而此時你收銀系統裡卻顯示茅台庫存為0，系統顯示沒庫存了，你不可能告訴客人說這瓶茅台不賣讓客人別買。當然53度飛天除外。賬實不符，庫存不准，這些都是真實存在的，存在即合理，odoo預設允許超賣，有個模組，可以禁止超賣。都是開放原始碼的，自己找吧.
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr2_action_orders_ecommerce" model="ir.actions.act_window">
+            <field name="name">訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form,kanban,activity</field>
+            <field name="domain">[('report_ids.category', '=', '1')]</field>
+            <field name="context">{'show_sale': True, 'search_default_order_confirmed': 1, 'search_default_from_website': 1}</field>
+            <field name="search_view_id" ref="website_sale.view_sales_order_filter_ecommerce"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    沒有來自網站的確認訂單
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr2_action_view_unpaid_quotation_tree" model="ir.actions.act_window">
+            <field name="name">未支付的訂單</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,activity</field>
+            <field name="domain">[('state', '=', 'sent'), ('website_id', '!=', False), ('report_ids.category', '=', '1')]</field>
+            <field name="context" eval="{'show_sale': True, 'create': False}"/>
+            <field name="view_id" ref="sale.view_quotation_tree"/>
+            <field name="search_view_id" ref="website_sale.view_sales_order_filter_ecommerce_unpaid"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    網站上還沒有未付款的訂單
+                </p>
+                <p>
+                    收到付款後處理訂單。
+                </p>
+            </field>
+        </record>
+        <record id="idx_ocr2_action_view_abandoned_tree" model="ir.actions.act_window">
+            <field name="name">遺棄的購物車</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,activity</field>
+            <field name="domain">[('is_abandoned_cart', '=', 1), ('report_ids.category', '=', '1')]</field>
+            <field name="context" eval="{'show_sale': True, 'create': False, 'public_partner_id': ref('base.public_partner'), 'search_default_recovery_email': True}"/>
+            <field name="view_id" ref="sale.view_quotation_tree"/>
+            <field name="search_view_id" ref="website_sale.view_sales_order_filter_ecommerce_abondand"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    無遺棄購物車
+                </p>
+                <p>
+                    此處詳列所有遭網站訪客遺棄的購物車。
+                    若有關訪客有提供電郵地址，你應該考慮向他們發送提醒電郵！
+                </p>
+                <p>
+                    可以在設置中更改將購物車標記為放棄的時間。
+                </p>
+            </field>
+        </record>
+        <record id="sale.action_view_sale_advance_payment_inv" model="ir.actions.act_window">
+            <field name="groups_id" eval="[(4, ref('idx_ebs.group_back_document_management')), (4, ref('idx_ebs.group_back_it'))]"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- 檢驗別tree view -->
+    <record id="idx_view_product_inspect_tree" model="ir.ui.view">
+        <field name="name">idx.product.inspect.tree</field>
+        <field name="model">idx.product.inspect</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+                <field name="color" widget="color_picker" options="{'no_create': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 檢驗別 action -->
+    <record id="idx_action_product_inspect" model="ir.actions.act_window">
+        <field name="name">檢驗別</field>
+        <field name="res_model">idx.product.inspect</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <!-- 檢驗別 menuitem -->
+    <menuitem id="idx_menu_product_inspect"
+        name="檢驗別"
+        parent="website_sale.menu_catalog"
+        action="idx_action_product_inspect"
+        sequence="6"
+    />
+
+</odoo>

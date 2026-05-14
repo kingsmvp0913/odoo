@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="ir_cron_product_template_sync_wf" model="ir.cron">
+            <field name="name">商品WF同步排程</field>
+            <field name="model_id" ref="product.model_product_template"/>
+            <field name="state">code</field>
+            <field name="code">model.with_context(from_cron=True).action_sync_wf()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now().replace(hour=15, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="active">True</field>
+        </record>
+        <record id="cron_check_expiring_cards" model="ir.cron">
+            <field name="name">檢查即將剩餘30天的優惠券</field>
+            <field name="model_id" ref="loyalty.model_loyalty_card"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_check_expiring_cards()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now().replace(hour=0, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="active">True</field>
+        </record>
+        <record id="cron_sync_wf_odoo_price" model="ir.cron">
+            <field name="name">WF報價單同步odoo價格表</field>
+            <field name="model_id" ref="product.model_product_pricelist"/>
+            <field name="state">code</field>
+            <field name="code">model.sync_with_wf()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now().replace(hour=15, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="active">True</field>
+            <field name="priority">10</field>
+        </record>
+        <record id="ir_cron_check_expiring_lots" model="ir.cron">
+            <field name="name">IDX : 檢查產品即將到期的批次</field>
+            <field name="model_id" ref="stock.model_stock_lot"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_check_expiring_lots()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now().replace(hour=0, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="active">True</field>
+        </record>
+        <record id="ir_cron_get_wf_order_and_delivery_info" model="ir.cron">
+            <field name="name">取得WF訂單及出貨資訊</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_action_get_wf_and_sale_info()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now().replace(hour=16, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="active">True</field>
+        </record>
+        <record id="ir_cron_update_carrier_type" model="ir.cron">
+            <field name="name">IDX : 批次更新送檢單物流狀態</field>
+            <field name="model_id" ref="idx_ebs.model_sale_order_report"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_update_carrier_type()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now().replace(hour=15, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>

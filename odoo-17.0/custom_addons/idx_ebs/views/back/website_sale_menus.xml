@@ -1,0 +1,100 @@
+<odoo>
+
+    <record id="website_sale.menu_orders_customers" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <record id="website_sale.menu_catalog" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_sale'), ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <record id="sale.menu_sale_quotations" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_sale'), ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <record id="website_sale.menu_orders_orders" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_sale'), ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <record id="website_sale.menu_orders_unpaid_orders" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_sale'), ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <record id="website_sale.menu_orders_abandoned_orders" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_sale'), ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <record id="website_sale.menu_product_pages" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_sale'), ref('idx_ebs.group_back_doctor_sale_manager'),
+        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
+        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
+    </record>
+
+    <record id="website_sale.menu_orders_abandoned_orders" model="ir.ui.menu">
+        <field name="sequence">7</field>
+    </record>
+
+    <record id="website_sale.menu_orders_customers" model="ir.ui.menu">
+        <field name="sequence">8</field>
+    </record>
+
+    <!--檢驗課(人醫)-->
+    <menuitem id="menu_idx_ocr1_orders_orders"
+              action="idx_ocr1_action_orders_ecommerce"
+              parent="website_sale.menu_orders"
+              groups="idx_ebs.group_back_inspect_ocr1"
+              sequence="1"
+    />
+
+    <menuitem id="menu_idx_ocr1_orders_unpaid_orders"
+              action="idx_ocr1_action_view_unpaid_quotation_tree"
+              parent="website_sale.menu_orders"
+              groups="idx_ebs.group_back_inspect_ocr1"
+              sequence="2"/>
+
+    <menuitem id="menu_idx_ocr1_orders_abandoned_orders"
+              parent="website_sale.menu_orders"
+              groups="idx_ebs.group_back_inspect_ocr1"
+              action="idx_ocr1_action_view_abandoned_tree"
+              sequence="3"/>
+
+    <!--檢驗課(小動物)-->
+    <menuitem id="menu_idx_ocr2_orders_orders"
+              action="idx_ocr2_action_orders_ecommerce"
+              parent="website_sale.menu_orders"
+              groups="idx_ebs.group_back_inspect_ocr2"
+              sequence="1"
+    />
+
+    <menuitem id="menu_idx_ocr2_orders_unpaid_orders"
+              action="idx_ocr2_action_view_unpaid_quotation_tree"
+              parent="website_sale.menu_orders"
+              groups="idx_ebs.group_back_inspect_ocr2"
+              sequence="2"/>
+
+    <menuitem id="menu_idx_ocr2_orders_abandoned_orders"
+              parent="website_sale.menu_orders"
+              groups="idx_ebs.group_back_inspect_ocr2"
+              action="idx_ocr2_action_view_abandoned_tree"
+              sequence="3"/>
+
+    <!--業務-->
+    <menuitem id="menu_idx_sale_orders_customers"
+              parent="website_sale.menu_orders"
+              groups="idx_ebs.group_back_sale"
+              action="idx_sale_action_partner_customer_form"
+              sequence="4"/>
+
+</odoo>

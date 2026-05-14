@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="categ_crm1" model="crm.tag">
+            <field name="name">國內 / 通路 01診所</field>
+            <field name="color" eval="1"/>
+        </record>
+
+        <record id="categ_crm2" model="crm.tag">
+            <field name="name">國內 / 通路 02醫院</field>
+            <field name="color" eval="2"/>
+        </record>
+
+        <record id="categ_crm3" model="crm.tag">
+            <field name="name">國內 / 通路 03醫院-動物醫院</field>
+            <field name="color" eval="3"/>
+        </record>
+
+        <record id="categ_crm4" model="crm.tag">
+            <field name="name">國內 / 通路 04經銷商</field>
+            <field name="color" eval="4"/>
+        </record>
+
+        <record id="categ_crm5" model="crm.tag">
+            <field name="name">國內 / 通路 05學術單位</field>
+            <field name="color" eval="5"/>
+        </record>
+
+        <record id="categ_crm6" model="crm.tag">
+            <field name="name">國內 / 通路 06公家單位</field>
+            <field name="color" eval="6"/>
+        </record>
+
+        <record id="categ_crm7" model="crm.tag">
+            <field name="name">國內 / 通路 07檢驗單位</field>
+            <field name="color" eval="7"/>
+        </record>
+
+        <record id="categ_crm8" model="crm.tag">
+            <field name="name">國內 / 通路 08公協會、社團</field>
+            <field name="color" eval="8"/>
+        </record>
+
+        <record id="categ_crm9" model="crm.tag">
+            <field name="name">國內 / 通路 09寵物店</field>
+            <field name="color" eval="9"/>
+        </record>
+
+        <record id="categ_crm10" model="crm.tag">
+            <field name="name">國內 / 通路 10電子商務</field>
+            <field name="color" eval="10"/>
+        </record>
+
+        <record id="categ_crm11" model="crm.tag">
+            <field name="name">國內 / 通路 11公司行號</field>
+            <field name="color" eval="11"/>
+        </record>
+
+        <record id="categ_crm12" model="crm.tag">
+            <field name="name">國內 / 通路 12個人</field>
+            <field name="color" eval="1"/>
+        </record>
+
+        <record id="categ_crm13" model="crm.tag">
+            <field name="name">國內 / 通路 13藥局</field>
+            <field name="color" eval="2"/>
+        </record>
+
+        <record id="categ_crm14" model="crm.tag">
+            <field name="name">國內 / 通路 14健診中心</field>
+            <field name="color" eval="3"/>
+        </record>
+
+        <record id="categ_crm15" model="crm.tag">
+            <field name="name">國內 / 通路 15連鎖通路</field>
+            <field name="color" eval="4"/>
+        </record>
+
+        <record id="categ_crm16" model="crm.tag">
+            <field name="name">國內 / 通路 16其他</field>
+            <field name="color" eval="5"/>
+        </record>
+
+        <record id="categ_crm17" model="crm.tag">
+            <field name="name">國外 / 通路03 醫院-動物醫院</field>
+            <field name="color" eval="6"/>
+        </record>
+
+        <record id="categ_crm18" model="crm.tag">
+            <field name="name">國外 / 通路04 經銷商</field>
+            <field name="color" eval="7"/>
+        </record>
+
+        <record id="categ_crm19" model="crm.tag">
+            <field name="name">國外 / 通路06 公家單位</field>
+            <field name="color" eval="8"/>
+        </record>
+
+        <record id="categ_crm20" model="crm.tag">
+            <field name="name">國外 / 通路07 檢驗單位</field>
+            <field name="color" eval="9"/>
+        </record>
+
+        <record id="categ_crm21" model="crm.tag">
+            <field name="name">國外 / 通路11 公司行號</field>
+            <field name="color" eval="10"/>
+        </record>
+
+        <record id="categ_crm22" model="crm.tag">
+            <field name="name">國外 / 通路12 個人</field>
+            <field name="color" eval="11"/>
+        </record>
+
+        <record id="categ_crm23" model="crm.tag">
+            <field name="name">國內 / 通路 01診所 (北)</field>
+            <field name="color" eval="1"/>
+        </record>
+
+        <record id="categ_crm24" model="crm.tag">
+            <field name="name">國內 / 通路 02醫院 (北)</field>
+            <field name="color" eval="2"/>
+        </record>
+
+        <record id="categ_crm25" model="crm.tag">
+            <field name="name">國內 / 通路 04經銷商 (北)</field>
+            <field name="color" eval="3"/>
+        </record>
+
+        <record id="categ_crm26" model="crm.tag">
+            <field name="name">國內 / 通路 07檢驗單位 (北)</field>
+            <field name="color" eval="4"/>
+        </record>
+
+        <record id="categ_crm27" model="crm.tag">
+            <field name="name">國內 / 通路 13藥局 (北)</field>
+            <field name="color" eval="5"/>
+        </record>
+
+        <record id="categ_crm28" model="crm.tag">
+            <field name="name">國內 / 通路 14健診中心 (北)</field>
+            <field name="color" eval="6"/>
+        </record>
+
+        <record id="categ_crm29" model="crm.tag">
+            <field name="name">國內 / 通路 03醫院-動物醫院 (中南)</field>
+            <field name="color" eval="7"/>
+        </record>
+
+        <record id="categ_crm30" model="crm.tag">
+            <field name="name">國內 / 通路 05學術單位 (中南)</field>
+            <field name="color" eval="8"/>
+        </record>
+
+        <record id="categ_crm31" model="crm.tag">
+            <field name="name">國內 / 通路 06公家單位 (中南)</field>
+            <field name="color" eval="9"/>
+        </record>
+
+        <record id="categ_crm32" model="crm.tag">
+            <field name="name">國內 / 通路 07檢驗單位 (中南)</field>
+            <field name="color" eval="10"/>
+        </record>
+
+        <record id="categ_crm33" model="crm.tag">
+            <field name="name">國內 / 通路 08公協會、社團 (中南)</field>
+            <field name="color" eval="11"/>
+        </record>
+
+        <record id="categ_crm34" model="crm.tag">
+            <field name="name">國內 / 通路 09寵物店 (中南)</field>
+            <field name="color" eval="1"/>
+        </record>
+
+        <record id="categ_crm35" model="crm.tag">
+            <field name="name">國內 / 通路 13藥局 (中南)</field>
+            <field name="color" eval="2"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,597 @@
+<odoo>
+    <!-- 繼承 Odoo 原廠的 robots.txt template，添加 /shop 禁止規則 -->
+    <template id="idx_robots_inherit" inherit_id="website.robots" name="IDX Robots.txt - Disallow Shop">
+        <xpath expr="//t[@t-out='request.website.sudo().robots_txt']" position="before">
+            <t t-translation="off">
+##############
+#   IDX SEO  #
+##############
+# Prevent indexing of shop pages
+Disallow: /shop
+Disallow: /shop/
+Disallow: /shop/*
+Disallow: /shop/cart
+Disallow: /shop/checkout
+Disallow: /shop/payment
+Disallow: /shop/confirmation
+
+
+</t>
+        </xpath>
+    </template>
+    <!-- 防止搜尋引擎索引 /shop 相關頁面 -->
+    <template id="idx_shop_noindex" inherit_id="website.layout" name="Shop Pages No Index">
+        <xpath expr="//head" position="inside">
+            <t t-if="request.httprequest.path.startswith('/shop') or is_shop_access_denied">
+                <meta name="robots" content="noindex, nofollow"/>
+                <meta name="googlebot" content="noindex, nofollow"/>
+            </t>
+        </xpath>
+    </template>
+    <!-- 403 存取被拒頁面 -->
+    <template id="shop_access_denied" name="Shop Access Denied">
+        <t t-call="website.layout">
+            <t t-set="additional_title">存取被拒</t>
+            <t t-set="head">
+                <meta name="robots" content="noindex, nofollow"/>
+                <meta name="googlebot" content="noindex, nofollow"/>
+            </t>
+            <div id="wrap" class="oe_structure oe_empty">
+                <section class="s_text_block pt96 pb96" data-snippet="s_text_block" data-name="Text">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-8 offset-lg-2 text-center">
+                                <h1 class="display-4 mb-3">
+                                    <i class="fa fa-lock text-muted me-2"/>
+                                    存取被拒
+                                </h1>
+                                <p class="lead text-muted mb-4">
+                                    您無權限查看此頁面
+                                    <t t-esc="page_name or '此頁面'"/>
+                                </p>
+                                <div class="mt-4">
+                                    <a t-att-href="redirect_url or '/web/login'" class="btn btn-primary btn-lg">
+                                        <i class="fa fa-sign-in me-2"/>
+                                        立即登入
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </t>
+    </template>
+    <!-- 產品清單頁 -->
+    <template id="custom_products_item" inherit_id="website_sale.products_item">
+        <xpath expr="//div[contains(@class, 'o_wsale_product_information')]/div[contains(@class, 'o_wsale_product_sub')]" position="replace">
+            <div t-attf-class="#{'d-flex' if True else 'd-none'}" class="o_wsale_product_sub justify-content-between align-items-end gap-2 flex-wrap pb-1">
+                <t t-set="template_price_vals" t-value="get_product_prices(product)"/>
+                <div class="o_wsale_product_btn"/>
+                <t groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                    <div class="product_price" itemprop="offers" itemscope="itemscope" itemtype="http://schema.org/Offer">
+                        <t t-if="'base_price' in template_price_vals and (template_price_vals['base_price'] &gt; template_price_vals['price_reduce']) and (template_price_vals['price_reduce'] or not website.prevent_zero_price_sale)">
+                            <del t-attf-class="text-muted me-1 h6 mb-0" style="white-space: nowrap;">
+                                <em class="small" t-esc="template_price_vals['base_price']" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}" />
+                            </del>
+                        </t>
+                        <span class="h6 mb-0" t-if="template_price_vals['inc_tax_price'] or not website.prevent_zero_price_sale" t-esc="template_price_vals['inc_tax_price']" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                        <span class="h6 mb-0" t-elif="any(ptav.price_extra for ptav in product.attribute_line_ids.product_template_value_ids)">&amp;nbsp;</span>
+                        <span class="h6 mb-0" t-else="" t-field="website.prevent_zero_price_sale_text"/>
+                        <span itemprop="price" style="display:none;" t-esc="template_price_vals['inc_tax_price']" />
+                        <span itemprop="priceCurrency" style="display:none;" t-esc="website.currency_id.name" />
+                    </div>
+                </t>
+            </div>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'o_wsale_product_information')]/div[contains(@class, 'o_wsale_product_sub')]" position="after">
+            <div id="sale_price">
+                <div class="d-flex">
+                    <span class="col-7">定價：</span>
+                    <span class="col-5 text-end" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}" t-out="product['sale_price']"/>
+                </div>
+            </div>
+            <div id="product_category">
+                <div class="d-flex">
+                    <span class="col-7">產品類別：</span>
+                    <span class="col-5 text-end" t-out="product.product_category_id.name if product.product_category_id else 'N/A'"/>
+                </div>
+            </div>
+            <div id="avg_recommended_qty" t-if="product.product_category_id.name == '耗材'">
+                <div class="d-flex">
+                    <span class="col-7">平均建議申請量：</span>
+                    <span class="col-5 text-end" t-out="product['avg_recommended_qty']"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+    <!-- 產品內頁 -->
+    <template id="custom_product_page" inherit_id="website_sale.product">
+        <xpath expr="//div[@id='product_detail_main']/div[@id='product_details']/h1" position="replace">
+            <div class="d-flex justify-content-between align-items-center title-section">
+                <h1 itemprop="name" t-field="product.name">Product Name</h1>
+                <h5 itemprop="description" t-field="product.description"/>
+            </div>
+            <div class="product-description" itemprop="product_desc" t-field="product.product_desc"/>
+        </xpath>
+    </template>
+    <template id="custom_product_price" inherit_id="website_sale.product_price">
+        <xpath expr="//div[@itemprop='offers']" position="replace">
+            <div
+                id="product_price"
+                itemprop="offers"
+                itemscope="itemscope"
+                itemtype="http://schema.org/Offer"
+                t-attf-class="product_price mt-2 mb-3"
+            >
+                <t groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                    <div id="list_price" t-attf-class="{{'opacity-0 col-md-6 col-12 d-none d-md-block' if combination_info['prevent_zero_price_sale'] else 'col-md-6 col-12'}}">
+                        <h3 class="css_editable_mode_hidden">
+                            <span class="oe_price"
+                              style="white-space: nowrap;"
+                              t-out="combination_info['inc_tax_price']"
+                              t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                            <span itemprop="price" style="display:none;" t-out="combination_info['inc_tax_price']"/>
+                            <span itemprop="priceCurrency" style="display:none;" t-esc="website.currency_id.name"/>
+                            <span t-attf-class="text-danger oe_default_price ms-1 h5 {{'' if combination_info['has_discounted_price'] and not combination_info['compare_list_price'] else 'd-none'}}"
+                              style="text-decoration: line-through; white-space: nowrap;"
+                              t-esc="combination_info['list_price']"
+                              t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"
+                            itemprop="listPrice"
+                        />
+                            <t t-if="is_view_active('website_sale.tax_indication')" t-call="website_sale.tax_indication"/>
+                            <del t-if="combination_info['compare_list_price'] and (combination_info['compare_list_price'] &gt; combination_info['price'])">
+                                <bdi dir="inherit">
+                                    <span t-esc="combination_info['compare_list_price']"
+                                  groups="website_sale.group_product_price_comparison"
+                                  t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                                </bdi>
+                            </del>
+                        </h3>
+                    </div>
+                    <div id="sale_price" t-attf-class="col-md-6 col-12">
+                        <div class="d-flex text-md-end">
+                            <span class="col-8">定價：</span>
+                            <span class="col-4" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}" t-out="combination_info['sale_price']"/>
+                        </div>
+                    </div>
+                    <div id="product_category" class="col-md-6">
+                        <div class="d-flex text-start">
+                            <span class="col-8">產品類別：</span>
+                            <span class="col-4" itemprop="product_category" t-out="combination_info.get('product_category_name') or 'N/A'"/>
+                        </div>
+                    </div>
+                    <div id="avg_recommended_qty" class="col-md-6 col-12" t-if="combination_info.get('product_category_name') == '耗材'">
+                        <div class="d-flex text-md-end">
+                            <span class="col-8">平均建議申請量：</span>
+                            <span class="col-4" itemprop="avg_recommended_qty" t-out="combination_info['avg_recommended_qty']"/>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </xpath>
+        <xpath expr="//div[@id='product_unavailable']" position="replace"></xpath>
+    </template>
+    <!-- 購物車頁左側區塊 -->
+    <template id="custom_cart" inherit_id="website_sale.cart">
+        <xpath expr="//div[contains(@class, 'col')]" position="replace">
+            <div id="cart_title_block" class="mb-4">
+                <h3 class="title">訂單概覽</h3>
+                <div class="btn_block">
+                    <div class="services_btn_block">
+                        <a role="button" name="detect_items" t-attf-class="btn #{'btn-primary' if not request.params.get('general') else 'btn-light'}" t-att-href="'/shop/cart'">檢測項目</a>
+                        <a role="button" name="product_items" t-attf-class="btn #{'btn-primary' if request.params.get('general') else 'btn-light'}" t-att-href="'/shop/cart?general=true'">產品</a>
+                    </div>
+                    <div class="action_btn_block">
+                        <a role="button" name="download_human_template" class="js_download_human_template btn btn-light" t-att-data-order-id="website_sale_order.id" href="#">人醫樣板</a>
+                        <a role="button" name="download_animal_template" class="js_download_animal_template btn btn-light" t-att-data-order-id="website_sale_order.id" href="#">小動物樣板</a>
+                        <a role="button" name="batch_upload" class="js_batch_upload btn btn-light" t-att-data-order-id="website_sale_order.id" href="#">批次上傳</a>
+                        <a role="button" name="delete_form" class="js_delete_cart btn btn-light" t-att-data-order-id="website_sale_order.id" href="#">刪除</a>
+                    </div>
+                </div>
+            </div>
+            <div t-if="abandoned_proceed or access_token" class="alert alert-info mt8 mb8" role="alert">
+                <!-- abandoned cart choices -->
+                <t t-if="abandoned_proceed">
+                    <p>您之前的購物車已完成。</p>
+                    <p t-if="website_sale_order">請繼續使用目前購物車。</p>
+                </t>
+                <t t-if="access_token">
+                    <p>這是你目前的購物車。</p>
+                    <p>
+                        <strong>
+                            <a t-attf-href="/shop/cart/?access_token=#{access_token}&amp;revive=squash">Click here</a>
+                        </strong> 如果要恢復之前的購物車，請點選此處。您之前的購物車將代替目前購物車。
+                    </p>
+                    <p>
+                        <strong>
+                            <a t-attf-href="/shop/cart/?access_token=#{access_token}&amp;revive=merge">Click here</a>
+                        </strong> 如果想要將之前的購物車合併到目前購物車，請點選此處。
+                    </p>
+                </t>
+            </div>
+            <t t-call="website_sale.cart_lines"/>
+            <div class="clearfix" />
+            <div class="oe_structure" id="oe_structure_website_sale_cart_1"/>
+        </xpath>
+    </template>
+    <!-- 購物車清單產品 -->
+    <template id="custom_cart_lines" inherit_id="website_sale.cart_lines">
+        <xpath expr="//div[1]" position="replace">
+            <!-- 空購物車訊息由 JS 動態處理 -->
+        </xpath>
+        <xpath expr="//div[@id='cart_products']" position="replace">
+            <div id="cart_products"
+             t-if="website_sale_order and website_sale_order.website_order_line"
+             class="js_cart_lines d-flex flex-column mb32">
+                <t t-set="show_qty" t-value="is_view_active('website_sale.product_quantity')"/>
+                <div t-foreach="website_sale_order.website_order_line"
+                 t-as="line">
+                    <t t-if="line.product_id">
+                        <div t-attf-class="o_cart_product d-flex align-items-stretch border-bottom pb-4 gap-3 #{line.linked_line_id and 'optional_product info'} #{line_index &gt; 0 and 'pt-4'}" t-attf-data-product-id="#{line.product_id and line.product_id.id}" t-attf-data-has-category="#{bool(line.product_id.category)}">
+                            <div style="width: 64px">
+                                <!--
+                                    Unsellable lines can have unpublished products, but portal users have no
+                                    access to unpublished product images. To ensure product images are
+                                    always shown for unsellable lines, we use the raw image data as src
+                                    (which doesn't require access, unlike the image URL).
+                                -->
+                                <img
+                                    t-if="line._is_not_sellable_line() and line.product_id.image_128"
+                                    t-att-src="image_data_uri(line.product_id.image_128)"
+                                    class="o_image_64_max img rounded"
+                                    t-att-alt="line.name_short"
+                                />
+                                <div
+                                    t-else=""
+                                    t-field="line.product_id.image_128"
+                                    t-options="{
+                                        'widget': 'image',
+                                        'qweb_img_responsive': False,
+                                        'class': 'o_image_64_max rounded',
+                                    }"
+                                />
+                                </div>
+                            <div class="flex-grow-1">
+                                <div class="prod_title_block">
+                                    <t t-call="website_sale.cart_line_product_link">
+                                        <h6 t-field="line.name_short" class="d-inline mb-0 fw-bold"/>
+                                    </t>
+                                    <div class="product_category text-primary" t-field="line.product_id.category"/>
+                                </div>
+                                <div class="small text-black fw-bold">
+                                    <t t-if="line.wf_sequence">
+                                        <span>訂單序號：</span>
+                                        <span t-field="line.wf_sequence"/>
+                                    </t>
+                                </div>
+                                <div class="small text-black fw-bold">
+                                    <span>產品類別：</span>
+                                    <span t-if="line.product_id.product_category_id.name" 
+                                        t-field="line.product_id.product_category_id.name"/>
+                                    <span t-else="">N/A</span>
+                                </div>
+                                <t t-call="website_sale.cart_line_description_following_lines">
+                                    <t t-set="div_class" t-value="''"/>
+                                </t>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <a href='#' class="js_delete_product d-none d-md-inline-block small" aria-label="Remove from cart" title="Remove from cart">移除</a>
+                                        <button class="js_delete_product btn btn-light d-inline-block d-md-none"
+                                                title="remove">
+                                            <i class="fa fa-trash-o"/>
+                                        </button>
+                                    </div>
+                                    <div t-if="line.product_id.category" 
+                                         class="detects_widget_container"
+                                         t-att-data-cart-id="line.order_id.id"
+                                         t-att-data-cart-line-id="line.id"
+                                         t-att-data-category="line.product_id.category"/>
+                                    </div>
+                            </div>
+                            <div class="d-flex flex-column align-items-end">
+                                <div t-attf-class="css_quantity input-group mb-2"
+                                    name="website_sale_cart_line_quantity">
+                                    <t t-if="not line._is_not_sellable_line()">
+                                        <t t-if="show_qty">
+                                            <a href="#" class="js_add_cart_json btn btn-link d-inline-block border-end-0" aria-label="Remove one" title="Remove one">
+                                                <i class="position-relative z-index-1 fa fa-minus"/>
+                                            </a>
+                                            <input type="text"
+                                                class="js_quantity quantity form-control border-start-0 border-end-0"
+                                                t-att-data-line-id="line.id"
+                                                t-att-data-product-id="line.product_id.id"
+                                                t-att-value="line._get_displayed_quantity()"/>
+                                            <t t-if="line._get_shop_warning(clear=False)">
+                                                <a href="#" class="btn btn-link">
+                                                    <i class='fa fa-warning text-warning' t-att-title="line._get_shop_warning()" role="img" aria-label="Warning"/>
+                                                </a>
+                                            </t>
+                                            <a t-else="" href="#" class="js_add_cart_json d-inline-block float_left btn btn-link border-start-0" aria-label="Add one" title="Add one">
+                                                <i class="fa fa-plus position-relative z-index-1"/>
+                                            </a>
+                                        </t>
+                                        <t t-else="">
+                                            <input type="hidden"
+                                                class="js_quantity form-control quantity"
+                                                t-att-data-line-id="line.id"
+                                                t-att-data-product-id="line.product_id.id"
+                                                t-att-value="line._get_displayed_quantity()"/>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="w-100 text-muted" t-esc="int(line.product_uom_qty)"/>
+                                        <input type="hidden"
+                                            class="js_quantity quantity form-control"
+                                            t-att-data-line-id="line.id"
+                                            t-att-data-product-id="line.product_id.id"
+                                            t-att-value="line._get_displayed_quantity()"/>
+                                    </t>
+                                </div>
+                                <div class="mb-0 h6 fw-bold text-end" name="website_sale_cart_line_price">
+                                    <t groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                                        <t t-if="website.show_line_subtotals_tax_selection == 'tax_exclude`d'" t-set='product_price' t-value='line.price_subtotal'/>
+                                        <t t-else="" t-set='product_price' t-value='line.price_total'/>
+                                        <span t-out="product_price" style="white-space: nowrap;"
+                                        t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                                        <small t-if="not line._is_not_sellable_line() and line.product_id.base_unit_price"
+                                        class="cart_product_base_unit_price d-block text-muted"
+                                        groups="website_sale.group_show_uom_price">
+                                            <t t-call='website_sale.base_unit_price'>
+                                                <t t-set='product' t-value='line.product_id'/>
+                                                <t t-set='combination_info' t-value="{'base_unit_price': product._get_base_unit_price(product_price/line.product_uom_qty)}"/>
+                                            </t>
+                                        </small>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </xpath>
+    </template>
+    <!-- 購物車頁右側金額區塊 -->
+    <template id="custom_total" inherit_id="website_sale.total">
+        <xpath expr="//div[@id='cart_total']" position="replace">
+            <div id="cart_total" t-if="website_sale_order and website_sale_order.website_order_line" t-att-class="_cart_total_classes">
+                <table class="table mb-0">
+                    <!-- 隱藏的元素，供 JS 更新運送費用使用 -->
+                    <tr id="order_delivery" class="d-none">
+                        <td colspan="2" class="border-0 ps-0 pt-0 pb-2">運費</td>
+                        <td class="text-end border-0 px-0 pt-0 pb-2">
+                            <span t-field="website_sale_order.amount_delivery"
+                                  class="monetary_field"
+                                  t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr id="order_total_untaxed" class="d-none">
+                        <td colspan="2" class="border-0 ps-0 pt-0 pb-2">小計</td>
+                        <td class="text-end border-0 px-0 pt-0 pb-2">
+                            <span t-field="website_sale_order.amount_untaxed"
+                                  class="monetary_field"
+                                  t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr id="order_total_taxes" class="d-none">
+                        <td colspan="2" class="border-0 ps-0 pt-0 pb-2">稅金</td>
+                        <td class="text-end border-0 px-0 pt-0 pb-2">
+                            <span t-field="website_sale_order.amount_tax"
+                                  class="monetary_field"
+                                  t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr id="order_total" groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                        <td colspan="2" class="border-0 ps-0 pt-3">
+                            <strong>總計</strong>
+                        </td>
+                        <td class="text-end border-0 px-0 pt-3">
+                            <strong t-field="website_sale_order.amount_total"
+                                class="monetary_field text-end p-0"
+                                t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr t-if="not hide_promotions">
+                        <td colspan="3" class="text-end text-xl-end border-0 p-0">
+                            <span>
+                                <t t-set="force_coupon" t-value="website_sale_order.pricelist_id.code"/>
+                                <div t-if="not force_coupon" class="coupon_form">
+                                    <t t-call="website_sale.coupon_form"/>
+                                </div>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr t-if="not hide_promotions" class="oe_website_sale_gift_card">
+                        <td colspan="3" class="text-center text-xl-end border-0 p-0">
+                            <span class=''>
+                                <t t-if="request.params.get('code_not_available')">
+                                    <div class="alert alert-danger text-start mt16" role="alert">
+                                促銷代碼無效或過期。
+                            </div>
+                                </t>
+                                <t t-if="website_sale_order.get_promo_code_error(delete=False)">
+                                    <div class="alert alert-danger text-start mt16" role="alert">
+                                        <t t-esc="website_sale_order.get_promo_code_error()"/>
+                                    </div>
+                                </t>
+                                <t t-if="website_sale_order">
+                                    <t t-if="website_sale_order.get_promo_code_success_message(delete=False)">
+                                        <div class="alert alert-success text-start mt16" role="alert">
+                                    成功套用以下代碼：
+                                            <strong t-esc="website_sale_order.get_promo_code_success_message()"/>
+                                        </div>
+                                    </t>
+                                    <t t-foreach="website_sale_order._get_claimable_and_showable_rewards().items()" t-as="coupon_reward">
+                                        <t t-set="coupon" t-value="coupon_reward[0]"/>
+                                        <t t-set="rewards" t-value="coupon_reward[1]"/>
+                                        <t t-foreach="rewards" t-as="reward">
+                                            <form t-att-action="'/shop/claimreward%s' % (redirect and '?r=' + redirect or '')"
+                                        method="post" name="claim_reward">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <input type="hidden" name="reward_id" t-att-value="reward.id"/>
+                                                <input type="hidden" name="code" t-att-value="coupon.code"/>
+                                                <div class="alert alert-success text-start mt16" role="alert">
+                                                    <div class="d-flex flex-row">
+                                                        <div class="flex-grow-1 text-break">
+                                                            <t t-set="program" t-value="reward.program_id"/>
+                                                            <t t-set="points" t-value="coupon._format_points(website_sale_order._get_real_points_for_coupon(coupon))"/>
+                                                            <t t-if="program.program_type not in ['ewallet', 'promo_code'] and (program.trigger == 'with_code' or (program.trigger == 'auto' and program.applies_on == 'future'))">
+                                                                <t t-if="program.program_type == 'gift_card'">
+                                                                    <strong t-esc="reward.description"/>
+                                                                    <strong> - </strong>
+                                                                    <strong t-esc="points"/>
+                                                                </t>
+                                                                <t t-elif="program.program_type == 'coupons'">
+                                                                    <strong>優惠券 － </strong>
+                                                                    <strong t-esc="reward.description"/>
+                                                                </t>
+                                                                <t t-elif="program.trigger == 'auto' and program.applies_on == 'future'">
+                                                                    <strong t-esc="reward.description"/>
+                                                                </t>
+                                                                <div class="text-muted d-md-block small">
+                                                                    <span t-if="coupon and not coupon.program_id.is_nominative">
+                                                                優惠代碼：
+                                                                        <!-- <t t-esc="coupon.code[-4:].rjust(14, '&#8902;')"/> -->
+                                                                        <t t-esc="coupon.code"/>
+                                                                    </span>
+                                                                    <t t-if="coupon.expiration_date">
+                                                                        <br/>
+                                                                        <span>
+                                                                    過期日期：
+                                                                            <t t-esc="coupon.expiration_date"/>
+                                                                        </span>
+                                                                    </t>
+                                                                </div>
+                                                            </t>
+                                                            <t t-elif="program.program_type == 'promo_code'">
+                                                                <strong t-esc="reward.description"/>
+                                                            </t>
+                                                            <t t-else="">
+                                                                <strong t-esc="reward.description"/>
+                                                                <div t-if="program.portal_visible">
+                                                                    <t t-if="not program.is_nominative">
+                                                                        <span t-out="points"/>
+                                                                    </t>
+                                                                    <t t-else="">
+                                                                        <span>您有
+                                                                            <t t-out="points"/>
+                                                                        </span>
+                                                                        <span t-if="program.program_type == 'ewallet'"> 在你的電子錢包內</span>
+                                                                        <t t-else="">
+                                                                            <br/>
+                                                                            <span>費用
+                                                                                <t t-out="coupon._format_points(reward.required_points)"/>
+                                                                            </span>
+                                                                        </t>
+                                                                    </t>
+                                                                </div>
+                                                            </t>
+                                                            <select
+                                                        t-if="reward.multi_product"
+                                                        class="o_select w-100 form-select form-select-sm css_attribute_select"
+                                                        name="product_id"
+                                                    >
+                                                                <option
+                                                            t-foreach="reward.reward_product_ids"
+                                                            t-as="product"
+                                                            t-att-value="product.id"
+                                                        >
+                                                                    <t t-out="product.display_name"/>
+                                                                </option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="justify-content-end">
+                                                            <a class="btn btn-primary a-submit" href="#" role="button">
+                                                                <t t-if="reward.program_id.program_type == 'ewallet'">
+                                                            以電子錢包付款
+                                                        </t>
+                                                                <t t-elif="(reward.program_id.trigger == 'with_code' and reward.program_id.program_type != 'promo_code') or (reward.program_id.trigger == 'auto' and reward.program_id.applies_on == 'future')">
+                                                            使用
+                                                        </t>
+                                                                <t t-else="">領取</t>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </t>
+                                    </t>
+                                </t>
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </xpath>
+    </template>
+    <template id="custom_navigation_buttons" inherit_id="website_sale.navigation_buttons">
+        <xpath expr="//div" position="replace">
+            <div t-attf-class="#{_container_classes} d-flex #{_form_send_navigation and 'flex-column flex-lg-row align-items-lg-center' or 'flex-column'} mb-5 mb-lg-0 pt-4">
+                <t t-if="website_sale_order and website_sale_order.website_order_line">
+                    <t t-if="xmlid == 'website_sale.payment'">
+                        <div t-if="not errors and not website_sale_order.amount_total"
+                         name="o_website_sale_free_cart">
+                            <form name="o_wsale_confirm_order"
+                              class="d-flex flex-column"
+                              target="_self"
+                              action="/shop/payment/validate"
+                              method="post">
+                                <input type="hidden"
+                                   name="csrf_token"
+                                   t-att-value="request.csrf_token()"
+                                   t-nocache="The csrf token must always be up to date."/>
+                                <t t-if="not hide_payment_button" t-call="payment.submit_button">
+                                    <t t-set="submit_button_label">Confirm Order</t>
+                                </t>
+                            </form>
+                        </div>
+                        <t t-elif="not hide_payment_button" t-call="payment.submit_button"/>
+                </t>
+                    <t t-else="">
+                        <a role="button" name="website_sale_main_button"
+                        t-attf-class="#{_cta_classes} btn btn-primary #{not website_sale_order._is_cart_ready() and 'disabled'} #{_form_send_navigation and 'order-lg-3 w-100 w-lg-auto ms-lg-auto' or 'w-100'}"
+                        t-att-href="step_specific_values['main_button_href']">
+                            <t t-out="step_specific_values['main_button']"/>
+                            <i class="fa fa-angle-right ms-2 fw-light"/>
+                        </a>
+                    </t>
+                </t>
+                <div t-if="not hide_payment_button" t-attf-class="position-relative #{_form_send_navigation and 'd-flex d-lg-none' or 'd-flex'} w-100 justify-content-center align-items-center my-2 opacity-75">
+                    <hr class="w-100"/>
+                    <span class="px-3">or</span>
+                    <hr class="w-100"/>
+                </div>
+                <a t-att-href="step_specific_values['back_button_href']" class="text-center">
+                    <i class="fa fa-angle-left me-2 fw-light"/>
+                    繼續下單
+                </a>
+            </div>
+        </xpath>
+    </template>
+    <!-- 結帳流程(送貨頁)訂單摘要：改為顯示含稅金額 -->
+    <template id="custom_cart_summary_line_price" inherit_id="website_sale.checkout_layout">
+        <xpath expr="//td[@name='website_sale_cart_summary_line_price']" position="replace">
+            <td t-attf-class="#{o_cart_sum_padding_top} td-price pe-0 text-end"
+                name="website_sale_cart_summary_line_price">
+                <t groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                    <span t-field="line.price_total" style="white-space: nowrap;"
+                        t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                </t>
+            </td>
+        </xpath>
+        <!-- 送貨頁摘要列：隱藏總金額及分隔符號 -->
+        <xpath expr="//button[hasclass('accordion-button')]/div[hasclass('d-flex')]" position="replace">
+            <div class="d-flex flex-wrap">
+                <b class="w-100">訂單摘要</b>
+                <span t-out="str(website_sale_order.cart_quantity)"/>&#160;個項目
+                <t groups="base.group_user,idx_ebs.group_front_clinic_manager">
+                    &#160;-&#160;
+                    <span id="amount_total_summary"
+                        class="monetary_field ms-1"
+                        t-field="website_sale_order.amount_total"
+                        t-options='{"widget": "monetary", "display_currency": website_sale_order.currency_id}'/>
+                </t>
+            </div>
+        </xpath>
+    </template>
+</odoo>
