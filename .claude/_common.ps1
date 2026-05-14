@@ -293,6 +293,9 @@ function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
     $p.StartInfo = $psi
     $p.Start() | Out-Null
 
+    $stdoutTask = $p.StandardOutput.ReadToEndAsync()
+    $stderrTask = $p.StandardError.ReadToEndAsync()
+
     if (-not $p.WaitForExit($timeoutSec * 1000)) {
         $p.Kill()
         throw "test timeout"
@@ -300,6 +303,6 @@ function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
 
     return @{
         ExitCode = $p.ExitCode
-        Output   = $p.StandardOutput.ReadToEnd() + $p.StandardError.ReadToEnd()
+        Output   = $stdoutTask.Result + $stderrTask.Result
     }
 }
