@@ -25,7 +25,9 @@ function Test-Environment {
         $dbPwd  = if ($dbConf) { $dbConf.db_password } else { '' }
         $dbHost = if ($dbConf) { $dbConf.db_host } else { 'localhost' }
         $dbPort = if ($dbConf) { $dbConf.db_port } else { '5432' }
-        $dbCheck = python -c "import psycopg2; psycopg2.connect(dbname='$dbName', user='$dbUser', password='$dbPwd', host='$dbHost', port=$dbPort)" 2>&1
+        $env:_CHK_DB = $dbName; $env:_CHK_USER = $dbUser; $env:_CHK_PWD = $dbPwd; $env:_CHK_HOST = $dbHost; $env:_CHK_PORT = $dbPort
+        $dbCheck = python -c "import os,psycopg2; psycopg2.connect(dbname=os.environ['_CHK_DB'],user=os.environ['_CHK_USER'],password=os.environ['_CHK_PWD'],host=os.environ['_CHK_HOST'],port=int(os.environ['_CHK_PORT']))" 2>&1
+        Remove-Item Env:\_CHK_DB, Env:\_CHK_USER, Env:\_CHK_PWD, Env:\_CHK_HOST, Env:\_CHK_PORT -ErrorAction SilentlyContinue
         if ($LASTEXITCODE -ne 0) {
             $ok = $false
             $errors += "無法連線到資料庫 '$dbName' ($dbHost`:$dbPort)，請確認 odoo.conf 設定"
@@ -108,7 +110,7 @@ try {
             }
 
             Write-Host "[TDD] $($case.Name) generating tests..."
-            $slimSpec = python "$root\.claude\slim_spec.py" $analysisPath 2>&1
+            $slimSpec = python "$root\.claude\slim_spec.py" "$analysisPath" 2>&1
             if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
             $prompt = (Get-Content $agentPath -Raw) + "`n`nSPEC:`n" + $slimSpec
 
@@ -157,8 +159,8 @@ try {
 
             $isExitCodeFail       = ($result.ExitCode -ne 0)
             $isLogContainsFailure = ($result.Output -match "\bFAIL\b" -or $result.Output -match "\bERROR\b" -or $result.Output -match "Traceback")
-            $hasTestRun           = ($result.Output -match "Ran \d+ tests? in")
-            $isZeroTestsRun       = ($projectType.ToUpper() -eq "ODOO" -and $result.Output -match "Ran 0 tests")
+            $hasTestRun           = ($result.Output -match "\bRan\b \d+ tests? in")
+            $isZeroTestsRun       = ($projectType.ToUpper() -eq "ODOO" -and $result.Output -match "\bRan 0 tests\b")
 
             $isValidRed = $isExitCodeFail -and $isLogContainsFailure -and (-not $isZeroTestsRun) -and $hasTestRun
 

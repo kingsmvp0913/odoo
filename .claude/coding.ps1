@@ -87,7 +87,7 @@ try {
             if (Test-Path $tracebackPath) {
                 $tracebackContent = Get-Content $tracebackPath -Raw
             }
-            $slimSpec = python "$root\.claude\slim_spec.py" $analysisPath 2>&1
+            $slimSpec = python "$root\.claude\slim_spec.py" "$analysisPath" 2>&1
             if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
             $prompt = (Get-Content $agentPath -Raw) +
                       "`n`nSPEC:`n" + $slimSpec +
