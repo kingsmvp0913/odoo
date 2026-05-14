@@ -156,7 +156,7 @@ try {
             }
 
             $isExitCodeFail       = ($result.ExitCode -ne 0)
-            $isLogContainsFailure = ($result.Output -match "FAIL" -or $result.Output -match "ERROR" -or $result.Output -match "Traceback")
+            $isLogContainsFailure = ($result.Output -match "\bFAIL\b" -or $result.Output -match "\bERROR\b" -or $result.Output -match "Traceback")
             $hasTestRun           = ($result.Output -match "Ran \d+ tests? in")
             $isZeroTestsRun       = ($projectType.ToUpper() -eq "ODOO" -and $result.Output -match "Ran 0 tests")
 

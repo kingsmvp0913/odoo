@@ -140,7 +140,7 @@ try {
             }
 
             $isExitOk    = ($result.ExitCode -eq 0)
-            $hasTestRun  = ($result.Output -match "Ran \d+ tests? in")
+            $hasTestRun  = ($result.Output -match "\bRan\b \d+ tests? in")
             $isCleanPass = ($result.Output -notmatch "\bFAIL\b|\bERROR\b|Traceback")
             $isGreen     = $isExitOk -and $hasTestRun -and $isCleanPass
             if ($isGreen) {

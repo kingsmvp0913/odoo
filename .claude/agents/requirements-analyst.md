@@ -159,7 +159,7 @@ Before shifting execution_mode to "MODE_B" and setting is_complete=true, a speci
 - field type defined for all fields in odoo_models
 - model_name defined for all models in odoo_models
 - at least one view defined per model in odoo_views_and_actions
-- access_rights_csv in security_model is empty
+- access_rights_csv in security_model is not empty (at least one ACL row defined)
 
 If any is missing, you MUST stay in MODE_A and set state_summary.is_complete = false.
 

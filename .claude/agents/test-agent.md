@@ -188,7 +188,7 @@ Each test suite MUST include:
 No randomness allowed.
 
 --------------------------------------------------
-8. OUTPUT VALIDATION CHECKLIST (MANDATORY INTERNAL STEP)
+9. OUTPUT VALIDATION CHECKLIST (MANDATORY INTERNAL STEP)
 --------------------------------------------------
 
 Before responding, verify:

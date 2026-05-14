@@ -371,7 +371,8 @@ try {
 
             if (-not (Atomic-WriteJson $updated $analysisPath)) { throw "failed writing updated analysis.json" }
 
-            $isOdoo = ($updated.inferred_target.project -eq "Odoo")
+            $projectVal = "$($updated.inferred_target.project)".Trim()
+            $isOdoo = ($projectVal -eq "Odoo")
             $odooVersionMissing = $isOdoo -and [string]::IsNullOrWhiteSpace($updated.inferred_target.odoo_version)
 
             $done = ($cleanMode -eq "MODE_B") -and

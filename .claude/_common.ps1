@@ -75,6 +75,7 @@ function Convert-MultiFileTags($aiOutput, $caseDir) {
         if ($currentFile) { $buffer.AppendLine($line) | Out-Null }
     }
     if ($currentFile) { $files[$currentFile] = $buffer.ToString().Trim() }
+    $buffer.Clear() | Out-Null
 
     if ($files.Count -eq 0) {
         $rawOutputPath = Join-Path $caseDir "ai_raw_output_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
@@ -151,6 +152,16 @@ function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion) {
     }
 
     $finalAbsolute = Join-Path $baseDir $fixedPath
+
+    # 路徑逃逸檢查：確認最終路徑仍在 $baseDir 範圍內
+    $resolvedAbsolute = [System.IO.Path]::GetFullPath($finalAbsolute)
+    $resolvedBase     = [System.IO.Path]::GetFullPath($baseDir)
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    if (-not ($resolvedAbsolute.StartsWith($resolvedBase + $sep) -or $resolvedAbsolute -eq $resolvedBase)) {
+        Write-Host "[SECURITY] 偵測到路徑逃逸，拒絕寫入: $finalAbsolute" -ForegroundColor Red
+        return $false
+    }
+
     try {
         $tmp = "$finalAbsolute.tmp"
         $dir = Split-Path $finalAbsolute
