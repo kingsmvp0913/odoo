@@ -73,46 +73,32 @@ function Get-OdooConf($odooVersion) {
 # CLAUDE CALL (300s timeout, 3-retry with exponential backoff)
 # =========================================================
 function Invoke-ClaudeWithTimeout($prompt) {
-    $maxAttempts = 3; $attempt = 1; $waitSec = 2
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "claude"
+    $psi.Arguments = "-p --model claude-sonnet-4-6"
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
 
-    while ($attempt -le $maxAttempts) {
-        try {
-            $psi = New-Object System.Diagnostics.ProcessStartInfo
-            $psi.FileName = "claude"
-            $psi.Arguments = "-p --model claude-sonnet-4-6"
-            $psi.RedirectStandardInput = $true
-            $psi.RedirectStandardOutput = $true
-            $psi.RedirectStandardError = $true
-            $psi.UseShellExecute = $false
-            $psi.CreateNoWindow = $true
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $psi
+    $p.Start() | Out-Null
 
-            $p = New-Object System.Diagnostics.Process
-            $p.StartInfo = $psi
-            $p.Start() | Out-Null
+    $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+    $writer.Write($prompt)
+    $writer.Close()
 
-            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
-            $writer.Write($prompt)
-            $writer.Close()
-
-            if (-not $p.WaitForExit(300000)) {
-                $p.Kill()
-                try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
-                throw "timeout"
-            }
-
-            $resp = $p.StandardOutput.ReadToEnd() + $p.StandardError.ReadToEnd()
-            if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty" }
-
-            Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
-            return $resp
-        }
-        catch {
-            Write-Host "[RETRY] attempt $attempt failed: $_"
-            Start-Sleep -Seconds $waitSec
-            $waitSec *= 2; $attempt++
-        }
+    if (-not $p.WaitForExit(300000)) {
+        $p.Kill()
+        try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
+        throw "timeout"
     }
-    throw "Claude failed"
+
+    $resp = $p.StandardOutput.ReadToEnd() + $p.StandardError.ReadToEnd()
+    if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty response" }
+    return $resp
 }
 
 # =========================================================

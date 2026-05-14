@@ -71,27 +71,9 @@ function Get-RepoModulesCached {
 # CLAUDE CALL
 # =========================================================
 function Invoke-Claude($prompt) {
-    $max = 3
-    $i = 1
-    $wait = 2
-
-    while ($i -le $max) {
-        try {
-            $resp = $prompt | claude -p --model claude-sonnet-4-6
-            if (-not [string]::IsNullOrWhiteSpace($resp)) {
-                Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
-                return $resp
-            }
-            throw "empty response"
-        }
-        catch {
-            Write-Host "[RETRY] attempt $i failed. Retrying in $wait seconds... Error: $_" -ForegroundColor Yellow
-            Start-Sleep -Seconds $wait
-            $wait *= 2
-            $i++
-        }
-    }
-    throw "Claude failed after retries"
+    $resp = $prompt | claude -p --model claude-sonnet-4-6
+    if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty response" }
+    return $resp
 }
 
 # =========================================================
