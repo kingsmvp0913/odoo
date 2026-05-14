@@ -138,6 +138,55 @@ function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion) {
     }
 }
 
+function Invoke-ClaudeAgentStream {
+    param(
+        [string]$prompt,
+        [string]$model,
+        [string]$workDir = "",
+        [int]$timeoutMs = 600000
+    )
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "claude"
+    $psi.Arguments = "--model $model"
+    if ($workDir) { $psi.WorkingDirectory = $workDir }
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $psi
+    $p.Start() | Out-Null
+
+    $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+    $writer.Write($prompt)
+    $writer.Close()
+
+    $stderrTask = $p.StandardError.ReadToEndAsync()
+
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while (-not $p.StandardOutput.EndOfStream) {
+        $remaining = [Math]::Max(1, $timeoutMs - [int]$sw.ElapsedMilliseconds)
+        $readTask = $p.StandardOutput.ReadLineAsync()
+        if (-not $readTask.Wait($remaining)) {
+            $p.Kill()
+            try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
+            throw "agent timeout after ${timeoutMs}ms"
+        }
+        $line = $readTask.Result
+        if ($null -ne $line) { Write-Host $line }
+    }
+
+    $p.WaitForExit(5000) | Out-Null
+
+    $errText = $stderrTask.Result.Trim()
+    if (-not [string]::IsNullOrWhiteSpace($errText)) {
+        Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
+    }
+}
+
 function Invoke-ClaudeStream {
     param(
         [string]$prompt,
