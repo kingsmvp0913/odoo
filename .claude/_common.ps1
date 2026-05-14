@@ -180,8 +180,7 @@ function Invoke-ClaudeAgentStream {
     param(
         [string]$prompt,
         [string]$model,
-        [string]$workDir = "",
-        [int]$timeoutMs = 600000
+        [string]$workDir = ""
     )
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
@@ -204,16 +203,8 @@ function Invoke-ClaudeAgentStream {
 
     $stderrTask = $p.StandardError.ReadToEndAsync()
 
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
     while (-not $p.StandardOutput.EndOfStream) {
-        $remaining = [Math]::Max(1, $timeoutMs - [int]$sw.ElapsedMilliseconds)
-        $readTask = $p.StandardOutput.ReadLineAsync()
-        if (-not $readTask.Wait($remaining)) {
-            $p.Kill()
-            try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
-            throw "agent timeout after ${timeoutMs}ms"
-        }
-        $line = $readTask.Result
+        $line = $p.StandardOutput.ReadLine()
         if ($null -ne $line) { Write-Host $line }
     }
 
