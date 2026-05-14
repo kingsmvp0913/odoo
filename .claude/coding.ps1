@@ -12,45 +12,7 @@ $agentPath     = "$root\.claude\agents\senior-software-engineer.md"
 # CLAUDE CALL (HAIKU, 300s timeout, 3-retry with exponential backoff)
 # =========================================================
 function Invoke-ClaudeHaiku($prompt) {
-    $maxAttempts = 3; $attempt = 1; $waitSec = 2
-
-    while ($attempt -le $maxAttempts) {
-        try {
-            $psi = New-Object System.Diagnostics.ProcessStartInfo
-            $psi.FileName = "claude"
-            $psi.Arguments = "-p --model claude-haiku-4-5-20251001"
-            $psi.RedirectStandardInput = $true
-            $psi.RedirectStandardOutput = $true
-            $psi.RedirectStandardError = $true
-            $psi.UseShellExecute = $false
-            $psi.CreateNoWindow = $true
-
-            $p = New-Object System.Diagnostics.Process
-            $p.StartInfo = $psi
-            $p.Start() | Out-Null
-
-            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
-            $writer.Write($prompt)
-            $writer.Close()
-
-            if (-not $p.WaitForExit(300000)) {
-                $p.Kill()
-                try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
-                throw "timeout"
-            }
-
-            $resp = $p.StandardOutput.ReadToEnd() + $p.StandardError.ReadToEnd()
-            if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty" }
-
-            return $resp
-        }
-        catch {
-            Write-Host "[RETRY] Haiku attempt $attempt failed: $_" -ForegroundColor Yellow
-            Start-Sleep -Seconds $waitSec
-            $waitSec *= 2; $attempt++
-        }
-    }
-    throw "Claude Haiku failed after retries"
+    return Invoke-ClaudeStream -prompt $prompt -model "claude-haiku-4-5-20251001" -maxAttempts 3
 }
 
 # =========================================================
