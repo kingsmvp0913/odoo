@@ -76,8 +76,10 @@ try {
                 if (Test-Path $tracebackPath) {
                     $tracebackContent = Get-Content $tracebackPath -Raw
                 }
+                $slimSpec = python "$root\.claude\slim_spec.py" $analysisPath 2>&1
+                if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
                 $prompt = (Get-Content $agentPath -Raw) +
-                          "`n`nSPEC:`n" + ($analysis | ConvertTo-Json -Depth 100 -Compress) +
+                          "`n`nSPEC:`n" + $slimSpec +
                           "`n`n<traceback_log>`n$tracebackContent`n</traceback_log>"
 
                 $rawOutput = ""

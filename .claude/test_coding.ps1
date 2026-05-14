@@ -138,7 +138,9 @@ try {
             }
 
             Write-Host "[TDD] $($case.Name) generating tests..."
-            $prompt = (Get-Content $agentPath -Raw) + "`n`nSPEC:`n" + ($analysis | ConvertTo-Json -Depth 100 -Compress)
+            $slimSpec = python "$root\.claude\slim_spec.py" $analysisPath 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
+            $prompt = (Get-Content $agentPath -Raw) + "`n`nSPEC:`n" + $slimSpec
 
             $rawAiOutput = ""
             try {
