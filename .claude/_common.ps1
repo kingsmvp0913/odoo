@@ -138,6 +138,128 @@ function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion) {
     }
 }
 
+function Invoke-ClaudeAgentStream {
+    param(
+        [string]$prompt,
+        [string]$model,
+        [string]$workDir = "",
+        [int]$timeoutMs = 600000
+    )
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "claude"
+    $psi.Arguments = "--model $model"
+    if ($workDir) { $psi.WorkingDirectory = $workDir }
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $psi
+    $p.Start() | Out-Null
+
+    $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+    $writer.Write($prompt)
+    $writer.Close()
+
+    $stderrTask = $p.StandardError.ReadToEndAsync()
+
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while (-not $p.StandardOutput.EndOfStream) {
+        $remaining = [Math]::Max(1, $timeoutMs - [int]$sw.ElapsedMilliseconds)
+        $readTask = $p.StandardOutput.ReadLineAsync()
+        if (-not $readTask.Wait($remaining)) {
+            $p.Kill()
+            try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
+            throw "agent timeout after ${timeoutMs}ms"
+        }
+        $line = $readTask.Result
+        if ($null -ne $line) { Write-Host $line }
+    }
+
+    $p.WaitForExit(5000) | Out-Null
+
+    $errText = $stderrTask.Result.Trim()
+    if (-not [string]::IsNullOrWhiteSpace($errText)) {
+        Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
+    }
+}
+
+function Invoke-ClaudeStream {
+    param(
+        [string]$prompt,
+        [string]$model,
+        [int]$timeoutMs = 300000,
+        [int]$maxAttempts = 3
+    )
+    $attempt = 1
+    $waitSec = 2
+
+    while ($attempt -le $maxAttempts) {
+        $p = $null
+        try {
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = "claude"
+            $psi.Arguments = "-p --model $model"
+            $psi.RedirectStandardInput = $true
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError = $true
+            $psi.UseShellExecute = $false
+            $psi.CreateNoWindow = $true
+
+            $p = New-Object System.Diagnostics.Process
+            $p.StartInfo = $psi
+            $p.Start() | Out-Null
+
+            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+            $writer.Write($prompt)
+            $writer.Close()
+
+            # Async stderr prevents deadlock while we stream stdout
+            $stderrTask = $p.StandardError.ReadToEndAsync()
+
+            # Stream stdout with deadline enforcement
+            $stdoutSb = New-Object System.Text.StringBuilder
+            $sw = [System.Diagnostics.Stopwatch]::StartNew()
+            while (-not $p.StandardOutput.EndOfStream) {
+                $remaining = [Math]::Max(1, $timeoutMs - [int]$sw.ElapsedMilliseconds)
+                $readTask = $p.StandardOutput.ReadLineAsync()
+                if (-not $readTask.Wait($remaining)) {
+                    $p.Kill()
+                    try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
+                    throw "timeout"
+                }
+                $line = $readTask.Result
+                if ($null -ne $line) {
+                    Write-Host $line
+                    $stdoutSb.AppendLine($line) | Out-Null
+                }
+            }
+            $p.WaitForExit(5000) | Out-Null
+
+            $resp    = $stdoutSb.ToString().Trim()
+            $errText = $stderrTask.Result.Trim()
+            if ([string]::IsNullOrWhiteSpace($resp) -and -not [string]::IsNullOrWhiteSpace($errText)) {
+                $resp = $errText
+            }
+
+            if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty response" }
+
+            Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
+            return $resp
+        }
+        catch {
+            Write-Host "[RETRY] $model attempt $attempt failed: $_" -ForegroundColor Yellow
+            Start-Sleep -Seconds $waitSec
+            $waitSec *= 2
+            $attempt++
+        }
+    }
+    throw "Claude ($model) failed after $maxAttempts retries"
+}
+
 function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $exe
