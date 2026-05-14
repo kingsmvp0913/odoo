@@ -139,7 +139,10 @@ try {
                 continue
             }
 
-            $isGreen = ($result.ExitCode -eq 0) -and ($result.Output -notmatch "FAIL|ERROR|Traceback")
+            $isExitOk    = ($result.ExitCode -eq 0)
+            $hasTestRun  = ($result.Output -match "Ran \d+ tests? in")
+            $isCleanPass = ($result.Output -notmatch "\bFAIL\b|\bERROR\b|Traceback")
+            $isGreen     = $isExitOk -and $hasTestRun -and $isCleanPass
             if ($isGreen) {
                 Write-Host "[GREEN] $($case.Name) 測試通過！" -ForegroundColor Green
                 $dest = Join-Path $finalDir $case.Name

@@ -178,10 +178,13 @@ STRICT QUALITY GATES
 OUTPUT FORMAT ENFORCEMENT (MANDATORY VERBATIM)
 --------------------------------------------------
 
-You MUST wrap your JSON output with the following markers to ensure robust parsing. No extra text before or after these markers:
+DEFAULT (stream mode): Wrap your JSON output with the following markers. No extra text before or after:
 
 ---BEGIN_JSON---
 { ... your json object ... }
 ---END_JSON---
 
-This rule overrides any previous output format instructions that conflict.
+AGENT MODE EXCEPTION: When the caller provides a file path and instructs you to write to a file
+(i.e. the prompt contains "AGENT MODE" and specifies a file path), write raw JSON directly to
+that file with NO markers, NO code fences, and NO stdout output. The AGENT MODE instruction
+in the prompt overrides the marker rule above.

@@ -40,36 +40,6 @@ function Test-Environment {
 }
 
 # =========================================================
-# ODOO CONF READER
-# =========================================================
-function Get-IniVal($text, $key, $default = $null) {
-    if ($text -match "(?m)^\s*$([regex]::Escape($key))\s*=\s*(.+?)\s*$") { return $matches[1].Trim() }
-    return $default
-}
-
-function Get-OdooConf($odooVersion) {
-    $candidates = @(
-        "$root\odoo-$odooVersion\odoo.conf",
-        "$root\odoo-$odooVersion\debian\odoo.conf",
-        "$root\odoo-$odooVersion\server\odoo.conf"
-    )
-    $confPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if (-not $confPath) {
-        throw "找不到 odoo.conf，已搜尋：$($candidates -join ' | ')"
-    }
-    Write-Host "[CONF] 讀取 $confPath" -ForegroundColor DarkCyan
-    $raw = Get-Content $confPath -Raw -Encoding UTF8
-    return @{
-        path        = $confPath
-        db_host     = (Get-IniVal $raw 'db_host'     'localhost')
-        db_port     = (Get-IniVal $raw 'db_port'     '5432')
-        db_user     = (Get-IniVal $raw 'db_user'     'odoo')
-        db_password = (Get-IniVal $raw 'db_password' '')
-        db_name     = (Get-IniVal $raw 'test_db_name' $null)
-    }
-}
-
-# =========================================================
 # CLAUDE CALL (300s timeout, 3-retry with exponential backoff)
 # =========================================================
 function Invoke-ClaudeWithTimeout($prompt) {
@@ -207,11 +177,7 @@ try {
 
                 Release-Lock $lockPath
                 $isLockReleased = $true
-
-                $dest = Join-Path $confirmDir $case.Name
-                if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
-                Move-Item -LiteralPath $case.FullName -Destination $confirmDir -Force
-                Write-Host "[ROLLBACK] $($case.Name) → confirm/" -ForegroundColor Yellow
+                Write-Host "[HOLD] $($case.Name) 留在 testcoding/，請確認測試結構後重新執行" -ForegroundColor Yellow
                 continue
             }
 

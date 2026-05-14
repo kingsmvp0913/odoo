@@ -9,7 +9,12 @@ Output: YAML to stdout
 """
 import sys
 import json
-import yaml
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 KEEP = ("inferred_target", "technical_specification")
 INFERRED_TARGET_DROP = ("confidence",)
@@ -35,9 +40,12 @@ def main():
         for drop in INFERRED_TARGET_DROP:
             slim["inferred_target"].pop(drop, None)
 
-    sys.stdout.write(
-        yaml.dump(slim, allow_unicode=True, default_flow_style=False, sort_keys=False)
-    )
+    if HAS_YAML:
+        sys.stdout.write(
+            yaml.dump(slim, allow_unicode=True, default_flow_style=False, sort_keys=False)
+        )
+    else:
+        sys.stdout.write(json.dumps(slim, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

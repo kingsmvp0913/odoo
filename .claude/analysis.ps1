@@ -280,7 +280,8 @@ Write the complete JSON object to: $path
 
                 try {
                     $json = Get-Content $path -Raw -Encoding utf8 | ConvertFrom-Json -ErrorAction Stop
-                    if (-not $json.execution_mode -or -not $json.state_summary) { throw "invalid schema" }
+                    if (-not $json.execution_mode -or -not $json.state_summary) { throw "invalid schema: missing execution_mode or state_summary" }
+                    if (-not $json.inferred_target -or -not $json.inferred_target.module) { throw "invalid schema: missing inferred_target.module" }
                     $success = $true
                     break
                 }
