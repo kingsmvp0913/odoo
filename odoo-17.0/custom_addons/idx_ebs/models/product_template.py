@@ -21,7 +21,7 @@ class ProductTemplate(models.Model):
     catalog_number = fields.Char(string="貨號")
     specification = fields.Char(string="規格")
     category = fields.Selection(
-        [("0", "人類醫學"), ("1", "小動物")], string="檢測單類別"
+        [("0", "人類醫學"), ("1", "小動物"), ("2", "E66")], string="檢測單類別"
     )
     wf_sync_time = fields.Integer(string="WF同步次數", default=0)
     wf_sync_datetime = fields.Datetime(string="WF同步時間")

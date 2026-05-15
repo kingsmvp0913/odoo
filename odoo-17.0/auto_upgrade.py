@@ -40,7 +40,7 @@ ODOO_BIN = "C:/odoo/odoo-17.0/odoo-bin"
 # Odoo 設定檔
 ODOO_CONF = "C:/odoo/odoo-17.0/odoo.conf"
 # 客製模組資料夾（只掃這裡做 auto upgrade 判斷）
-ADDONS_PATH = "C:/odoo/odoo-17.0/custom_addons"
+ADDONS_PATH = "C:/online_addons/17"
 # 指定資料庫（可以用環境變數 ODOO_DB 設定）
 DB_NAME = os.getenv("ODOO_DB", "")  # 預設空白代表不指定資料庫
 # 時間判斷，按自己的習慣調整（秒）

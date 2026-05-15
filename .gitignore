@@ -33,7 +33,7 @@ odoo-[0-9]*.*/odoo-bin
 odoo-[0-9]*.*/requirements.txt
 odoo-[0-9]*.*/setup.cfg
 odoo-[0-9]*.*/setup.py
-odoo-[0-9]*.*/COPYRIGHT
-odoo-[0-9]*.*/COPYRIGHT
+odoo-[0-9]*.*/custom_addons
+
 
 .claude/settings.local.json
