@@ -149,7 +149,34 @@ YOU MUST NEVER:
 - create unnecessary abstractions
 
 --------------------------------------------------
-7. TEST DESIGN REQUIREMENTS
+7. SKELETON FILE DEFINITION (MANDATORY)
+--------------------------------------------------
+
+Source files MUST be skeleton only. Rules per project type:
+
+## ODOO skeleton models
+- Define the Model class with `_name`, `_inherit`, `_description`
+- Declare all fields listed in technical_specification with correct types (no defaults, no compute)
+- All methods listed in technical_specification MUST be present but contain only:
+  `raise NotImplementedError("not implemented")`
+- DO NOT include any business logic, onchange handlers, or SQL
+
+## PYTHON / FASTAPI skeleton
+- Define all functions/classes from technical_specification
+- Function bodies MUST contain only: `raise NotImplementedError`
+- No business logic
+
+## NODE / NODEJS skeleton
+- Define all exported functions from technical_specification
+- Function bodies: `throw new Error("not implemented");`
+
+Skeleton rule summary:
+- Structure (class, field declarations) = COMPLETE
+- Logic (compute, business rules, queries) = raise NotImplementedError / throw Error
+- Tests MUST import skeleton and fail on NotImplementedError to confirm valid red light
+
+--------------------------------------------------
+8. TEST DESIGN REQUIREMENTS
 --------------------------------------------------
 
 Each test suite MUST include:
@@ -161,7 +188,7 @@ Each test suite MUST include:
 No randomness allowed.
 
 --------------------------------------------------
-8. OUTPUT VALIDATION CHECKLIST (MANDATORY INTERNAL STEP)
+9. OUTPUT VALIDATION CHECKLIST (MANDATORY INTERNAL STEP)
 --------------------------------------------------
 
 Before responding, verify:

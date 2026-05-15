@@ -1,6 +1,5 @@
 $root = "C:\odoo"
 
-$confirmDir    = "$root\.claude\kingsmvpsplan\confirm"
 $testcodingDir = "$root\.claude\kingsmvpsplan\testcoding"
 $codingDir     = "$root\.claude\kingsmvpsplan\coding"
 
@@ -25,7 +24,9 @@ function Test-Environment {
         $dbPwd  = if ($dbConf) { $dbConf.db_password } else { '' }
         $dbHost = if ($dbConf) { $dbConf.db_host } else { 'localhost' }
         $dbPort = if ($dbConf) { $dbConf.db_port } else { '5432' }
-        $dbCheck = python -c "import psycopg2; psycopg2.connect(dbname='$dbName', user='$dbUser', password='$dbPwd', host='$dbHost', port=$dbPort)" 2>&1
+        $env:_CHK_DB = $dbName; $env:_CHK_USER = $dbUser; $env:_CHK_PWD = $dbPwd; $env:_CHK_HOST = $dbHost; $env:_CHK_PORT = $dbPort
+        $dbCheck = python -c "import os,psycopg2; psycopg2.connect(dbname=os.environ['_CHK_DB'],user=os.environ['_CHK_USER'],password=os.environ['_CHK_PWD'],host=os.environ['_CHK_HOST'],port=int(os.environ['_CHK_PORT']))" 2>&1
+        Remove-Item Env:\_CHK_DB, Env:\_CHK_USER, Env:\_CHK_PWD, Env:\_CHK_HOST, Env:\_CHK_PORT -ErrorAction SilentlyContinue
         if ($LASTEXITCODE -ne 0) {
             $ok = $false
             $errors += "無法連線到資料庫 '$dbName' ($dbHost`:$dbPort)，請確認 odoo.conf 設定"
@@ -40,79 +41,10 @@ function Test-Environment {
 }
 
 # =========================================================
-# ODOO CONF READER
-# =========================================================
-function Get-IniVal($text, $key, $default = $null) {
-    if ($text -match "(?m)^\s*$([regex]::Escape($key))\s*=\s*(.+?)\s*$") { return $matches[1].Trim() }
-    return $default
-}
-
-function Get-OdooConf($odooVersion) {
-    $candidates = @(
-        "$root\odoo-$odooVersion\odoo.conf",
-        "$root\odoo-$odooVersion\debian\odoo.conf",
-        "$root\odoo-$odooVersion\server\odoo.conf"
-    )
-    $confPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if (-not $confPath) {
-        throw "找不到 odoo.conf，已搜尋：$($candidates -join ' | ')"
-    }
-    Write-Host "[CONF] 讀取 $confPath" -ForegroundColor DarkCyan
-    $raw = Get-Content $confPath -Raw -Encoding UTF8
-    return @{
-        path        = $confPath
-        db_host     = (Get-IniVal $raw 'db_host'     'localhost')
-        db_port     = (Get-IniVal $raw 'db_port'     '5432')
-        db_user     = (Get-IniVal $raw 'db_user'     'odoo')
-        db_password = (Get-IniVal $raw 'db_password' '')
-        db_name     = (Get-IniVal $raw 'test_db_name' $null)
-    }
-}
-
-# =========================================================
-# CLAUDE CALL (300s timeout, 3-retry with exponential backoff)
+# CLAUDE CALL (3-retry with exponential backoff)
 # =========================================================
 function Invoke-ClaudeWithTimeout($prompt) {
-    $maxAttempts = 3; $attempt = 1; $waitSec = 2
-
-    while ($attempt -le $maxAttempts) {
-        try {
-            $psi = New-Object System.Diagnostics.ProcessStartInfo
-            $psi.FileName = "claude"
-            $psi.Arguments = "-p --model claude-sonnet-4-6"
-            $psi.RedirectStandardInput = $true
-            $psi.RedirectStandardOutput = $true
-            $psi.RedirectStandardError = $true
-            $psi.UseShellExecute = $false
-            $psi.CreateNoWindow = $true
-
-            $p = New-Object System.Diagnostics.Process
-            $p.StartInfo = $psi
-            $p.Start() | Out-Null
-
-            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
-            $writer.Write($prompt)
-            $writer.Close()
-
-            if (-not $p.WaitForExit(300000)) {
-                $p.Kill()
-                try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
-                throw "timeout"
-            }
-
-            $resp = $p.StandardOutput.ReadToEnd() + $p.StandardError.ReadToEnd()
-            if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty" }
-
-            Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
-            return $resp
-        }
-        catch {
-            Write-Host "[RETRY] attempt $attempt failed: $_"
-            Start-Sleep -Seconds $waitSec
-            $waitSec *= 2; $attempt++
-        }
-    }
-    throw "Claude failed"
+    return Invoke-ClaudeStream -prompt $prompt -model "claude-sonnet-4-6" -maxAttempts 3
 }
 
 # =========================================================
@@ -177,7 +109,9 @@ try {
             }
 
             Write-Host "[TDD] $($case.Name) generating tests..."
-            $prompt = (Get-Content $agentPath -Raw) + "`n`nSPEC:`n" + ($analysis | ConvertTo-Json -Depth 100 -Compress)
+            $slimSpec = python "$root\.claude\slim_spec.py" "$analysisPath" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
+            $prompt = (Get-Content $agentPath -Raw) + "`n`nSPEC:`n" + $slimSpec
 
             $rawAiOutput = ""
             try {
@@ -223,9 +157,9 @@ try {
             }
 
             $isExitCodeFail       = ($result.ExitCode -ne 0)
-            $isLogContainsFailure = ($result.Output -match "FAIL" -or $result.Output -match "ERROR" -or $result.Output -match "Traceback")
-            $hasTestRun           = ($result.Output -match "Ran \d+ tests? in")
-            $isZeroTestsRun       = ($projectType.ToUpper() -eq "ODOO" -and $result.Output -match "Ran 0 tests")
+            $isLogContainsFailure = ($result.Output -match "\bFAIL\b" -or $result.Output -match "\bERROR\b" -or $result.Output -match "Traceback")
+            $hasTestRun           = ($result.Output -match "\bRan\b \d+ tests? in")
+            $isZeroTestsRun       = ($projectType.ToUpper() -eq "ODOO" -and $result.Output -match "\bRan 0 tests\b")
 
             $isValidRed = $isExitCodeFail -and $isLogContainsFailure -and (-not $isZeroTestsRun) -and $hasTestRun
 
@@ -244,11 +178,7 @@ try {
 
                 Release-Lock $lockPath
                 $isLockReleased = $true
-
-                $dest = Join-Path $confirmDir $case.Name
-                if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
-                Move-Item -LiteralPath $case.FullName -Destination $confirmDir -Force
-                Write-Host "[ROLLBACK] $($case.Name) → confirm/" -ForegroundColor Yellow
+                Write-Host "[HOLD] $($case.Name) 留在 testcoding/，請確認測試結構後重新執行" -ForegroundColor Yellow
                 continue
             }
 

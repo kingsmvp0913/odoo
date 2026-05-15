@@ -75,6 +75,7 @@ function Convert-MultiFileTags($aiOutput, $caseDir) {
         if ($currentFile) { $buffer.AppendLine($line) | Out-Null }
     }
     if ($currentFile) { $files[$currentFile] = $buffer.ToString().Trim() }
+    $buffer.Clear() | Out-Null
 
     if ($files.Count -eq 0) {
         $rawOutputPath = Join-Path $caseDir "ai_raw_output_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
@@ -99,6 +100,33 @@ function Write-PipelineFile($content, $absolutePath) {
 }
 
 # $root must be defined in the calling script before dot-sourcing
+function Get-IniVal($text, $key, $default = $null) {
+    if ($text -match "(?m)^\s*$([regex]::Escape($key))\s*=\s*(.+?)\s*$") { return $matches[1].Trim() }
+    return $default
+}
+
+function Get-OdooConf($odooVersion) {
+    $candidates = @(
+        "$root\odoo-$odooVersion\odoo.conf",
+        "$root\odoo-$odooVersion\debian\odoo.conf",
+        "$root\odoo-$odooVersion\server\odoo.conf"
+    )
+    $confPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $confPath) {
+        throw "找不到 odoo.conf，已搜尋：$($candidates -join ' | ')"
+    }
+    Write-Host "[CONF] 讀取 $confPath" -ForegroundColor DarkCyan
+    $raw = Get-Content $confPath -Raw -Encoding UTF8
+    return @{
+        path        = $confPath
+        db_host     = (Get-IniVal $raw 'db_host'     'localhost')
+        db_port     = (Get-IniVal $raw 'db_port'     '5432')
+        db_user     = (Get-IniVal $raw 'db_user'     'odoo')
+        db_password = (Get-IniVal $raw 'db_password' '')
+        db_name     = (Get-IniVal $raw 'test_db_name' $null)
+    }
+}
+
 function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion) {
     $normPath = $path.Replace("\", "/")
     $fixedPath = $normPath
@@ -124,6 +152,16 @@ function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion) {
     }
 
     $finalAbsolute = Join-Path $baseDir $fixedPath
+
+    # 路徑逃逸檢查：確認最終路徑仍在 $baseDir 範圍內
+    $resolvedAbsolute = [System.IO.Path]::GetFullPath($finalAbsolute)
+    $resolvedBase     = [System.IO.Path]::GetFullPath($baseDir)
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    if (-not ($resolvedAbsolute.StartsWith($resolvedBase + $sep) -or $resolvedAbsolute -eq $resolvedBase)) {
+        Write-Host "[SECURITY] 偵測到路徑逃逸，拒絕寫入: $finalAbsolute" -ForegroundColor Red
+        return $false
+    }
+
     try {
         $tmp = "$finalAbsolute.tmp"
         $dir = Split-Path $finalAbsolute
@@ -136,6 +174,109 @@ function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion) {
         if (Test-Path "$finalAbsolute.tmp") { Remove-Item "$finalAbsolute.tmp" -Force -ErrorAction SilentlyContinue }
         return $false
     }
+}
+
+function Invoke-ClaudeAgentStream {
+    param(
+        [string]$prompt,
+        [string]$model,
+        [string]$workDir = ""
+    )
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "claude"
+    $psi.Arguments = "--model $model"
+    if ($workDir) { $psi.WorkingDirectory = $workDir }
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $psi
+    $p.Start() | Out-Null
+
+    $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+    $writer.Write($prompt)
+    $writer.Close()
+
+    $stderrTask = $p.StandardError.ReadToEndAsync()
+
+    while (-not $p.StandardOutput.EndOfStream) {
+        $line = $p.StandardOutput.ReadLine()
+        if ($null -ne $line) { Write-Host $line }
+    }
+
+    $p.WaitForExit(5000) | Out-Null
+
+    $errText = $stderrTask.Result.Trim()
+    if (-not [string]::IsNullOrWhiteSpace($errText)) {
+        Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
+    }
+}
+
+function Invoke-ClaudeStream {
+    param(
+        [string]$prompt,
+        [string]$model,
+        [int]$maxAttempts = 3
+    )
+    $attempt = 1
+    $waitSec = 2
+
+    while ($attempt -le $maxAttempts) {
+        $p = $null
+        try {
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = "claude"
+            $psi.Arguments = "-p --model $model"
+            $psi.RedirectStandardInput = $true
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError = $true
+            $psi.UseShellExecute = $false
+            $psi.CreateNoWindow = $true
+
+            $p = New-Object System.Diagnostics.Process
+            $p.StartInfo = $psi
+            $p.Start() | Out-Null
+
+            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+            $writer.Write($prompt)
+            $writer.Close()
+
+            # Async stderr prevents deadlock while we stream stdout
+            $stderrTask = $p.StandardError.ReadToEndAsync()
+
+            $stdoutSb = New-Object System.Text.StringBuilder
+            while (-not $p.StandardOutput.EndOfStream) {
+                $line = $p.StandardOutput.ReadLine()
+                if ($null -ne $line) {
+                    Write-Host $line
+                    $stdoutSb.AppendLine($line) | Out-Null
+                }
+            }
+            $p.WaitForExit(5000) | Out-Null
+
+            $resp    = $stdoutSb.ToString().Trim()
+            $errText = $stderrTask.Result.Trim()
+            if ([string]::IsNullOrWhiteSpace($resp) -and -not [string]::IsNullOrWhiteSpace($errText)) {
+                $resp = $errText
+            }
+
+            if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty response" }
+
+            Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
+            return $resp
+        }
+        catch {
+            Write-Host "[RETRY] $model attempt $attempt failed: $_" -ForegroundColor Yellow
+            Start-Sleep -Seconds $waitSec
+            $waitSec *= 2
+            $attempt++
+        }
+    }
+    throw "Claude ($model) failed after $maxAttempts retries"
 }
 
 function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
@@ -152,6 +293,9 @@ function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
     $p.StartInfo = $psi
     $p.Start() | Out-Null
 
+    $stdoutTask = $p.StandardOutput.ReadToEndAsync()
+    $stderrTask = $p.StandardError.ReadToEndAsync()
+
     if (-not $p.WaitForExit($timeoutSec * 1000)) {
         $p.Kill()
         throw "test timeout"
@@ -159,6 +303,6 @@ function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
 
     return @{
         ExitCode = $p.ExitCode
-        Output   = $p.StandardOutput.ReadToEnd() + $p.StandardError.ReadToEnd()
+        Output   = $stdoutTask.Result + $stderrTask.Result
     }
 }

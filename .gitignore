@@ -36,3 +36,4 @@ odoo-[0-9]*.*/setup.py
 odoo-[0-9]*.*/COPYRIGHT
 odoo-[0-9]*.*/COPYRIGHT
 
+.claude/settings.local.json

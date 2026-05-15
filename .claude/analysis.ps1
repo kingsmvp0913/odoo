@@ -71,27 +71,11 @@ function Get-RepoModulesCached {
 # CLAUDE CALL
 # =========================================================
 function Invoke-Claude($prompt) {
-    $max = 3
-    $i = 1
-    $wait = 2
+    return Invoke-ClaudeStream -prompt $prompt -model "claude-sonnet-4-6" -maxAttempts 3
+}
 
-    while ($i -le $max) {
-        try {
-            $resp = $prompt | claude -p --model claude-sonnet-4-6
-            if (-not [string]::IsNullOrWhiteSpace($resp)) {
-                Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
-                return $resp
-            }
-            throw "empty response"
-        }
-        catch {
-            Write-Host "[RETRY] attempt $i failed. Retrying in $wait seconds... Error: $_" -ForegroundColor Yellow
-            Start-Sleep -Seconds $wait
-            $wait *= 2
-            $i++
-        }
-    }
-    throw "Claude failed after retries"
+function Invoke-ClaudeAgent($prompt) {
+    Invoke-ClaudeAgentStream -prompt $prompt -model "claude-sonnet-4-6" -workDir $root
 }
 
 # =========================================================
@@ -248,17 +232,68 @@ try {
 
             $versionHint = "`n`n【SYSTEM CONFIRMED CONTEXT — DO NOT QUESTION】`nodoo_version = `"$odooVersion`" (confirmed from project config, treat as a fixed fact, do NOT add any clarification question about odoo_version)"
 
+            $path = "$caseDir\analysis.json"
+            $moduleRoot = "$root\odoo-$odooVersion\custom_addons"
+
+            $agentHint = @"
+
+
+【AGENT MODE — FILE OUTPUT REQUIRED】
+⚠️ OVERRIDE: Ignore the ---BEGIN_JSON--- stdout marker rule above. In agent mode, write raw JSON to file instead.
+
+You have file system tools. Execute in order:
+
+STEP 1 — READ EXISTING CODE:
+Infer the target module name from the business requirements.
+Check if this directory exists: $moduleRoot\<inferred_module_name>\
+If it exists, read: __manifest__.py, models\*.py, views\*.xml
+Use the existing code to make technical_specification accurate (correct field names, inherit chains, xpath targets).
+
+STEP 2 — WRITE OUTPUT:
+Write the complete JSON object to: $path
+- Raw JSON only, no ---BEGIN_JSON--- markers, no code fences
+- UTF-8 encoding
+- Do NOT write JSON to stdout
+"@
+
             $prompt = $promptTemplate +
                 $versionHint +
-                "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement_data>`n$req`n</user_requirement_data>`n`n分析"
+                "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement_data>`n$req`n</user_requirement_data>`n`n" +
+                $agentHint + "`n`n分析"
 
-            $json = Parse-ClaudeJson (Invoke-Claude $prompt)
+            $maxAgentAttempts = 3
+            $success = $false
+            for ($attempt = 1; $attempt -le $maxAgentAttempts; $attempt++) {
+                Write-Host "[AGENT] $caseId analysis attempt $attempt/$maxAgentAttempts" -ForegroundColor Cyan
+                Remove-Item $path -Force -ErrorAction SilentlyContinue
 
-            if (-not $json.execution_mode -or -not $json.state_summary) { throw "invalid schema structure" }
+                try { Invoke-ClaudeAgent $prompt }
+                catch {
+                    Write-Host "[ERROR] Agent call failed (attempt $attempt): $_" -ForegroundColor Red
+                    continue
+                }
+
+                if (-not (Test-Path $path)) {
+                    Write-Host "[RETRY] Agent did not write analysis.json (attempt $attempt)" -ForegroundColor Yellow
+                    continue
+                }
+
+                try {
+                    $json = Get-Content $path -Raw -Encoding utf8 | ConvertFrom-Json -ErrorAction Stop
+                    if (-not $json.execution_mode -or -not $json.state_summary) { throw "invalid schema: missing execution_mode or state_summary" }
+                    if (-not $json.inferred_target -or -not $json.inferred_target.module) { throw "invalid schema: missing inferred_target.module" }
+                    $success = $true
+                    break
+                }
+                catch {
+                    Write-Host "[RETRY] Invalid analysis.json (attempt $attempt): $_" -ForegroundColor Yellow
+                    Remove-Item $path -Force -ErrorAction SilentlyContinue
+                }
+            }
+
+            if (-not $success) { throw "Claude agent failed to produce valid analysis.json" }
 
             $json | Add-Member -Force repo_context @{ available_modules = @(Get-RepoModulesCached) }
-            $path = "$caseDir\analysis.json"
-
             if (-not (Atomic-WriteJson $json $path)) { throw "write failed" }
 
             Move-Item -LiteralPath $file.FullName -Destination $caseDir -Force
@@ -336,7 +371,8 @@ try {
 
             if (-not (Atomic-WriteJson $updated $analysisPath)) { throw "failed writing updated analysis.json" }
 
-            $isOdoo = ($updated.inferred_target.project -eq "Odoo")
+            $projectVal = "$($updated.inferred_target.project)".Trim()
+            $isOdoo = ($projectVal -eq "Odoo")
             $odooVersionMissing = $isOdoo -and [string]::IsNullOrWhiteSpace($updated.inferred_target.odoo_version)
 
             $done = ($cleanMode -eq "MODE_B") -and
