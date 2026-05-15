@@ -44,7 +44,7 @@
         <field name="name">idx.sale.order.ocr1.tree</field>
         <field name="model">idx.sale.order.ocr1</field>
         <field name="arch" type="xml">
-            <tree editable="bottom" js_class="idx_view_sale_order_ocr1_tree">
+            <tree editable="top" js_class="idx_view_sale_order_ocr1_tree">
                 <field name="order_id" string="訂單號碼"/>
                 <field name="image_file_name" column_invisible="1"/>
                 <field name="image_file" string="圖片檔" widget="binary" filename="image_file_name" optional="show"/>

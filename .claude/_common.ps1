@@ -306,3 +306,163 @@ function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
         Output   = $stdoutTask.Result + $stderrTask.Result
     }
 }
+
+function Invoke-ClaudeAgentCapture {
+    param(
+        [string]$prompt,
+        [string]$model,
+        [string]$workDir = ""
+    )
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "claude"
+    $psi.Arguments = "--model $model"
+    if ($workDir) { $psi.WorkingDirectory = $workDir }
+    $psi.RedirectStandardInput  = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError  = $true
+    $psi.UseShellExecute        = $false
+    $psi.CreateNoWindow         = $true
+
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $psi
+    $p.Start() | Out-Null
+
+    $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+    $writer.Write($prompt)
+    $writer.Close()
+
+    $stderrTask = $p.StandardError.ReadToEndAsync()
+    $sb = New-Object System.Text.StringBuilder
+
+    while (-not $p.StandardOutput.EndOfStream) {
+        $line = $p.StandardOutput.ReadLine()
+        if ($null -ne $line) {
+            Write-Host $line
+            $sb.AppendLine($line) | Out-Null
+        }
+    }
+
+    $p.WaitForExit(5000) | Out-Null
+
+    $errText = $stderrTask.Result.Trim()
+    if (-not [string]::IsNullOrWhiteSpace($errText)) {
+        Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
+    }
+
+    return $sb.ToString().Trim()
+}
+
+function Invoke-ClaudePrintStreamCapture {
+    param(
+        [string]$prompt,
+        [string]$model,
+        [int]$maxAttempts = 3
+    )
+    $attempt = 1
+    $waitSec  = 2
+
+    while ($attempt -le $maxAttempts) {
+        $p = $null
+        try {
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = "claude"
+            $psi.Arguments = "-p --output-format stream-json --include-partial-messages --model $model"
+            $psi.RedirectStandardInput  = $true
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError  = $true
+            $psi.UseShellExecute        = $false
+            $psi.CreateNoWindow         = $true
+
+            $p = New-Object System.Diagnostics.Process
+            $p.StartInfo = $psi
+            $p.Start() | Out-Null
+
+            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
+            $writer.Write($prompt)
+            $writer.Close()
+
+            $stderrTask  = $p.StandardError.ReadToEndAsync()
+            $finalResult = $null
+            $wroteOutput = $false
+
+            while (-not $p.StandardOutput.EndOfStream) {
+                $line = $p.StandardOutput.ReadLine()
+                if ([string]::IsNullOrWhiteSpace($line)) { continue }
+                $event = $null
+                try { $event = $line | ConvertFrom-Json -ErrorAction Stop } catch { }
+
+                if ($null -eq $event) { Write-Host $line; continue }
+
+                if ($event.type -eq "assistant" -and $null -ne $event.message) {
+                    $txt = ""
+                    foreach ($block in @($event.message.content)) {
+                        if ($null -ne $block -and $block.type -eq "text") { $txt += $block.text }
+                    }
+                    if ($txt) { Write-Host $txt -NoNewline; $wroteOutput = $true }
+                }
+                elseif ($event.type -eq "result") {
+                    if ($wroteOutput) { Write-Host "" }
+                    if ($event.subtype -eq "error") { throw "Claude error: $($event.error)" }
+                    $finalResult = $event.result
+                }
+            }
+
+            $p.WaitForExit(5000) | Out-Null
+            $errText = $stderrTask.Result.Trim()
+            if (-not [string]::IsNullOrWhiteSpace($errText)) {
+                Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
+            }
+
+            if ([string]::IsNullOrWhiteSpace($finalResult)) { throw "empty or missing result" }
+            Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
+            return $finalResult
+        }
+        catch {
+            Write-Host "[RETRY] attempt $attempt failed: $_" -ForegroundColor Yellow
+            try { if ($null -ne $p -and -not $p.HasExited) { $p.Kill() } } catch {}
+            Start-Sleep -Seconds $waitSec
+            $waitSec *= 2
+            $attempt++
+        }
+    }
+    throw "Claude ($model) failed after $maxAttempts retries"
+}
+
+function Send-OdooTaskMessage {
+    param(
+        [string]$OdooUrl,
+        [string]$DbName,
+        [string]$Username,
+        [string]$Password,
+        [int]$TaskId,
+        [string]$Body
+    )
+    try {
+        $authBody = @{
+            jsonrpc = "2.0"; method = "call"; id = 1
+            params  = @{ db = $DbName; login = $Username; password = $Password }
+        } | ConvertTo-Json -Depth 5 -Compress
+        $authResp = Invoke-RestMethod -Uri "$OdooUrl/web/session/authenticate" `
+            -Method Post -ContentType "application/json" -Body $authBody -SessionVariable ods
+        if ($authResp.error -or -not $authResp.result) {
+            Write-Host "[WARN] Odoo 登入失敗，跳過進度回報" -ForegroundColor Yellow; return
+        }
+        $innerIds   = [object[]]@($TaskId)
+        $outerArgs  = [object[]]@(,$innerIds)
+        $msgPayload = @{
+            jsonrpc = "2.0"; method = "call"; id = 2
+            params  = @{
+                model  = "project.task"
+                method = "message_post"
+                args   = $outerArgs
+                kwargs = @{ body = $Body; message_type = "comment" }
+            }
+        } | ConvertTo-Json -Depth 10 -Compress
+        Invoke-RestMethod -Uri "$OdooUrl/web/dataset/call_kw" `
+            -Method Post -ContentType "application/json" -Body $msgPayload -WebSession $ods | Out-Null
+        Write-Host "[ODOO] 已回報進度至 task $TaskId" -ForegroundColor DarkCyan
+    }
+    catch {
+        Write-Host "[WARN] Odoo 進度回報失敗: $_" -ForegroundColor Yellow
+    }
+}

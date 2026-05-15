@@ -298,6 +298,9 @@ Write the complete JSON object to: $path
 
             Move-Item -LiteralPath $file.FullName -Destination $caseDir -Force
             Write-Host "[OK] $caseId -> successfully initialized in confirm" -ForegroundColor Green
+            if ($caseId -match '^task_(\d+)$') {
+                Send-OdooTaskMessage $ODOO_URL $DB_NAME $USERNAME $PASSWORD ([int]$matches[1]) "<p>【Pipeline】需求分析完成，請查看 analysis.json 並填寫 <b>clarification_channel</b> 中的答案。</p>"
+            }
         }
         catch {
             Write-Host "[ERROR] Initial analysis failed for $caseId. Details: $_" -ForegroundColor Red
@@ -393,6 +396,9 @@ try {
 
                 Move-Item -LiteralPath $casePath -Destination $testcodingDir -Force
                 Write-Host "[DONE] $caseName -> All requirements resolved! Successfully advanced to Coding Stage." -ForegroundColor Green
+                if ($caseName -match '^task_(\d+)$') {
+                    Send-OdooTaskMessage $ODOO_URL $DB_NAME $USERNAME $PASSWORD ([int]$matches[1]) "<p>【Pipeline】需求釐清完成，任務已進入<b>測試開發</b>階段。</p>"
+                }
             }
             else {
                 Remove-Item "$analysisPath.bak" -Force -ErrorAction SilentlyContinue
@@ -423,4 +429,26 @@ try {
 finally {
     Release-Lock $globalLockFile2
 }
+Write-Host ""
+Write-Host "=== Pipeline 任務狀態摘要 ===" -ForegroundColor Cyan
+$stageMap = [ordered]@{
+    "start"      = $startDir
+    "confirm"    = $confirmDir
+    "testcoding" = $testcodingDir
+    "coding"     = $codingDir
+    "final"      = $finalDir
+}
+$totalCount = 0
+foreach ($stage in $stageMap.Keys) {
+    $dir = $stageMap[$stage]
+    if (-not (Test-Path $dir)) { continue }
+    $items = Get-ChildItem $dir -Exclude "README.md" -ErrorAction SilentlyContinue
+    foreach ($item in $items) {
+        $tName = if ($item.PSIsContainer) { $item.Name } else { $item.BaseName }
+        Write-Host ("  [{0,-10}]  {1}" -f $stage, $tName) -ForegroundColor White
+        $totalCount++
+    }
+}
+if ($totalCount -eq 0) { Write-Host "  (目前無任何待處理任務)" -ForegroundColor DarkGray }
+Write-Host ""
 Write-Host "[PIPELINE DONE]"

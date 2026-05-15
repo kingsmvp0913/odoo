@@ -76,6 +76,7 @@ for task in tasks:
 
     clean_description = remove_images_only(task.get("description"))
     project_name = task["project_id"][1] if task.get("project_id") else "未知專案"
+    stage_name   = task["stage_id"][1]   if task.get("stage_id")   else "未知階段"
 
     message_payload = {
         "jsonrpc": "2.0", "method": "call",
@@ -99,7 +100,7 @@ for task in tasks:
 
     all_messages_text = "\n".join(message_lines) if message_lines else "無訊息內容"
 
-    file_content = f"---id---\n{task_id}\n---title---\n{task_name}\n---project---\n{project_name}\n---description---\n{clean_description}\n---message---\n{all_messages_text}"
+    file_content = f"---id---\n{task_id}\n---title---\n{task_name}\n---project---\n{project_name}\n---stage---\n{stage_name}\n---description---\n{clean_description}\n---message---\n{all_messages_text}"
 
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(file_content)

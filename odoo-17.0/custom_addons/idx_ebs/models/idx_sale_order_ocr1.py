@@ -9,6 +9,7 @@ class SaleOrderOCR1(models.Model):
     _name = "idx.sale.order.ocr1"
     _description = "人類醫學OCR明細"
     _rec_name = "order_id"
+    _order = "id desc"
 
     order_id = fields.Many2one("sale.order", string="訂單號碼", readonly=True, copy=False)
     partner_id = fields.Many2one("res.partner", string="客戶", required=True)

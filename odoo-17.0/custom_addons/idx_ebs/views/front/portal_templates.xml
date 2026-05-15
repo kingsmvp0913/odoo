@@ -780,6 +780,7 @@
                                                 <th t-if="has_pdf" class="text-start">電子書報告</th>
                                                 <th class="text-start">親取</th>
                                                 <th class="text-start d-none d-xl-table-cell">親取日期</th>
+                                                <th class="text-start d-none d-xl-table-cell">預計交貨日</th>
                                                 <th class="text-start d-none d-xl-table-cell">備註</th>
                                             </tr>
                                         </thead>
@@ -822,6 +823,9 @@
                                                         </td>
                                                         <td class="text-start  d-none d-xl-table-cell">
                                                             <span t-field="report.pick_date" t-options='{"widget": "date", "format": "yyyy年MM月dd日"}'/>
+                                                        </td>
+                                                        <td class="text-start  d-none d-xl-table-cell">
+                                                            <span t-field="report.expected_date" t-options='{"widget": "date", "format": "yyyy年MM月dd日"}'/>
                                                         </td>
                                                         <td class="text-start d-none d-xl-table-cell">
                                                             <span t-field="report.note"/>

@@ -1,0 +1,14 @@
+---id---
+3918
+---title---
+專案任務-內部使用功能調整
+---project---
+A11-Odoo產品功能研發
+---stage---
+待辦
+---description---
+<p>模組 idx_project clone 到本地 <font style="color: rgb(0, 0, 255);">執行環境odoo14</font><br/><a href="https://github.com/Ideaxpress-odoo/idx_project">https://github.com/Ideaxpress-odoo/idx_project</a>  <br/>1. 專案任務清單 增加顯示 <font style="color: rgb(255, 0, 0);">SD人員、SD時數、RD人員、RD時數</font>，且RD、SD時數需要在下方顯示目前表列之加總時數 <br/>    這4個欄位預設顯示可讓使用者選擇要顯示還是不顯示。</p><p><br/></p><p>2. 新增欄位 <font style="color: rgb(255, 0, 0);">實際完成日</font> 任務移動到已完成時，當下時間自動帶入實際完成日，該欄位開放修改，任何改動<span style="color: rgb(0, 0, 0); font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-weight: inherit; text-align: inherit;">實際完成日</span><font style="font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-weight: inherit; text-align: inherit; color: rgb(0, 0, 255);">須有訊息追蹤</font><span style="font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-weight: inherit; text-align: inherit; color: rgb(0, 0, 0);">。</span></p><p><br/></p>
+---message---
+[2026-05-15 01:09:46] 親愛的 林培軒Steven,
+您被指派到 任務 專案任務-內部使用功能調整.
+檢視 任務

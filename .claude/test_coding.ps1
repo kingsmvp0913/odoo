@@ -44,7 +44,7 @@ function Test-Environment {
 # CLAUDE CALL (3-retry with exponential backoff)
 # =========================================================
 function Invoke-ClaudeWithTimeout($prompt) {
-    return Invoke-ClaudeStream -prompt $prompt -model "claude-sonnet-4-6" -maxAttempts 3
+    return Invoke-ClaudePrintStreamCapture -prompt $prompt -model "claude-sonnet-4-6" -maxAttempts 3
 }
 
 # =========================================================

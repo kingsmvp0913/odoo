@@ -95,15 +95,54 @@ class SaleOrderReport(models.Model):
     fliphtml5_book_url = fields.Char(string="FlipHTML5 連結")
     expected_date = fields.Date(string="預計交貨日")
 
+    def _get_public_holiday_dates(self, year: int) -> set:
+        company = self.env.company
+        calendar = company.resource_calendar_id
+        if not calendar:
+            return set()
+
+        leaves = self.env['resource.calendar.leaves'].search([
+            ('calendar_id', '=', calendar.id),
+            ('resource_id', '=', False),
+            ('date_from', '>=', fields.Datetime.to_datetime(str(year) + '-01-01 00:00:00')),
+            ('date_from', '<',  fields.Datetime.to_datetime(str(year + 1) + '-01-01 00:00:00')),
+        ])
+
+        holiday_dates = set()
+        for leave in leaves:
+            d = leave.date_from.date()
+            end = leave.date_to.date()
+            while d <= end:
+                holiday_dates.add(d)
+                d += timedelta(days=1)
+        return holiday_dates
+
+    def _add_working_days(self, start_date, days: int, holiday_dates: set):
+        current = start_date
+        count = 0
+        while count < days:
+            current += timedelta(days=1)
+            if current.weekday() not in (5, 6) and current not in holiday_dates:
+                count += 1
+        return current
+
     def compute_expected_date(self):
         for rec in self:
+            base = rec.order_id.request_inspection_date
+            if not base:
+                rec.expected_date = False
+                continue
+
+            holiday_dates = self._get_public_holiday_dates(base.year)
+
             if rec.category == '1':
-                rec.expected_date = rec.order_id.request_inspection_date + relativedelta(days=4)
+                days = 4
+            elif rec.category == '2':
+                days = 3
             else:
-                if rec.default_code == '4611001':
-                    rec.expected_date = rec.order_id.request_inspection_date + relativedelta(days=3)
-                else:
-                    rec.expected_date = rec.order_id.request_inspection_date + relativedelta(days=5)
+                days = 5
+
+            rec.expected_date = self._add_working_days(base, days, holiday_dates)
 
     def _sanitize_filename(self, vals):
         """ 清理檔名中的空格與括號，避免 Odoo 17 JS 報錯 """
@@ -357,13 +396,14 @@ class SaleOrderReport(models.Model):
 
                 # 判斷狀態是否符合更新條件
                 if order_id.state in ['received', 'active']:
+                    base_date = order_id.request_inspection_date
+                    holiday_dates = self._get_public_holiday_dates(base_date.year)
                     if order_line_id.product_template_id.category == '1':
-                        expected_date = order_id.request_inspection_date + relativedelta(days=4)
+                        expected_date = self._add_working_days(base_date, 4, holiday_dates)
+                    elif order_line_id.product_template_id.category == '2':
+                        expected_date = self._add_working_days(base_date, 3, holiday_dates)
                     else:
-                        if order_line_id.product_template_id.default_code == '4611001':
-                            expected_date = order_id.request_inspection_date + relativedelta(days=3)
-                        else:
-                            expected_date = order_id.request_inspection_date + relativedelta(days=5)
+                        expected_date = self._add_working_days(base_date, 5, holiday_dates)
                     # 直接塞入準備建立的資料中
                     vals['expected_date'] = expected_date
 
@@ -570,21 +610,33 @@ class SaleOrderReport(models.Model):
         ninety_days_ago = today - timedelta(days=90)
 
         for rec in self:
+            model_name = 'idx.test.requisition1' if rec.category == '0' else 'idx.test.requisition2'
+            requisition_id = self.env[model_name].search([('order_report_id', '=', rec.id)], limit=1)
+
+            if not requisition_id:
+                continue
+
+            domain = [
+                ('patient_name', '=', requisition_id.patient_name),
+                ('create_date', '>=', ninety_days_ago),
+                ('id', '!=', requisition_id.id)
+            ]
+
             if rec.category == '0':
-                requisition_id = self.env['idx.test.requisition1'].search([('order_report_id', '=', rec.id)], limit=1)
-                rec_count = self.env['idx.test.requisition1'].search_count([
-                    ('birth_date', '=', requisition_id.birth_date),
-                    ('patient_name', '=', requisition_id.patient_name),
-                    ('create_date', '>=', ninety_days_ago),
-                    ('id', '!=', requisition_id.id)
-                ])
+                domain.append(('birth_date', '=', requisition_id.birth_date))
             else:
-                requisition_id = self.env['idx.test.requisition2'].search([('order_report_id', '=', rec.id)], limit=1)
-                rec_count = self.env['idx.test.requisition2'].search_count([
-                    ('patient_name', '=', requisition_id.patient_name),
-                    ('owner_name', '=', requisition_id.owner_name),
-                    ('create_date', '>=', ninety_days_ago),
-                    ('id', '!=', requisition_id.id)
-                ])
-            if rec_count:
-                raise ValidationError(_("該訂單於90天內已有送檢紀錄，請勿重複送檢"))
+                domain.append(('owner_name', '=', requisition_id.owner_name))
+
+            if self.env[model_name].search_count(domain) > 0:
+                return {
+                    "type": "ir.actions.client",
+                    "tag": "display_notification",
+                    "params": {
+                        "title": _("重複送檢警告"),
+                        "message": _("該訂單於90天內已有送檢紀錄。"),
+                        "sticky": True,
+                        "type": "warning",
+                        "next": {"type": "ir.actions.client", "tag": "soft_reload"},
+                    },
+                }
+        return None

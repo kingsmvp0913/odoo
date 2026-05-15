@@ -316,17 +316,22 @@ class SaleOrder(models.Model):
 
     def action_received(self):
         self._check_states_or_raise(allowed_states=['confirmed'], action_name='批次已收件')
-        self.report_ids._check_duplicate_submission()
+
         for record in self:
             if record.contains_consumables:
                 raise UserError(_("包含耗材的訂單不可進行「已收件」"))
             if not record.allow_inspection:
                 raise UserError(_("需勾選【已收檢】才可進行「已收件」"))
 
-        self.write(
-            {"request_inspection_date": fields.Date.today(), "state": "received"}
-        )
+        self.write({
+            "request_inspection_date": fields.Date.today(),
+            "state": "received"
+        })
         self.report_ids.compute_expected_date()
+
+        notification = self.report_ids._check_duplicate_submission()
+        if notification:
+            return notification
 
     #耗材確認
     def action_active_consumables(self):
