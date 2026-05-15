@@ -1,170 +1,79 @@
-$root = "C:\odoo"
+# coding.ps1 - 實作階段主程式（Step 4）
+# PS1 僅負責機械工作（檔案管理）；AI 呼叫由 Claude terminal 非同步執行
 
-$codingDir     = "$root\.claude\kingsmvpsplan\coding"
-$finalDir      = "$root\.claude\kingsmvpsplan\final"
+$script:ROOT = "C:\odoo"
+. "$script:ROOT\.claude\_common.ps1"
 
-$agentPath     = "$root\.claude\agents\senior-software-engineer.md"
+Initialize-PipelineDirs
 
-. "$root\.claude\_common.ps1"
+Write-Host "[STEP 4] 準備實作任務（analysis/ → coding/）..." -ForegroundColor Cyan
 
-# =========================================================
-# CLAUDE CALL (HAIKU, 串流模式)
-# =========================================================
-function Invoke-ClaudeHaiku($prompt) {
-    return Invoke-ClaudeStream -prompt $prompt -model "claude-haiku-4-5-20251001" -maxAttempts 3
-}
+$agentPath     = Join-Path $script:ROOT ".claude\agents\senior-software-engineer.md"
+$agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
+$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
-# =========================================================
-# 輔助：儲存 Agent 輸出與 Prompt 供除錯
-# =========================================================
-function Save-DebugArtifact {
-    param($caseDir, $prompt, $rawOutput, $attempt)
-    $debugDir = Join-Path $caseDir "debug"
-    if (-not (Test-Path $debugDir)) { New-Item -ItemType Directory -Force $debugDir | Out-Null }
-    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    Write-PipelineFile $prompt (Join-Path $debugDir "prompt_${timestamp}_attempt${attempt}.txt")
-    Write-PipelineFile $rawOutput (Join-Path $debugDir "output_${timestamp}_attempt${attempt}.txt")
-}
+$analysisTasks = Get-ChildItem $script:ANALYSIS_DIR -Directory -ErrorAction SilentlyContinue
 
-# =========================================================
-# MAIN PIPELINE
-# =========================================================
-$globalLockFile = "$root\.claude\kingsmvpsplan\global_coding.lock"
-if (-not (Acquire-Lock $globalLockFile 300)) {
-    Write-Host "[SKIP] 無法取得編碼階段全域鎖"
-    exit 1
-}
+foreach ($taskDir in $analysisTasks) {
+    $taskName        = $taskDir.Name
+    $taskLock        = Join-Path $taskDir.FullName "process.lock"
+    $finalDone       = Join-Path $taskDir.FullName ".final_done"
+    $implementDone   = Join-Path $taskDir.FullName ".implement_done"
+    $analysisYamlPath = Join-Path $taskDir.FullName "analysis.yaml"
 
-try {
-    $cases = Get-ChildItem $codingDir -Directory -ErrorAction SilentlyContinue
+    if (-not (Test-Path $finalDone))     { continue }
+    if (Test-Path $implementDone)        { continue }
 
-    foreach ($case in $cases) {
-        $lockPath = Join-Path $case.FullName "process.lock"
+    # 已有 pending prompt，等待 Claude 處理
+    if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+        Write-Host "[WAIT] $taskName - Claude 實作中" -ForegroundColor DarkGray
+        continue
+    }
 
-        if (-not (Acquire-Lock $lockPath 600)) {
-            Write-Host "[SKIP] locked: $($case.Name)"
-            continue
+    if (-not (Test-Path $analysisYamlPath)) {
+        Write-Host "[ERROR] $taskName 缺少 analysis.yaml" -ForegroundColor Red; continue
+    }
+
+    if (-not (Acquire-Lock $taskLock 300)) {
+        Write-Host "[SKIP] $taskName 已被鎖定" -ForegroundColor Yellow; continue
+    }
+
+    try {
+        $yamlContent = Get-Content $analysisYamlPath -Raw -Encoding UTF8
+        $parsed      = ConvertFrom-Yaml $yamlContent
+
+        $moduleName  = $parsed['module']
+        $odooVersion = $parsed['odoo_version']
+        $projectName = $parsed['project_name']
+
+        if (-not $moduleName) {
+            Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
-        $isLockReleased = $false
+        $modulePath  = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
+        $destTaskDir = Join-Path $script:CODING_DIR $taskName   # 任務移動後的路徑
 
-        try {
-            $analysisPath = "$($case.FullName)\analysis.json"
-            if (-not (Test-Path $analysisPath)) { continue }
+        Write-Host "[INFO] $taskName → $modulePath" -ForegroundColor DarkCyan
 
-            $analysis = Get-Content $analysisPath -Raw | ConvertFrom-Json
-            $projectType = $analysis.inferred_target.project
-            $module = $analysis.inferred_target.module
-            $odooVersion = $analysis.inferred_target.odoo_version
-            if ([string]::IsNullOrWhiteSpace($projectType)) { $projectType = "GENERIC" }
+        $fullPrompt = $agentTemplate +
+            "`n`n【TASK DIRECTORY】`n$destTaskDir" +
+            "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
+            "`n`n【OUTPUT PATH】`n$modulePath" +
+            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後寫入 .implement_done 到【TASK DIRECTORY】`n4. 刪除 pending_prompt.txt 和 .pending_coding"
 
-            # 提前檢查 odoo_version
-            if ($projectType.ToUpper() -eq "ODOO" -and [string]::IsNullOrWhiteSpace($odooVersion)) {
-                Write-Host "[ERROR] $($case.Name) – odoo_version 未填寫，請返回 confirm/ 補充後重試。" -ForegroundColor Red
-                continue
-            }
+        Write-PendingPrompt -taskDir $taskDir.FullName -stage "coding" -prompt $fullPrompt
 
-            # 讀取 odoo.conf（含 test_db_name）
-            $odooConf = $null
-            if ($projectType.ToUpper() -eq "ODOO") {
-                try {
-                    $odooConf = Get-OdooConf $odooVersion
-                } catch {
-                    Write-Host "[ERROR] $($case.Name) – $_" -ForegroundColor Red
-                    continue
-                }
-                if (-not $odooConf.db_name) {
-                    Write-Host "[ERROR] $($case.Name) – odoo-$odooVersion\odoo.conf 缺少 test_db_name，請補上後重試" -ForegroundColor Red
-                    continue
-                }
-            }
-
-            Write-Host "[CODING] $($case.Name)"
-
-            $tracebackPath = Join-Path $case.FullName "logs\error.log"
-            $tracebackContent = ""
-            if (Test-Path $tracebackPath) {
-                $tracebackContent = Get-Content $tracebackPath -Raw
-            }
-            $slimSpec = python "$root\.claude\slim_spec.py" "$analysisPath" 2>&1
-            if ($LASTEXITCODE -ne 0) { throw "slim_spec.py failed: $slimSpec" }
-            $prompt = (Get-Content $agentPath -Raw) +
-                      "`n`nSPEC:`n" + $slimSpec +
-                      "`n`n<traceback_log>`n$tracebackContent`n</traceback_log>"
-
-            $rawOutput = Invoke-ClaudeHaiku $prompt
-            $files = Convert-MultiFileTags $rawOutput $case.FullName
-            Save-DebugArtifact -caseDir $case.FullName -prompt $prompt -rawOutput $rawOutput -attempt 1
-
-            if ($files.Count -eq 0) {
-                Write-Host "[EMPTY OUTPUT] AI 未產生任何檔案，請手動確認 debug/ 後重新執行" -ForegroundColor Red
-                continue
-            }
-
-            # 寫入檔案（含路徑安全守衛）
-            $anyWriteFail = $false
-            foreach ($k in $files.Keys) {
-                if ($k -match "\.\." -or $k -match "^/" -or $k -match "^[A-Za-z]:\\") {
-                    Write-Host "[SECURITY] 拒絕非法路徑: $k" -ForegroundColor Red
-                    $anyWriteFail = $true
-                    break
-                }
-                if (-not (Out-AtomicFile $files[$k] $k $projectType $module $odooVersion)) {
-                    Write-Host "[WRITE FAIL] $k" -ForegroundColor Red
-                    $anyWriteFail = $true
-                    break
-                }
-                Write-Host "[FILE] $k"
-            }
-            if ($anyWriteFail) { continue }
-
-            # 執行測試
-            $result = $null
-            try {
-                switch ($projectType.ToUpper()) {
-                    "ODOO" {
-                        $odooBin = "odoo-$odooVersion/odoo-bin"
-                        $dbName  = $odooConf.db_name
-                        $result = Run-TestProcess "python" @($odooBin, "-c", "odoo-$odooVersion/odoo.conf", "-i", $module, "--test-tags=/$module", "--stop-after-init", "-d", $dbName) $root
-                    }
-                    default {
-                        $result = Run-TestProcess "pytest" @() $root
-                    }
-                }
-            }
-            catch {
-                Write-Host "[TEST ERROR] $_" -ForegroundColor Red
-                Write-PipelineFile "$_" "$($case.FullName)\logs\error.log"
-                continue
-            }
-
-            $isExitOk    = ($result.ExitCode -eq 0)
-            $hasTestRun  = ($result.Output -match "\bRan\b \d+ tests? in")
-            $isCleanPass = ($result.Output -notmatch "\bFAIL\b|\bERROR\b|Traceback")
-            $isGreen     = $isExitOk -and $hasTestRun -and $isCleanPass
-            if ($isGreen) {
-                Write-Host "[GREEN] $($case.Name) 測試通過！" -ForegroundColor Green
-                $dest = Join-Path $finalDir $case.Name
-                if (Test-Path $dest) { Remove-Item $dest -Recurse -Force -ErrorAction SilentlyContinue }
-                Move-Item -LiteralPath $case.FullName -Destination $finalDir -Force
-                Write-Host "[FINISH] $($case.Name) 完成開發並通過測試" -ForegroundColor Green
-            } else {
-                Write-Host "[RED] $($case.Name) 測試未通過，請確認後手動重新執行" -ForegroundColor Red
-                $logDir = Join-Path $case.FullName "logs"
-                if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force $logDir | Out-Null }
-                Write-PipelineFile $result.Output "$logDir\error.log"
-            }
-        }
-        catch {
-            Write-Host "[ERROR] 處理 $($case.Name) 時發生例外: $_" -ForegroundColor Red
-        }
-        finally {
-            if (-not $isLockReleased) { Release-Lock $lockPath }
-        }
+        Release-Lock $taskLock
+        $dest = Join-Path $script:CODING_DIR $taskName
+        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+        Move-Item $taskDir.FullName $script:CODING_DIR -Force
+        Write-Host "[OK] $taskName → coding/ (等待 Claude 實作)" -ForegroundColor Green
+    } catch {
+        Write-Host "[ERROR] ${taskName}: $_" -ForegroundColor Red
+    } finally {
+        if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
     }
 }
-finally {
-    Release-Lock $globalLockFile
-}
 
-Write-Host "[DONE]"
+Open-ClaudeTerminal
+Write-Host "`n[coding.ps1 完成]" -ForegroundColor Green

@@ -1,0 +1,130 @@
+# qa.ps1 - 品管階段主程式（Steps 5–6）
+# PS1 僅負責機械工作；AI QA 由 Claude terminal 非同步執行
+
+$script:ROOT = "C:\odoo"
+. "$script:ROOT\.claude\_common.ps1"
+
+Initialize-PipelineDirs
+
+$agentPath     = Join-Path $script:ROOT ".claude\agents\qa-analyst.md"
+$agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
+$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
+
+# ============================================================
+# STEP 5: coding/ → 寫 QA pending prompt（不等 AI）
+# ============================================================
+Write-Host "[STEP 5] 準備 QA 任務..." -ForegroundColor Cyan
+
+$codingTasks = Get-ChildItem $script:CODING_DIR -Directory -ErrorAction SilentlyContinue
+
+foreach ($taskDir in $codingTasks) {
+    $taskName        = $taskDir.Name
+    $taskLock        = Join-Path $taskDir.FullName "process.lock"
+    $implementDone   = Join-Path $taskDir.FullName ".implement_done"
+    $qaDone          = Join-Path $taskDir.FullName ".qa_done"
+    $analysisYamlPath = Join-Path $taskDir.FullName "analysis.yaml"
+
+    if (-not (Test-Path $implementDone)) { continue }
+    if (Test-Path $qaDone)               { continue }
+
+    # 已有 pending prompt，等待 Claude 處理
+    if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+        Write-Host "[WAIT] $taskName - Claude QA 中" -ForegroundColor DarkGray
+        continue
+    }
+
+    if (-not (Test-Path $analysisYamlPath)) {
+        Write-Host "[ERROR] $taskName 缺少 analysis.yaml" -ForegroundColor Red; continue
+    }
+
+    if (-not (Acquire-Lock $taskLock 300)) {
+        Write-Host "[SKIP] $taskName 已被鎖定" -ForegroundColor Yellow; continue
+    }
+
+    try {
+        $yamlContent = Get-Content $analysisYamlPath -Raw -Encoding UTF8
+        $parsed      = ConvertFrom-Yaml $yamlContent
+
+        $moduleName  = $parsed['module']
+        $odooVersion = $parsed['odoo_version']
+        $projectName = $parsed['project_name']
+
+        if (-not $moduleName) {
+            Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
+        }
+
+        $modulePath = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
+        Write-Host "[INFO] $taskName 準備 QA: $modulePath" -ForegroundColor DarkCyan
+
+        $fullPrompt = $agentTemplate +
+            "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
+            "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
+            "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
+            "`n`n完成後將 qa_report.yaml 和 .qa_done 寫入【TASK DIRECTORY】，並刪除 pending_prompt.txt 和 .pending_qa。"
+
+        Write-PendingPrompt -taskDir $taskDir.FullName -stage "qa" -prompt $fullPrompt
+        Write-Host "[OK] $taskName → 等待 Claude QA 檢查" -ForegroundColor Green
+    } catch {
+        Write-Host "[ERROR] STEP 5 ${taskName}: $_" -ForegroundColor Red
+    } finally {
+        Release-Lock $taskLock
+    }
+}
+
+# ============================================================
+# STEP 6: 依 QA 報告移至 final/ 或退回 confirm/（無 AI）
+# ============================================================
+Write-Host "`n[STEP 6] 處理 QA 結果..." -ForegroundColor Cyan
+
+$codingTasks2 = Get-ChildItem $script:CODING_DIR -Directory -ErrorAction SilentlyContinue
+
+foreach ($taskDir in $codingTasks2) {
+    $taskName     = $taskDir.Name
+    $taskLock     = Join-Path $taskDir.FullName "process.lock"
+    $qaDone       = Join-Path $taskDir.FullName ".qa_done"
+    $qaReportPath = Join-Path $taskDir.FullName "qa_report.yaml"
+
+    if (-not (Test-Path $qaDone))      { continue }
+    if (-not (Test-Path $qaReportPath)) { continue }
+
+    # 若 pending_prompt.txt 仍存在（QA 尚未完成），跳過
+    if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+        Write-Host "[WAIT] $taskName - Claude QA 尚未完成" -ForegroundColor DarkGray
+        continue
+    }
+
+    if (-not (Acquire-Lock $taskLock 300)) {
+        Write-Host "[SKIP] $taskName 已被鎖定" -ForegroundColor Yellow; continue
+    }
+
+    try {
+        $qaReport = Get-Content $qaReportPath -Raw -Encoding UTF8
+        $parsed   = ConvertFrom-Yaml $qaReport
+        $status   = $parsed['status']
+
+        if ($status -eq "PASSED") {
+            Release-Lock $taskLock
+            $dest = Join-Path $script:FINAL_DIR $taskName
+            if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+            Move-Item $taskDir.FullName $script:FINAL_DIR -Force
+            Write-Host "[OK] $taskName QA 通過 → final/" -ForegroundColor Green
+
+            if ($taskName -match '^task_(\d+)$') {
+                Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已完成，請查看 final/$taskName/</p>"
+            }
+        } else {
+            $reason = "QA 檢查失敗"
+            if ($qaReport -match '(?m)^\s*description:\s*"?([^"\r\n]+)"?') { $reason = $matches[1].Trim() }
+
+            Release-Lock $taskLock
+            BackToConfirm -taskDir $taskDir.FullName -reason $reason -stage "QA"
+        }
+    } catch {
+        Write-Host "[ERROR] STEP 6 ${taskName}: $_" -ForegroundColor Red
+    } finally {
+        if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
+    }
+}
+
+Open-ClaudeTerminal
+Write-Host "`n[qa.ps1 完成]" -ForegroundColor Green

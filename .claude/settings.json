@@ -25,5 +25,18 @@
       "PowerShell(Copy-Item **)"
     ]
   },
-  "spinnerTipsEnabled": false
+  "spinnerTipsEnabled": false,
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "開工",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File \"C:\\odoo\\.claude\\_pipeline_run.ps1\""
+          }
+        ]
+      }
+    ]
+  }
 }

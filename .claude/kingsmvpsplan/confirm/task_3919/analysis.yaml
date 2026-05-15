@@ -1,0 +1,38 @@
+case_id: task_3919
+timestamp: '2026-05-15T17:37:27'
+execution_mode: MODE_A
+
+inferred_target:
+  project: Odoo
+  odoo_version: '17.0'
+  module: idx_ebs
+  project_name: 2508014 凌越生醫-商務管理平台
+  confidence: 0.65
+
+state_summary:
+  is_complete: false
+  has_blocking_unknowns: true
+
+clarification_channel:
+  - id: 1
+    category: scope
+    question: Q82 和 Q90 分別對應哪個 Odoo 表單或 Model？目前程式中有以下候選：(A) idx.test.requisition1（人類醫學-送檢單）和 idx.test.requisition2（小動物-送檢單）；(B) idx.sale.order.ocr1（人類醫學 OCR 明細，已有 image_file 欄位）和 idx.sale.order.ocr2（小動物 OCR 明細，已有 image_file 欄位）；(C) 其他？
+    user_answer: null
+  - id: 2
+    category: data_model
+    question: 送檢單明細跟訂單明細中的圖檔欄位需要哪種型態？(A) 單張圖片（Binary，如現有的 image_file）；(B) 多個附件（Many2many 到 ir.attachment，類似附件清單）；(C) 兩者都要
+    user_answer: null
+  - id: 3
+    category: scope
+    question: 「訂單也需連動OCR 掃描讀圖檔」這句話的具體意思為何？(A) sale.order 本身要新增圖片欄位，讓業務手動上傳時也能附圖；(B) 從 OCR 明細建立訂單時，要把 OCR 的圖片自動複製到訂單上；(C) 其他？
+    user_answer: null
+
+technical_specification:
+  odoo_models: []
+  odoo_views_and_actions: []
+  core_logic: []
+  security_model:
+    access_rights_csv: []
+    record_rules: []
+  project_structure:
+    - ''

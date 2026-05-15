@@ -1,468 +1,316 @@
-# =========================================================
-# SHARED PIPELINE FUNCTIONS - sourced by analysis.ps1 / test_coding.ps1 / coding.ps1
-# =========================================================
+# _common.ps1 - 共用函數庫
+
+# ============================================================
+# 路徑常數
+# ============================================================
+$script:ROOT             = "C:\odoo"
+$script:ONLINE_ADDONS_DIR = "C:\online_addons"
+
+$script:START_DIR    = "$script:ROOT\.claude\kingsmvpsplan\start"
+$script:CONFIRM_DIR  = "$script:ROOT\.claude\kingsmvpsplan\confirm"
+$script:ANALYSIS_DIR = "$script:ROOT\.claude\kingsmvpsplan\analysis"
+$script:CODING_DIR   = "$script:ROOT\.claude\kingsmvpsplan\coding"
+$script:FINAL_DIR    = "$script:ROOT\.claude\kingsmvpsplan\final"
+
+$script:PIPELINE_WAITING     = "$script:ROOT\.claude\kingsmvpsplan\_PIPELINE_WAITING"
+$script:PROJECT_VERSION_MAP_PATH = "$script:ROOT\.claude\project_version_map.json"
+
+# ============================================================
+# Odoo 連線常數
+# ============================================================
+$script:ODOO_URL      = "https://odoo.ideaxpress.biz"
+$script:ODOO_DB       = "odoo"
+$script:ODOO_USERNAME = "steven.lin@ideaxpress.biz"
+$script:ODOO_USER_ID  = if ($env:ODOO_USER_ID) { [int]$env:ODOO_USER_ID } else { 79 }
+
+# ============================================================
+# 編碼設定
+# ============================================================
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+# ============================================================
+# 檔案鎖（真正排他鎖：持有 handle 直到 Release-Lock）
+# ============================================================
+$script:LockHandles = @{}
 
 function Acquire-Lock {
-    param([string]$lockPath, [int]$ttlSeconds = 600)
-    $lockObj = @{
-        pid        = $PID
-        host       = $env:COMPUTERNAME
-        created    = (Get-Date).ToString("o")
-        ttlSeconds = $ttlSeconds
-    }
-    $maxAttempts = 3
-    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-        $stream = $null
+    param(
+        [string]$LockPath,
+        [int]$TimeoutSeconds = 300
+    )
+    $startTime = Get-Date
+    while ($true) {
         try {
-            $stream = [System.IO.File]::Open($lockPath, 'CreateNew', 'Write', 'None')
-            $writer = New-Object System.IO.StreamWriter($stream)
-            $writer.Write(($lockObj | ConvertTo-Json -Depth 5))
-            $writer.Flush()
+            $handle = [System.IO.File]::Open($LockPath, 'OpenOrCreate', 'ReadWrite', 'None')
+            $script:LockHandles[$LockPath] = $handle
             return $true
-        }
-        catch [System.IO.IOException] {
-            if (-not (Test-Path $lockPath)) { continue }
-            try {
-                $existing = Get-Content $lockPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-                $age = (Get-Date) - [DateTime]::Parse($existing.created)
-                $isExpired     = $age.TotalSeconds -gt $existing.ttlSeconds
-                $isDeadProcess = -not (Get-Process -Id $existing.pid -ErrorAction SilentlyContinue)
-                if ($isExpired -or $isDeadProcess) {
-                    Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-                    continue
-                }
+        } catch {
+            if ((Get-Date) - $startTime -gt [TimeSpan]::FromSeconds($TimeoutSeconds)) {
+                Write-Host "[LOCK] 逾時無法取得: $LockPath" -ForegroundColor Red
                 return $false
             }
-            catch {
-                Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-                continue
-            }
+            Start-Sleep -Milliseconds 500
         }
-        catch { return $false }
-        finally { if ($null -ne $stream) { $stream.Close() } }
     }
-    return $false
 }
 
 function Release-Lock {
-    param([string]$lockPath)
-    if (-not (Test-Path $lockPath)) { return }
-    try {
-        $lock = Get-Content $lockPath -Raw | ConvertFrom-Json
-        if ($lock.pid -eq $PID -and $lock.host -eq $env:COMPUTERNAME) {
-            Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
-        }
+    param([string]$LockPath)
+    if ($script:LockHandles.ContainsKey($LockPath)) {
+        try { $script:LockHandles[$LockPath].Close(); $script:LockHandles[$LockPath].Dispose() } catch {}
+        $script:LockHandles.Remove($LockPath)
     }
-    catch { Remove-Item $lockPath -Force -ErrorAction SilentlyContinue }
+    Remove-Item $LockPath -Force -ErrorAction SilentlyContinue
 }
 
-function Convert-MultiFileTags($aiOutput, $caseDir) {
-    $files = @{}
-    $currentFile = $null
-    $buffer = New-Object System.Text.StringBuilder
-
-    foreach ($line in ($aiOutput -split "`r?`n")) {
-        $t = $line.Trim()
-        if ($t -match '^@FILE:(.+)$') {
-            if ($currentFile) { $files[$currentFile] = $buffer.ToString().Trim(); $buffer.Clear() | Out-Null }
-            $currentFile = $Matches[1].Trim()
-            continue
-        }
-        if ($t -eq '@FILE_END') {
-            if ($currentFile) { $files[$currentFile] = $buffer.ToString().Trim(); $currentFile = $null; $buffer.Clear() | Out-Null }
-            continue
-        }
-        if ($currentFile) { $buffer.AppendLine($line) | Out-Null }
+# ============================================================
+# 目錄初始化
+# ============================================================
+function Initialize-PipelineDirs {
+    @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR) | ForEach-Object {
+        if (-not (Test-Path $_)) { New-Item -ItemType Directory -Force $_ | Out-Null }
     }
-    if ($currentFile) { $files[$currentFile] = $buffer.ToString().Trim() }
-    $buffer.Clear() | Out-Null
-
-    if ($files.Count -eq 0) {
-        $rawOutputPath = Join-Path $caseDir "ai_raw_output_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
-        $aiOutput | Out-File $rawOutputPath -Encoding utf8 -Force
-        Write-Host "[FATAL] AI 輸出格式錯誤，未產生任何檔案。原始輸出已儲存至: $rawOutputPath" -ForegroundColor Red
-        Write-Host "[FATAL] 請檢查 AI 是否遵循 @FILE: / @FILE_END 格式" -ForegroundColor Red
-    }
-    return $files
 }
 
-function Write-PipelineFile($content, $absolutePath) {
+# ============================================================
+# 模組路徑函數
+# ============================================================
+function Get-OnlineAddonsRoot {
+    param([string]$odooVersion, [string]$projectName = $null)
+    if (-not [string]::IsNullOrWhiteSpace($projectName)) {
+        $p = Join-Path $script:ONLINE_ADDONS_DIR $projectName
+        if (-not (Test-Path $p)) { New-Item -ItemType Directory -Force $p | Out-Null }
+        return $p
+    }
+    $major = $odooVersion -replace '\.0$', ''
+    $p = Join-Path $script:ONLINE_ADDONS_DIR $major
+    if (-not (Test-Path $p)) { New-Item -ItemType Directory -Force $p | Out-Null }
+    return $p
+}
+
+function Get-ModulePath {
+    param([string]$moduleName, [string]$odooVersion, [string]$projectName = $null)
+    return Join-Path (Get-OnlineAddonsRoot -odooVersion $odooVersion -projectName $projectName) $moduleName
+}
+
+# ============================================================
+# YAML 序列化（支援巢狀物件與物件陣列）
+# ============================================================
+function Format-YamlScalar {
+    param($val)
+    if ($null -eq $val) { return 'null' }
+    if ($val -is [bool]) { return $val.ToString().ToLower() }
+    if ($val -is [int] -or $val -is [long] -or $val -is [double]) { return "$val" }
+    $s = "$val"
+    if ($s -eq '' -or $s -match '[\r\n]' -or $s -match '^\s|\s$' -or $s -match '[:#\[\]{}&*!|>''"%@`]') {
+        return "'" + ($s -replace "'", "''") + "'"
+    }
+    return $s
+}
+
+function Write-YamlObject {
+    param($obj, [int]$indent, [string]$prefix = '')
+    $sp = ' ' * $indent
+    $lines = @()
+    $props = if ($obj -is [hashtable]) { $obj.GetEnumerator() } else { $obj.PSObject.Properties }
+    $first = $true
+    foreach ($p in $props) {
+        $lead = if ($first -and $prefix) { "$prefix$($p.Name)" } else { "$sp$($p.Name)" }
+        $v = $p.Value
+        if ($null -eq $v) {
+            $lines += "${lead}: null"
+        } elseif ($v -is [hashtable] -or $v -is [PSCustomObject]) {
+            $lines += "${lead}:"
+            $lines += Write-YamlObject $v ($indent + 2)
+        } elseif ($v -is [System.Collections.IList]) {
+            $lines += "${lead}:"
+            foreach ($item in $v) {
+                if ($null -eq $item) {
+                    $lines += "$sp  - null"
+                } elseif ($item -is [hashtable] -or $item -is [PSCustomObject]) {
+                    $lines += Write-YamlObject $item ($indent + 4) "$sp  - "
+                } else {
+                    $lines += "$sp  - $(Format-YamlScalar $item)"
+                }
+            }
+        } else {
+            $lines += "${lead}: $(Format-YamlScalar $v)"
+        }
+        $first = $false
+    }
+    return $lines
+}
+
+function ConvertTo-Yaml {
+    param($obj)
+    if ($null -eq $obj) { return 'null' }
+    if ($obj -is [hashtable] -or $obj -is [PSCustomObject]) {
+        return (Write-YamlObject $obj 0) -join "`n"
+    }
+    return Format-YamlScalar $obj
+}
+
+# ============================================================
+# YAML 反序列化（萃取關鍵欄位，支援 CRLF）
+# ============================================================
+function ConvertFrom-Yaml {
+    param([string]$yaml)
+    $result = @{}
+
+    if ($yaml -match '(?m)^execution_mode:\s*(\S+)') { $result['execution_mode'] = $matches[1] }
+    if ($yaml -match '(?m)^\s+module:\s*(\S+)')      { $result['module'] = $matches[1] }
+    if ($yaml -match '(?m)^(?:\s+)?odoo_version:\s*"?([^"\r\n]+)"?') { $result['odoo_version'] = $matches[1].Trim() }
+    if ($yaml -match '(?m)^(?:\s+)?project_name:\s*"?([^"\r\n]+)"?') { $result['project_name'] = $matches[1].Trim() }
+    if ($yaml -match '(?m)^status:\s*(\S+)')          { $result['status'] = $matches[1] }
+
+    $result['has_null_answer'] = [regex]::IsMatch($yaml, "(?m)^\s*user_answer:\s*(null|`"`"|''|)?\s*$")
+    $result['has_any_answer']  = [regex]::IsMatch($yaml, '(?m)^\s*user_answer:\s*\S')
+    $result['is_mode_b']       = ($result['execution_mode'] -eq 'MODE_B')
+
+    return $result
+}
+
+# ============================================================
+# 原子性寫檔
+# ============================================================
+function Atomic-WriteFile {
+    param([string]$path, [string]$content)
     try {
-        $tmp = "$absolutePath.tmp"
-        $dir = Split-Path $absolutePath
+        $dir = Split-Path $path -Parent
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
+        $tmp = "$path.tmp"
         [System.IO.File]::WriteAllText($tmp, $content, [System.Text.Encoding]::UTF8)
-        Move-Item -Force $tmp $absolutePath
-    }
-    catch {
-        if (Test-Path "$absolutePath.tmp") { Remove-Item "$absolutePath.tmp" -Force -ErrorAction SilentlyContinue }
-    }
-}
-
-# $root must be defined in the calling script before dot-sourcing
-function Get-IniVal($text, $key, $default = $null) {
-    if ($text -match "(?m)^\s*$([regex]::Escape($key))\s*=\s*(.+?)\s*$") { return $matches[1].Trim() }
-    return $default
-}
-
-function Get-OdooConf($odooVersion) {
-    $candidates = @(
-        "$root\odoo-$odooVersion\odoo.conf",
-        "$root\odoo-$odooVersion\debian\odoo.conf",
-        "$root\odoo-$odooVersion\server\odoo.conf"
-    )
-    $confPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if (-not $confPath) {
-        throw "找不到 odoo.conf，已搜尋：$($candidates -join ' | ')"
-    }
-    Write-Host "[CONF] 讀取 $confPath" -ForegroundColor DarkCyan
-    $raw = Get-Content $confPath -Raw -Encoding UTF8
-    return @{
-        path        = $confPath
-        db_host     = (Get-IniVal $raw 'db_host'     'localhost')
-        db_port     = (Get-IniVal $raw 'db_port'     '5432')
-        db_user     = (Get-IniVal $raw 'db_user'     'odoo')
-        db_password = (Get-IniVal $raw 'db_password' '')
-        db_name     = (Get-IniVal $raw 'test_db_name' $null)
-    }
-}
-
-function Out-AtomicFile($content, $path, $projectType, $module, $odooVersion) {
-    $normPath = $path.Replace("\", "/")
-    $fixedPath = $normPath
-
-    if ($projectType.ToUpper() -eq "ODOO") {
-        if ([string]::IsNullOrWhiteSpace($odooVersion)) {
-            Write-Host "[ERROR] odoo_version 未填寫，無法判斷目標目錄，跳過: $normPath" -ForegroundColor Red
-            return $false
-        }
-        $expectedPrefix = "custom_addons/$module/"
-        if ($normPath -notlike "$expectedPrefix*") {
-            $stripped = $normPath -replace '^(custom_addons/[^/]+/|custom_addons/)', ''
-            $fixedPath = "$expectedPrefix$stripped"
-            Write-Host "[PATH FIX] $normPath → $fixedPath" -ForegroundColor Yellow
-        }
-        $baseDir = Join-Path $root "odoo-$odooVersion"
-    } else {
-        if ($normPath -notlike "tests/*" -and $normPath -notlike "src/*" -and $normPath -ne "requirements.txt" -and $normPath -ne "package.json") {
-            $fixedPath = "tests/$normPath"
-            Write-Host "[PATH FIX] $normPath → $fixedPath" -ForegroundColor Yellow
-        }
-        $baseDir = $root
-    }
-
-    $finalAbsolute = Join-Path $baseDir $fixedPath
-
-    # 路徑逃逸檢查：確認最終路徑仍在 $baseDir 範圍內
-    $resolvedAbsolute = [System.IO.Path]::GetFullPath($finalAbsolute)
-    $resolvedBase     = [System.IO.Path]::GetFullPath($baseDir)
-    $sep = [System.IO.Path]::DirectorySeparatorChar
-    if (-not ($resolvedAbsolute.StartsWith($resolvedBase + $sep) -or $resolvedAbsolute -eq $resolvedBase)) {
-        Write-Host "[SECURITY] 偵測到路徑逃逸，拒絕寫入: $finalAbsolute" -ForegroundColor Red
-        return $false
-    }
-
-    try {
-        $tmp = "$finalAbsolute.tmp"
-        $dir = Split-Path $finalAbsolute
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
-        $content | Out-File $tmp -Encoding utf8 -Force
-        Move-Item -Force $tmp $finalAbsolute
+        Move-Item -Force $tmp $path
         return $true
-    }
-    catch {
-        if (Test-Path "$finalAbsolute.tmp") { Remove-Item "$finalAbsolute.tmp" -Force -ErrorAction SilentlyContinue }
+    } catch {
+        Remove-Item "$path.tmp" -Force -ErrorAction SilentlyContinue
         return $false
     }
 }
 
-function Invoke-ClaudeAgentStream {
-    param(
-        [string]$prompt,
-        [string]$model,
-        [string]$workDir = ""
-    )
+# ============================================================
+# Pipeline Pending Prompt（寫入後由 Claude 非同步執行）
+# ============================================================
+function Write-PendingPrompt {
+    param([string]$taskDir, [string]$stage, [string]$prompt)
+    Atomic-WriteFile (Join-Path $taskDir "pending_prompt.txt") $prompt | Out-Null
+    Atomic-WriteFile (Join-Path $taskDir ".pending_$stage") "" | Out-Null
+}
 
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = "claude"
-    $psi.Arguments = "--model $model"
-    if ($workDir) { $psi.WorkingDirectory = $workDir }
-    $psi.RedirectStandardInput = $true
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
-
-    $p = New-Object System.Diagnostics.Process
-    $p.StartInfo = $psi
-    $p.Start() | Out-Null
-
-    $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
-    $writer.Write($prompt)
-    $writer.Close()
-
-    $stderrTask = $p.StandardError.ReadToEndAsync()
-
-    while (-not $p.StandardOutput.EndOfStream) {
-        $line = $p.StandardOutput.ReadLine()
-        if ($null -ne $line) { Write-Host $line }
+# ============================================================
+# 開啟 Claude Terminal（PS1 結束後觸發 AI 處理）
+# ============================================================
+function Open-ClaudeTerminal {
+    # Hook 模式：Claude 已在執行，不開新 terminal
+    if ($env:PIPELINE_HOOK_MODE -eq "1") {
+        Write-Host "[PIPELINE] Hook 模式，略過開啟新 Terminal" -ForegroundColor DarkGray
+        return
     }
 
-    $p.WaitForExit(5000) | Out-Null
+    $pendingFiles = Get-ChildItem "$script:ROOT\.claude\kingsmvpsplan" -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue
+    if (-not $pendingFiles -or $pendingFiles.Count -eq 0) {
+        Write-Host "[PIPELINE] 無待處理 AI 任務" -ForegroundColor DarkGray
+        return
+    }
 
-    $errText = $stderrTask.Result.Trim()
-    if (-not [string]::IsNullOrWhiteSpace($errText)) {
-        Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
+    Write-Host "[PIPELINE] $($pendingFiles.Count) 個任務等待 AI 處理，開啟 Claude..." -ForegroundColor Magenta
+
+    # 寫入等待標記，Claude 讀到後自動處理 pending 任務
+    Atomic-WriteFile $script:PIPELINE_WAITING "" | Out-Null
+
+    # 優先用 Windows Terminal，否則開新 PowerShell 視窗
+    if (Get-Command "wt" -ErrorAction SilentlyContinue) {
+        Start-Process "wt" -ArgumentList @(
+            "new-tab", "--startingDirectory", "`"$script:ROOT`"", "--", "claude"
+        )
+    } else {
+        Start-Process "pwsh" -ArgumentList @(
+            "-NoExit", "-Command", "Set-Location `"$script:ROOT`"; claude"
+        ) -WindowStyle Normal
     }
 }
 
-function Invoke-ClaudeStream {
-    param(
-        [string]$prompt,
-        [string]$model,
-        [int]$maxAttempts = 3
-    )
-    $attempt = 1
-    $waitSec = 2
+# ============================================================
+# 專案版本映射
+# ============================================================
+$script:ProjectVersionMap = $null
 
-    while ($attempt -le $maxAttempts) {
-        $p = $null
+function Load-ProjectVersionMap {
+    if ($null -ne $script:ProjectVersionMap) { return $script:ProjectVersionMap }
+    $script:ProjectVersionMap = @{}
+    if (Test-Path $script:PROJECT_VERSION_MAP_PATH) {
         try {
-            $psi = New-Object System.Diagnostics.ProcessStartInfo
-            $psi.FileName = "claude"
-            $psi.Arguments = "-p --model $model"
-            $psi.RedirectStandardInput = $true
-            $psi.RedirectStandardOutput = $true
-            $psi.RedirectStandardError = $true
-            $psi.UseShellExecute = $false
-            $psi.CreateNoWindow = $true
-
-            $p = New-Object System.Diagnostics.Process
-            $p.StartInfo = $psi
-            $p.Start() | Out-Null
-
-            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
-            $writer.Write($prompt)
-            $writer.Close()
-
-            # Async stderr prevents deadlock while we stream stdout
-            $stderrTask = $p.StandardError.ReadToEndAsync()
-
-            $stdoutSb = New-Object System.Text.StringBuilder
-            while (-not $p.StandardOutput.EndOfStream) {
-                $line = $p.StandardOutput.ReadLine()
-                if ($null -ne $line) {
-                    Write-Host $line
-                    $stdoutSb.AppendLine($line) | Out-Null
-                }
-            }
-            $p.WaitForExit(5000) | Out-Null
-
-            $resp    = $stdoutSb.ToString().Trim()
-            $errText = $stderrTask.Result.Trim()
-            if ([string]::IsNullOrWhiteSpace($resp) -and -not [string]::IsNullOrWhiteSpace($errText)) {
-                $resp = $errText
-            }
-
-            if ([string]::IsNullOrWhiteSpace($resp)) { throw "empty response" }
-
-            Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
-            return $resp
-        }
-        catch {
-            Write-Host "[RETRY] $model attempt $attempt failed: $_" -ForegroundColor Yellow
-            Start-Sleep -Seconds $waitSec
-            $waitSec *= 2
-            $attempt++
+            $j = Get-Content $script:PROJECT_VERSION_MAP_PATH -Raw -Encoding UTF8 | ConvertFrom-Json
+            $j.project_version_map.PSObject.Properties | ForEach-Object { $script:ProjectVersionMap[$_.Name] = $_.Value }
+            Write-Host "[CONFIG] 載入 project_version_map.json，共 $($script:ProjectVersionMap.Count) 個專案" -ForegroundColor DarkCyan
+        } catch {
+            Write-Host "[WARN] 無法解析 project_version_map.json: $_" -ForegroundColor Yellow
         }
     }
-    throw "Claude ($model) failed after $maxAttempts retries"
+    return $script:ProjectVersionMap
 }
 
-function Run-TestProcess($exe, $argsArray, $workDir, $timeoutSec = 60) {
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $exe
-    $psi.WorkingDirectory = $workDir
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
-    foreach ($arg in $argsArray) { $psi.ArgumentList.Add($arg) }
-
-    $p = New-Object System.Diagnostics.Process
-    $p.StartInfo = $psi
-    $p.Start() | Out-Null
-
-    $stdoutTask = $p.StandardOutput.ReadToEndAsync()
-    $stderrTask = $p.StandardError.ReadToEndAsync()
-
-    if (-not $p.WaitForExit($timeoutSec * 1000)) {
-        $p.Kill()
-        throw "test timeout"
-    }
-
-    return @{
-        ExitCode = $p.ExitCode
-        Output   = $stdoutTask.Result + $stderrTask.Result
-    }
+function Get-ProjectVersion {
+    param([string]$projectName)
+    $map = Load-ProjectVersionMap
+    if ($map.ContainsKey($projectName)) { return $map[$projectName] }
+    return $null
 }
 
-function Invoke-ClaudeAgentCapture {
-    param(
-        [string]$prompt,
-        [string]$model,
-        [string]$workDir = ""
-    )
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = "claude"
-    $psi.Arguments = "--model $model"
-    if ($workDir) { $psi.WorkingDirectory = $workDir }
-    $psi.RedirectStandardInput  = $true
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError  = $true
-    $psi.UseShellExecute        = $false
-    $psi.CreateNoWindow         = $true
+# ============================================================
+# 現有模組快取
+# ============================================================
+$script:RepoModulesCache = $null
 
-    $p = New-Object System.Diagnostics.Process
-    $p.StartInfo = $psi
-    $p.Start() | Out-Null
-
-    $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
-    $writer.Write($prompt)
-    $writer.Close()
-
-    $stderrTask = $p.StandardError.ReadToEndAsync()
-    $sb = New-Object System.Text.StringBuilder
-
-    while (-not $p.StandardOutput.EndOfStream) {
-        $line = $p.StandardOutput.ReadLine()
-        if ($null -ne $line) {
-            Write-Host $line
-            $sb.AppendLine($line) | Out-Null
+function Get-ExistingModules {
+    if ($null -ne $script:RepoModulesCache) { return $script:RepoModulesCache }
+    $all = @()
+    if (Test-Path $script:ONLINE_ADDONS_DIR) {
+        Get-ChildItem $script:ONLINE_ADDONS_DIR -Directory | ForEach-Object {
+            $all += Get-ChildItem $_.FullName -Directory | Select-Object -ExpandProperty Name
         }
     }
-
-    $p.WaitForExit(5000) | Out-Null
-
-    $errText = $stderrTask.Result.Trim()
-    if (-not [string]::IsNullOrWhiteSpace($errText)) {
-        Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
-    }
-
-    return $sb.ToString().Trim()
+    $script:RepoModulesCache = $all | Select-Object -Unique
+    return $script:RepoModulesCache
 }
 
-function Invoke-ClaudePrintStreamCapture {
-    param(
-        [string]$prompt,
-        [string]$model,
-        [int]$maxAttempts = 3
-    )
-    $attempt = 1
-    $waitSec  = 2
-
-    while ($attempt -le $maxAttempts) {
-        $p = $null
-        try {
-            $psi = New-Object System.Diagnostics.ProcessStartInfo
-            $psi.FileName = "claude"
-            $psi.Arguments = "-p --output-format stream-json --include-partial-messages --model $model"
-            $psi.RedirectStandardInput  = $true
-            $psi.RedirectStandardOutput = $true
-            $psi.RedirectStandardError  = $true
-            $psi.UseShellExecute        = $false
-            $psi.CreateNoWindow         = $true
-
-            $p = New-Object System.Diagnostics.Process
-            $p.StartInfo = $psi
-            $p.Start() | Out-Null
-
-            $writer = New-Object System.IO.StreamWriter($p.StandardInput.BaseStream, [System.Text.Encoding]::UTF8)
-            $writer.Write($prompt)
-            $writer.Close()
-
-            $stderrTask  = $p.StandardError.ReadToEndAsync()
-            $finalResult = $null
-            $wroteOutput = $false
-
-            while (-not $p.StandardOutput.EndOfStream) {
-                $line = $p.StandardOutput.ReadLine()
-                if ([string]::IsNullOrWhiteSpace($line)) { continue }
-                $event = $null
-                try { $event = $line | ConvertFrom-Json -ErrorAction Stop } catch { }
-
-                if ($null -eq $event) { Write-Host $line; continue }
-
-                if ($event.type -eq "assistant" -and $null -ne $event.message) {
-                    $txt = ""
-                    foreach ($block in @($event.message.content)) {
-                        if ($null -ne $block -and $block.type -eq "text") { $txt += $block.text }
-                    }
-                    if ($txt) { Write-Host $txt -NoNewline; $wroteOutput = $true }
-                }
-                elseif ($event.type -eq "result") {
-                    if ($wroteOutput) { Write-Host "" }
-                    if ($event.subtype -eq "error") { throw "Claude error: $($event.error)" }
-                    $finalResult = $event.result
-                }
-            }
-
-            $p.WaitForExit(5000) | Out-Null
-            $errText = $stderrTask.Result.Trim()
-            if (-not [string]::IsNullOrWhiteSpace($errText)) {
-                Write-Host "[STDERR] $errText" -ForegroundColor DarkGray
-            }
-
-            if ([string]::IsNullOrWhiteSpace($finalResult)) { throw "empty or missing result" }
-            Start-Sleep -Milliseconds (Get-Random -Min 200 -Max 800)
-            return $finalResult
-        }
-        catch {
-            Write-Host "[RETRY] attempt $attempt failed: $_" -ForegroundColor Yellow
-            try { if ($null -ne $p -and -not $p.HasExited) { $p.Kill() } } catch {}
-            Start-Sleep -Seconds $waitSec
-            $waitSec *= 2
-            $attempt++
-        }
-    }
-    throw "Claude ($model) failed after $maxAttempts retries"
-}
-
+# ============================================================
+# Odoo 訊息發送
+# ============================================================
 function Send-OdooTaskMessage {
-    param(
-        [string]$OdooUrl,
-        [string]$DbName,
-        [string]$Username,
-        [string]$Password,
-        [int]$TaskId,
-        [string]$Body
-    )
-    try {
-        $authBody = @{
-            jsonrpc = "2.0"; method = "call"; id = 1
-            params  = @{ db = $DbName; login = $Username; password = $Password }
-        } | ConvertTo-Json -Depth 5 -Compress
-        $authResp = Invoke-RestMethod -Uri "$OdooUrl/web/session/authenticate" `
-            -Method Post -ContentType "application/json" -Body $authBody -SessionVariable ods
-        if ($authResp.error -or -not $authResp.result) {
-            Write-Host "[WARN] Odoo 登入失敗，跳過進度回報" -ForegroundColor Yellow; return
-        }
-        $innerIds   = [object[]]@($TaskId)
-        $outerArgs  = [object[]]@(,$innerIds)
-        $msgPayload = @{
-            jsonrpc = "2.0"; method = "call"; id = 2
-            params  = @{
-                model  = "project.task"
-                method = "message_post"
-                args   = $outerArgs
-                kwargs = @{ body = $Body; message_type = "comment" }
-            }
-        } | ConvertTo-Json -Depth 10 -Compress
-        Invoke-RestMethod -Uri "$OdooUrl/web/dataset/call_kw" `
-            -Method Post -ContentType "application/json" -Body $msgPayload -WebSession $ods | Out-Null
-        Write-Host "[ODOO] 已回報進度至 task $TaskId" -ForegroundColor DarkCyan
+    param([int]$taskId, [string]$message)
+    $py = Join-Path $script:ROOT ".claude\send_message.py"
+    if (-not (Test-Path $py)) { return }
+    $r = python $py $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $taskId $message 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 訊息失敗: $r" -ForegroundColor Yellow }
+}
+
+# ============================================================
+# 退回 confirm/ 機制（清除所有標記含 pending files）
+# ============================================================
+function BackToConfirm {
+    param([string]$taskDir, [string]$reason, [string]$stage)
+
+    $taskName       = Split-Path $taskDir -Leaf
+    $confirmTaskDir = Join-Path $script:CONFIRM_DIR $taskName
+
+    if (Test-Path $confirmTaskDir) { Remove-Item $confirmTaskDir -Recurse -Force }
+    Move-Item $taskDir $script:CONFIRM_DIR -Force
+
+    # 清除所有 .done 標記與 pending 檔案
+    @('.analysis_done', '.answer_done', '.final_done', '.implement_done', '.qa_done',
+      '.pending_analysis', '.pending_final', '.pending_coding', '.pending_qa',
+      'pending_prompt.txt') | ForEach-Object {
+        Remove-Item (Join-Path $confirmTaskDir $_) -Force -ErrorAction SilentlyContinue
     }
-    catch {
-        Write-Host "[WARN] Odoo 進度回報失敗: $_" -ForegroundColor Yellow
+
+    $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n請修正後重新填寫 analysis.yaml 中的 user_answer。"
+    Atomic-WriteFile (Join-Path $confirmTaskDir 'BACK_REASON.txt') $content | Out-Null
+
+    Write-Host "[BACK] $taskName 從 $stage 退回 confirm/  原因: $reason" -ForegroundColor Yellow
+
+    if ($taskName -match '^task_(\d+)$') {
+        Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已從 <b>$stage</b> 退回。原因: $reason</p>"
     }
 }

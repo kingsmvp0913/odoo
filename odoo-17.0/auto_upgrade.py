@@ -40,7 +40,7 @@ ODOO_BIN = "C:/odoo/odoo-17.0/odoo-bin"
 # Odoo 設定檔
 ODOO_CONF = "C:/odoo/odoo-17.0/odoo.conf"
 # 客製模組資料夾（只掃這裡做 auto upgrade 判斷）
-ADDONS_PATH = "C:/online_addons/17"
+ADDONS_PATH = "C:/online_addons/17, C:/online_addons/17_lingyue"
 # 指定資料庫（可以用環境變數 ODOO_DB 設定）
 DB_NAME = os.getenv("ODOO_DB", "")  # 預設空白代表不指定資料庫
 # 時間判斷，按自己的習慣調整（秒）
@@ -73,58 +73,70 @@ def detect_changed_modules():
     modules = set()
     now = time.time()
 
-    for path in glob.glob(f"{ADDONS_PATH}/*"):
-        if not os.path.isdir(path):
+    for addons_dir in ADDONS_PATH.split(','):
+        addons_dir = addons_dir.strip() # 去除可能存在的空格
+        if not os.path.isdir(addons_dir):
             continue
 
-        module = os.path.basename(path)
+        # ====================================================================
+        # 【關鍵修正 1】用 * 展開這一層 addons 目錄底下的所有子資料夾（如 idx_project）
+        # ====================================================================
+        for path in glob.glob(f"{addons_dir}/*"):
+            if not os.path.isdir(path):
+                continue
 
-        has_strong_change = False   # python / schema
-        has_soft_change = False     # csv / data
+            # 排除 git 等系統隱藏資料夾，避免 Windows 遍歷卡死
+            if os.path.basename(path).startswith('.'):
+                continue
 
-        # =================================================
-        # Python + schema XML（一定要upgrade）
-        # =================================================
-        for pattern in ("**/*.py", "**/*.xml"):
-            for file in glob.glob(f"{path}/{pattern}", recursive=True):
+            # 【關鍵修正 2】此時取得的才是真正的 Odoo 模組名稱（如 idx_project）
+            module = os.path.basename(path)
+
+            has_strong_change = False   # python / schema
+            has_soft_change = False     # csv / data
+
+            # =================================================
+            # Python + schema XML（一定要upgrade）
+            # =================================================
+            for pattern in ("**/*.py", "**/*.xml"):
+                for file in glob.glob(f"{path}/{pattern}", recursive=True):
+                    # 排除 git 歷史紀錄檔案，大幅提升 Windows 掃描效能
+                    if '.git' in file:
+                        continue
+                    try:
+                        if now - os.path.getmtime(file) > CHECK_WINDOW:
+                            continue
+                        if is_view_xml(file):
+                            continue
+                        
+                        has_strong_change = True
+                    except:
+                        pass
+
+            # =================================================
+            # CSV / data（要看類型）
+            # =================================================
+            for file in glob.glob(f"{path}/**/*.csv", recursive=True):
+                if '.git' in file:
+                    continue
                 try:
                     if now - os.path.getmtime(file) > CHECK_WINDOW:
                         continue
-                    if is_view_xml(file):
-                        continue
-                    
-                    has_strong_change = True
 
+                    filename = file.lower()
+                    if "ir.model.access" in filename or "security" in filename:
+                        has_strong_change = True
+                    else:
+                        has_soft_change = True
                 except:
                     pass
 
-        # =================================================
-        # CSV / data（要看類型）
-        # =================================================
-        for file in glob.glob(f"{path}/**/*.csv", recursive=True):
-            try:
-                if now - os.path.getmtime(file) > CHECK_WINDOW:
-                    continue
-
-                filename = file.lower()
-                # 權限類的一定要upgrade
-                if "ir.model.access" in filename or "security" in filename:
-                    has_strong_change = True
-
-                # 資料類的可選
-                else:
-                    has_soft_change = True
-            except:
-                pass
-
-        if has_strong_change:
-            modules.add(module)
-        # 可選，不用時註解掉
-        if has_soft_change and module not in modules:
-            modules.add(module)
+            if has_strong_change:
+                modules.add(module)
+            if has_soft_change and module not in modules:
+                modules.add(module)
             
     return list(modules)
-
 
 changed_modules = detect_changed_modules()
 
@@ -173,7 +185,4 @@ print("\n=======================================================================
 # =========================================================
 # 執行 Odoo
 # =========================================================
-current_env = os.environ.copy()
-venv_scripts = os.path.dirname(PYTHON)
-current_env["PATH"] = venv_scripts + os.pathsep + current_env.get("PATH", "")
-subprocess.run(args, env=current_env)
+subprocess.run(args)
