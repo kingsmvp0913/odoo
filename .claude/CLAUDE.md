@@ -37,10 +37,10 @@
 - `C:\odoo\.claude\kingsmvpsplan\_PIPELINE_WAITING` 存在（PS1 手動執行後）
 
 ### 處理循環（全程不得請求手動確認）
-1. 掃描所有 `pending_prompt.txt`，依 stage 分組（confirm → analysis → coding → qa 順序）
+1. 掃描所有 `pending_prompt.txt`，依 stage 分組（confirm → analysis → coding 順序；coding 含 qa）
 2. 同一 stage 的任務**以 Agent tool 並行 spawn**，不等單一任務完成再啟動下一個
-   - **confirm / analysis / qa stage**：直接並行，無限制
-   - **coding stage**：先讀取各任務 `analysis.yaml` 的 `module` 欄位；
+   - **confirm / analysis stage**：直接並行，無限制
+   - **coding stage（含 qa）**：先讀取各任務 `analysis.yaml` 的 `module` 欄位；
      相同 module 的任務**序列執行**，不同 module 的任務**並行執行**
 3. 等待同一 stage 所有 Agent 完成後，再掃描下一 stage
 4. 每個任務完成後：刪除 `pending_prompt.txt` 和 `.pending_*`，寫入對應完成標記

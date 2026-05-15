@@ -1,50 +1,62 @@
 # Kingsmvps Pipeline
 
-自動化 Odoo 開發流水線。輸入「開工」由 Claude 全自動驅動，無需手動確認。
+輸入「**開工**」，Claude 自動完成需求分析 → 實作 → QA，無需手動確認。
 
-## 流程總覽
+---
+
+## 怎麼用
+
+1. 在 Odoo 建立任務
+2. 在 Claude 輸入「**開工**」
+3. 等待完成（任務出現在 `final/` 即代表通過 QA）
+
+有 `user_answer` 需要填寫時（MODE_A），Claude 會暫停等你在 `analysis.yaml` 填完後再繼續。
+
+---
+
+## 任務流向
 
 ```
 Odoo 任務
-   ↓ analysis.ps1 (STEP 1)
-start/task_N/          → 同步自 Odoo，含 original.txt
-   ↓ analysis.ps1 (STEP 2)  ← Claude: 需求分析 → analysis.yaml
-confirm/task_N/        → 等待使用者填寫 user_answer（MODE_A）或自動通過（MODE_B）
-   ↓ analysis.ps1 (STEP 3a/3b) ← Claude: 生成 MODE_B 完整規格
-analysis/task_N/       → 規格確認完成，含完整 analysis.yaml
-   ↓ coding.ps1 (STEP 4)  ← Claude: 依規格實作模組
-coding/task_N/         → 實作中 / 實作完成
-   ↓ qa.ps1 (STEP 5-6)  ← Claude: QA 審查
-final/task_N/          → 通過 QA，任務完成
+   ↓ 自動同步
+start/       新任務
+   ↓ Claude 需求分析
+confirm/     等待 user_answer（MODE_A）或自動通過（MODE_B）
+   ↓ 答案完整後
+analysis/    Claude 產出完整技術規格
+   ↓ Claude 實作
+coding/      實作中，完成後 Claude 自動執行 QA
+   ↓ QA 通過
+final/       ✓ 完成
 ```
 
-## 觸發方式
+QA 失敗會自動退回 `confirm/` 重跑。
 
-| 方式 | 說明 |
+---
+
+## 多工說明
+
+同一階段有多個任務時，Claude 自動並行處理：
+
+- **需求分析**：完全並行
+- **實作**：同模組序列，不同模組並行（避免檔案衝突）
+
+---
+
+## QA 檢查項目
+
+| 類型 | 項目 |
 |------|------|
-| 輸入「開工」 | Hook 自動執行 `_pipeline_run.ps1`，Claude 接手所有 AI 任務 |
-| 手動執行 PS1 | `pwsh -File analysis.ps1 / coding.ps1 / qa.ps1` |
+| 規格合規 | Model、Field、View、Security 符合 analysis.yaml |
+| 程式品質 | 不得在迴圈內查詢、不得用裸 SQL、`sudo()` 必須有說明 |
+| 程式品質 | compute + store 必須有 depends、不得硬編碼 ID、不得用裸 except |
 
-## 關鍵檔案
+---
 
-| 檔案 | 用途 |
+## 遇到問題
+
+| 狀況 | 處置 |
 |------|------|
-| `_pipeline_run.ps1` | 串接三個 PS1，hook 觸發入口 |
-| `analysis.ps1` | STEP 1–3，同步 Odoo + 需求分析 |
-| `coding.ps1` | STEP 4，實作分派 |
-| `qa.ps1` | STEP 5–6，QA 檢查與結果處理 |
-| `_common.ps1` | 共用函數庫（鎖、YAML、路徑）|
-| `_PIPELINE_WAITING` | Claude 尚有 pending 任務的訊號標記 |
-
-## 標記檔說明
-
-| 標記 | 意義 |
-|------|------|
-| `pending_prompt.txt` | 待 Claude 執行的完整 prompt |
-| `.pending_{stage}` | 對應階段正在等待 Claude |
-| `.analysis_done` | Claude 初始分析完成 |
-| `.answer_done` | user_answer 填寫完成，可進入 analysis/ |
-| `.final_done` | MODE_B 最終規格完成，可進入 coding/ |
-| `.implement_done` | 實作完成，可進入 QA |
-| `.qa_done` | QA 完成 |
-| `blocker.txt` | 發現阻礙，Claude 立即停止並報告 |
+| Claude 停下來說有 blocker | 查看對應任務目錄的 `blocker.txt`，手動決策後刪除它再繼續 |
+| MODE_A 等待填寫 | 打開 `confirm/task_N/analysis.yaml`，填寫所有 `user_answer` 欄位 |
+| QA 一直失敗 | 查看 `coding/task_N/qa_report.yaml` 的 issues 說明 |
