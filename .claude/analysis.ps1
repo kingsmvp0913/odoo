@@ -1,8 +1,8 @@
 # analysis.ps1 - 需求分析階段主程式（Steps 1–3b）
 # PS1 僅負責機械工作（檔案管理）；AI 呼叫由 Claude terminal 非同步執行
 
-$script:ROOT = "C:\odoo"
-. "$script:ROOT\.claude\_common.ps1"
+$script:ROOT = Split-Path $PSScriptRoot -Parent
+. "$PSScriptRoot/_common.ps1"
 
 if (-not $env:ODOO_PASSWORD) {
     Write-Host "[ERROR] 環境變數 ODOO_PASSWORD 未設定" -ForegroundColor Red
@@ -10,10 +10,6 @@ if (-not $env:ODOO_PASSWORD) {
 }
 
 Initialize-PipelineDirs
-
-$agentPath     = Join-Path $script:ROOT ".claude\agents\requirements-analyst.md"
-$agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
-$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
 # ============================================================
 # STEP 1: 同步 Odoo 任務 → start/task_N/original.txt
@@ -110,22 +106,21 @@ if (-not (Acquire-Lock $lock2 300)) {
 
                 $currentTime  = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
                 $destTaskDir  = Join-Path $script:CONFIRM_DIR $taskName   # 任務移動後的路徑
-                $prompt = $agentTemplate `
-                    -replace '__CASE_ID__', $taskName `
-                    -replace '__CURRENT_TIME__', $currentTime
 
-                $fullPrompt = "ultrathink`n`n" + $prompt +
-                    "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
-                    "`n`n【TASK DIRECTORY】`n$destTaskDir" +
-                    "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +
-                    "`n`n將 analysis.yaml 和 .analysis_done 寫入【TASK DIRECTORY】，完成後刪除 pending_prompt.txt 和 .pending_analysis。"
+                $fullPrompt = "ultrathink`n`n" +
+                    "INPUT_CASE_ID = `"$taskName`"`n" +
+                    "CURRENT_TIME  = `"$currentTime`"`n`n" +
+                    "【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。`n`n" +
+                    "【TASK DIRECTORY】`n$destTaskDir`n`n" +
+                    "【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>`n`n" +
+                    "將 analysis.yaml 和 .analysis_done 寫入【TASK DIRECTORY】，完成後刪除 pending_prompt.txt 和 .pending_analysis。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "analysis" -prompt $fullPrompt
 
-                Release-Lock $taskLock
                 $dest = Join-Path $script:CONFIRM_DIR $taskName
                 if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
                 Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
+                Release-Lock $taskLock
                 Write-Host "[OK] $taskName → confirm/ (等待 Claude 初始分析)" -ForegroundColor Green
             } catch {
                 Write-Host "[ERROR] STEP 2 ${taskName}: $_" -ForegroundColor Red
@@ -177,10 +172,10 @@ foreach ($taskDir in $confirmTasks) {
 
         Atomic-WriteFile $answerDone "" | Out-Null
 
-        Release-Lock $taskLock
         $dest = Join-Path $script:ANALYSIS_DIR $taskName
         if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
         Move-Item $taskDir.FullName $script:ANALYSIS_DIR -Force
+        Release-Lock $taskLock
         Write-Host "[OK] $taskName 答案完整 → analysis/" -ForegroundColor Green
     } catch {
         Write-Host "[ERROR] STEP 3a ${taskName}: $_" -ForegroundColor Red
@@ -227,14 +222,12 @@ if (-not (Acquire-Lock $lock3b 300)) {
             try {
                 $currentYaml = Get-Content $yamlPath -Raw -Encoding UTF8
                 $currentTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
-                $prompt = $agentTemplate `
-                    -replace '__CASE_ID__', $taskName `
-                    -replace '__CURRENT_TIME__', $currentTime
 
-                $fullPrompt = "ultrathink`n`n" + $prompt +
-                    "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
-                    "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
-                    "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 .final_done。完成後刪除 pending_prompt.txt 和 .pending_final。"
+                $fullPrompt = "INPUT_CASE_ID = `"$taskName`"`n" +
+                    "CURRENT_TIME  = `"$currentTime`"`n`n" +
+                    "【TASK DIRECTORY】`n$($taskDir.FullName)`n`n" +
+                    "【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>`n`n" +
+                    "使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 .final_done。完成後刪除 pending_prompt.txt 和 .pending_final。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "final" -prompt $fullPrompt
                 Write-Host "[OK] $taskName → 等待 Claude 生成 MODE_B 規格" -ForegroundColor Green

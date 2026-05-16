@@ -1,14 +1,10 @@
 # qa.ps1 - 品管階段主程式（Steps 5–6）
 # PS1 僅負責機械工作；AI QA 由 Claude terminal 非同步執行
 
-$script:ROOT = "C:\odoo"
-. "$script:ROOT\.claude\_common.ps1"
+$script:ROOT = Split-Path $PSScriptRoot -Parent
+. "$PSScriptRoot/_common.ps1"
 
 Initialize-PipelineDirs
-
-$agentPath     = Join-Path $script:ROOT ".claude\agents\qa-analyst.md"
-$agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
-$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
 # ============================================================
 # STEP 5: coding/ → 寫 QA pending prompt（不等 AI）
@@ -56,11 +52,10 @@ foreach ($taskDir in $codingTasks) {
         $modulePath = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
         Write-Host "[INFO] $taskName 準備 QA: $modulePath" -ForegroundColor DarkCyan
 
-        $fullPrompt = $agentTemplate +
-            "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
-            "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
-            "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
-            "`n`n完成後將 qa_report.yaml 和 .qa_done 寫入【TASK DIRECTORY】，並刪除 pending_prompt.txt 和 .pending_qa。"
+        $fullPrompt = "【TASK DIRECTORY】`n$($taskDir.FullName)`n`n" +
+            "【SPECIFICATION】`n讀取 $analysisYamlPath`n`n" +
+            "【IMPLEMENTATION PATH】`n$modulePath`n`n" +
+            "完成後將 qa_report.yaml 和 .qa_done 寫入【TASK DIRECTORY】，並刪除 pending_prompt.txt 和 .pending_qa。"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "qa" -prompt $fullPrompt
         Write-Host "[OK] $taskName → 等待 Claude QA 檢查" -ForegroundColor Green
@@ -100,13 +95,13 @@ foreach ($taskDir in $codingTasks2) {
     try {
         $qaReport = Get-Content $qaReportPath -Raw -Encoding UTF8
         $parsed   = ConvertFrom-Yaml $qaReport
-        $status   = $parsed['status']
+        $status   = $parsed['status'].Trim('"', "'")
 
         if ($status -eq "PASSED") {
-            Release-Lock $taskLock
             $dest = Join-Path $script:FINAL_DIR $taskName
             if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
             Move-Item $taskDir.FullName $script:FINAL_DIR -Force
+            Release-Lock $taskLock
             Write-Host "[OK] $taskName QA 通過 → final/" -ForegroundColor Green
 
             if ($taskName -match '^task_(\d+)$') {
@@ -116,8 +111,8 @@ foreach ($taskDir in $codingTasks2) {
             $reason = "QA 檢查失敗"
             if ($qaReport -match '(?m)^\s*description:\s*"?([^"\r\n]+)"?') { $reason = $matches[1].Trim() }
 
-            Release-Lock $taskLock
             BackToConfirm -taskDir $taskDir.FullName -reason $reason -stage "QA"
+            Release-Lock $taskLock
         }
     } catch {
         Write-Host "[ERROR] STEP 6 ${taskName}: $_" -ForegroundColor Red

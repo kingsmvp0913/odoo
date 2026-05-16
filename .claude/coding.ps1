@@ -1,16 +1,12 @@
 # coding.ps1 - 實作階段主程式（Step 4）
 # PS1 僅負責機械工作（檔案管理）；AI 呼叫由 Claude terminal 非同步執行
 
-$script:ROOT = "C:\odoo"
-. "$script:ROOT\.claude\_common.ps1"
+$script:ROOT = Split-Path $PSScriptRoot -Parent
+. "$PSScriptRoot/_common.ps1"
 
 Initialize-PipelineDirs
 
 Write-Host "[STEP 4] 準備實作任務（analysis/ → coding/）..." -ForegroundColor Cyan
-
-$agentPath     = Join-Path $script:ROOT ".claude\agents\senior-software-engineer.md"
-$agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
-$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
 $analysisTasks = Get-ChildItem $script:ANALYSIS_DIR -Directory -ErrorAction SilentlyContinue
 
@@ -55,18 +51,17 @@ foreach ($taskDir in $analysisTasks) {
 
         Write-Host "[INFO] $taskName → $modulePath" -ForegroundColor DarkCyan
 
-        $fullPrompt = $agentTemplate +
-            "`n`n【TASK DIRECTORY】`n$destTaskDir" +
-            "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
-            "`n`n【OUTPUT PATH】`n$modulePath" +
-            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後寫入 .implement_done 到【TASK DIRECTORY】`n4. 刪除 pending_prompt.txt 和 .pending_coding"
+        $fullPrompt = "【TASK DIRECTORY】`n$destTaskDir`n`n" +
+            "【SPECIFICATION】`n讀取 $(Join-Path $destTaskDir 'analysis.yaml') 取得完整規格。`n`n" +
+            "【OUTPUT PATH】`n$modulePath`n`n" +
+            "【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後寫入 .implement_done 到【TASK DIRECTORY】`n4. 刪除 pending_prompt.txt 和 .pending_coding"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "coding" -prompt $fullPrompt
 
-        Release-Lock $taskLock
         $dest = Join-Path $script:CODING_DIR $taskName
         if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
         Move-Item $taskDir.FullName $script:CODING_DIR -Force
+        Release-Lock $taskLock
         Write-Host "[OK] $taskName → coding/ (等待 Claude 實作)" -ForegroundColor Green
     } catch {
         Write-Host "[ERROR] ${taskName}: $_" -ForegroundColor Red

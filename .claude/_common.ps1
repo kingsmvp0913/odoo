@@ -3,8 +3,8 @@
 # ============================================================
 # 路徑常數
 # ============================================================
-$script:ROOT             = "C:\odoo"
-$script:ONLINE_ADDONS_DIR = "C:\online_addons"
+if (-not $script:ROOT) { $script:ROOT = Split-Path $PSScriptRoot -Parent }
+$script:ONLINE_ADDONS_DIR = if ($env:ONLINE_ADDONS_DIR) { $env:ONLINE_ADDONS_DIR } else { "C:\online_addons" }
 
 $script:START_DIR    = "$script:ROOT\.claude\kingsmvpsplan\start"
 $script:CONFIRM_DIR  = "$script:ROOT\.claude\kingsmvpsplan\confirm"
@@ -301,7 +301,7 @@ function BackToConfirm {
     # 清除所有 .done 標記與 pending 檔案
     @('.analysis_done', '.answer_done', '.final_done', '.implement_done', '.qa_done',
       '.pending_analysis', '.pending_final', '.pending_coding', '.pending_qa',
-      'pending_prompt.txt') | ForEach-Object {
+      'pending_prompt.txt', 'qa_report.yaml') | ForEach-Object {
         Remove-Item (Join-Path $confirmTaskDir $_) -Force -ErrorAction SilentlyContinue
     }
 

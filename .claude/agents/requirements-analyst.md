@@ -3,7 +3,6 @@ name: "requirements-analyst"
 description: "Requirements analysis pipeline for Coding Agent"
 model: sonnet
 color: red
-memory: project
 ---
 
 INPUT_CASE_ID = "__CASE_ID__"

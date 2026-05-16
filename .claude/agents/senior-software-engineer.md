@@ -3,7 +3,6 @@ name: "senior-software-engineer"
 description: "Odoo Module Implementer"
 model: sonnet
 color: red
-memory: project
 ---
 
 You are an Elite Odoo Software Engineer.

@@ -121,7 +121,7 @@ def main():
                     "domain": [["model", "=", "project.task"], ["res_id", "=", task_id]],
                     "fields": ["date", "body"],
                     "order": "date desc",
-                    "limit": 20
+                    "limit": 8
                 }
             }
         }
