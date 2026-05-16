@@ -1,7 +1,7 @@
 ---
 name: "requirements-analyst"
 description: "Requirements analysis pipeline for Coding Agent"
-model: opus
+model: sonnet
 color: red
 memory: project
 ---
