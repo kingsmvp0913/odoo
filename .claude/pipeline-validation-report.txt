@@ -1,0 +1,132 @@
+================================================================
+Pipeline 工作流程驗證報告（claude/validate-test-workflow-mXxG0）
+================================================================
+生成日期：2026-05-16
+
+本報告列出所有發現的問題、已套用的修正，以及優化效果說明。
+
+----------------------------------------------------------------
+一、功能性 Bug（已全部修正）
+----------------------------------------------------------------
+
+[Bug-1] QA status 比對永遠失敗 — qa.ps1
+  問題：ConvertFrom-Yaml regex 捕捉到 "PASSED"（含引號），
+        但比對是 -eq "PASSED"（不含引號），導致所有任務無法進入 final/
+  修正：$status = $parsed['status'].Trim('"', "'")
+
+[Bug-2] BackToConfirm 未清除 qa_report.yaml — _common.ps1
+  問題：任務失敗退回 confirm/ 再重試時，舊 qa_report.yaml 殘留，
+        可能導致新一輪 QA 前就被誤判為已通過
+  修正：加入 'qa_report.yaml' 至 BackToConfirm 清除清單
+
+[Bug-3] 競態條件：Release-Lock 在 Move-Item 之前 — 4 處
+  問題：鎖定釋放後、目錄移動前存在窗口，並行執行時可能重複處理同一任務
+  修正：全部改為先 Move-Item，再 Release-Lock
+  影響位置：
+    - analysis.ps1 STEP 2 (start/ → confirm/)
+    - analysis.ps1 STEP 3a (confirm/ → analysis/)
+    - coding.ps1   STEP 4  (analysis/ → coding/)
+    - qa.ps1       STEP 6  (coding/ → final/)
+    - qa.ps1       STEP 6  BackToConfirm (coding/ → confirm/)
+
+[Bug-4] Hook 指令使用 Windows 絕對路徑 — settings.json
+  問題："C:\\odoo\\.claude\\_pipeline_run.ps1" 在 Linux/Web 環境失敗
+  修正：改為相對路徑 ".claude/_pipeline_run.ps1"
+
+----------------------------------------------------------------
+二、Token 效率優化（已全部套用）
+----------------------------------------------------------------
+
+[Token-1] pending_prompt.txt 內嵌完整 agent template（最大節省）
+  問題：每個任務的 pending_prompt.txt 都重複嵌入整個 agent 定義
+        requirements-analyst: ~550 tokens
+        senior-software-engineer: ~450 tokens
+        qa-analyst: ~620 tokens
+  修正：
+    - 移除 analysis.ps1、coding.ps1、qa.ps1 中的 agentTemplate 載入邏輯
+    - pending_prompt.txt 改為只含任務資料（TASK DIRECTORY、需求內容等）
+    - CLAUDE.md 補充 subagent_type 對應表，Claude spawn agent 時自動
+      從 .claude/agents/ 載入 system prompt
+  預估節省：每任務 450~620 tokens；5 個並行任務 = 節省 2,250~3,100 tokens
+
+[Token-2] STEP 3b（MODE_B 生成）強制 ultrathink
+  問題：MODE_B 是結構性填表（已有 user_answer，填寫 technical_specification），
+        ultrathink 的 extended thinking 對此類機械性任務純屬浪費
+  修正：移除 STEP 3b 的 "ultrathink\n\n" 前綴
+  保留：STEP 2 初始分析保留 ultrathink（需判斷模糊需求）
+
+[Token-3] curl.py 訊息拉取過多
+  問題：每任務拉取 20 條 mail.message，多數為舊狀態流水，對分析無用
+  修正：上限從 20 降至 8
+
+----------------------------------------------------------------
+三、穩定性修正
+----------------------------------------------------------------
+
+[Stable-1] 跨平台路徑硬編碼
+  問題：所有 PS1 均硬編 "C:\odoo"，在 Linux/Web 執行失敗
+  修正：
+    - _common.ps1: if (-not $script:ROOT) { $script:ROOT = Split-Path $PSScriptRoot -Parent }
+    - _common.ps1: ONLINE_ADDONS_DIR 改用 $env:ONLINE_ADDONS_DIR 覆寫，fallback 維持 C:\online_addons
+    - _pipeline_run.ps1: $ROOT = Split-Path $PSScriptRoot -Parent
+    - analysis.ps1 / coding.ps1 / qa.ps1: 同上，dot-source 改用 "$PSScriptRoot/_common.ps1"
+    - _pipeline_run.ps1: 子程序呼叫改用 "$PSScriptRoot/analysis.ps1" 等相對路徑
+
+[Stable-2] memory: project 非標準 frontmatter 欄位
+  問題：所有 agent 定義檔含 "memory: project"，此欄位不在 Claude Code 規格中，
+        未來版本可能報錯導致 agent 載入失敗
+  修正：三個 agent 檔案均移除此行
+
+----------------------------------------------------------------
+四、CLAUDE.md 指令修正
+----------------------------------------------------------------
+
+[CLAUDE-1] Stage 命名與實際 marker 不一致
+  問題：CLAUDE.md 說 "confirm → analysis → coding"，
+        但實際 marker 是 .pending_analysis / .pending_final / .pending_coding / .pending_qa
+  修正：處理循環改為直接以 .pending_* 標記檔名為準
+
+[CLAUDE-2] 無 subagent_type 對應表
+  問題：Claude 不知道各 stage 應使用哪個 subagent_type，可能用通用 claude agent，
+        導致 agent 定義重複傳遞或行為不一致
+  修正：新增對應表：
+    .pending_analysis → requirements-analyst
+    .pending_final    → requirements-analyst
+    .pending_coding   → senior-software-engineer
+    .pending_qa       → qa-analyst
+
+[CLAUDE-3] Windows 路徑引用
+  問題：Section 6 觸發條件和步驟 5 含 Windows 絕對路徑
+  修正：改為相對路徑
+
+----------------------------------------------------------------
+五、修正範圍摘要
+----------------------------------------------------------------
+
+檔案                              | 修正類型
+----------------------------------|----------------------------------
+.claude/settings.json             | Bug-4（hook 路徑）
+.claude/CLAUDE.md                 | CLAUDE-1、CLAUDE-2、CLAUDE-3
+.claude/_common.ps1               | Stable-1（ROOT 動態化）、Bug-2（qa_report 清理）
+.claude/_pipeline_run.ps1         | Stable-1（ROOT 和子程序路徑）
+.claude/analysis.ps1              | Stable-1、Token-1、Token-2、Bug-3×2
+.claude/coding.ps1                | Stable-1、Token-1、Bug-3
+.claude/qa.ps1                    | Stable-1、Token-1、Bug-1、Bug-3×2
+.claude/curl.py                   | Token-3（訊息上限）
+.claude/agents/requirements-analyst.md    | Stable-2（memory 移除）
+.claude/agents/senior-software-engineer.md| Stable-2（memory 移除）
+.claude/agents/qa-analyst.md      | Stable-2（memory 移除）
+
+Git commit：e32e3fe
+Branch：claude/validate-test-workflow-mXxG0
+
+----------------------------------------------------------------
+六、尚未修正的已知問題（需評估成本）
+----------------------------------------------------------------
+
+[ConvertFrom-Yaml] regex 邊界情況
+  狀態：未修正（需引入 powershell-yaml 模組或完整重寫解析邏輯）
+  風險：若 AI 輸出 YAML 縮排格式變化，module/odoo_version/status 解析可能失敗
+  建議：中期考慮用 pwsh -Command "$obj | ConvertFrom-Yaml" 替換 regex
+
+================================================================
