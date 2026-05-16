@@ -23,12 +23,15 @@ final/
 
 ```yaml
 status: PASSED
-summary: "所有檢查項目通過"
-checks:
-  - item: "Model 結構符合規格"
-    result: PASS
-  - item: "View XML 語法正確"
-    result: PASS
+checked_at: "2025-01-01T00:00:00"
+items:
+  - check: "model_exists"
+    passed: true
+    message: ""
+  - check: "no_sql_in_loops"
+    passed: true
+    message: ""
+issues: []
 ```
 
 ## 到達此目錄後
