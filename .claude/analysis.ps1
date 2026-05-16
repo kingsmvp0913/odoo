@@ -114,7 +114,7 @@ if (-not (Acquire-Lock $lock2 300)) {
                     -replace '__CASE_ID__', $taskName `
                     -replace '__CURRENT_TIME__', $currentTime
 
-                $fullPrompt = $prompt +
+                $fullPrompt = "ultrathink`n`n" + $prompt +
                     "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
                     "`n`n【TASK DIRECTORY】`n$destTaskDir" +
                     "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +
@@ -231,7 +231,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
                     -replace '__CASE_ID__', $taskName `
                     -replace '__CURRENT_TIME__', $currentTime
 
-                $fullPrompt = $prompt +
+                $fullPrompt = "ultrathink`n`n" + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
                     "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
                     "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 .final_done。完成後刪除 pending_prompt.txt 和 .pending_final。"
