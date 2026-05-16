@@ -1,60 +1,72 @@
-# CLAUDE.md (V7)
+# CLAUDE.md (V8)
 
-## 0. Core Principles
+## 0. Hard Rules
+- NEVER modify core Odoo files. Custom code in `custom_addons/` only.
+- NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks.
+- NEVER add fields/models/logic beyond `analysis.yaml` spec.
+- NEVER request human confirmation mid-pipeline.
+- On any blocker: write `blocker.<type>.txt` to task dir → STOP immediately. Report **file path only**, never content.
+- Think in English. Output Traditional Chinese (Taiwan). No preambles.
 - Challenge proposals that violate Odoo best practices, security, or performance.
-- Surface 2–3 interpretations for ambiguous requests. Never guess intent.
-- State one core assumption before executing complex tasks.
 
-## 1. Knowledge Retrieval
+## 1. Paths
+- **Task root**: `.claude/kingsmvpsplan/<stage>/<task_id>/`
+- **Spec file**: `<task_root>/analysis.yaml`
+- **Pipeline flag**: `.claude/kingsmvpsplan/_PIPELINE_WAITING` (relative to project root; TTL 30 min — skip if older)
+- PS1 scripts run on the user's Windows machine; their `C:\` absolute paths are correct for that context. When Claude executes on Linux, translate `C:\odoo` → project root, `C:\online_addons` → `/online_addons`.
 
-| 工具 | 用途 | 使用時機 |
-|------|------|---------|
-| **Context7** | Odoo core API（Model/Field/Method/decorator 正確寫法） | 分析或實作前，確認 Odoo 版本的 API |
-| **Graphify** | 自訂模組結構與既有邏輯的知識圖譜 | 實作前讀 `graphify-out/wiki/index.md`；編輯後執行 `/graphify . --update` |
-| **Serena** | 即時精確 symbol 定位（定義、呼叫鏈） | Graphify wiki 快照不足，或需要確認當前代碼的確切位置時 |
+## 2. Knowledge Retrieval (Decision Tree)
+Execute in order. Stop as soon as sufficient.
+1. **Graphify** → `<online_addons_root>/graphify-out/wiki/index.md` (cached snapshot; read **once** per pipeline run by main orchestrator, inject summary into sub-Agent prompts)
+2. **Serena** → Only if Graphify wiki lacks the specific symbol definition or call chain
+3. **Context7** → Only to confirm Odoo native API (field types, decorators, method signatures) for the target version
 
-- Graphify wiki 路徑：`<online_addons_root>/graphify-out/wiki/index.md`（依版本對應目錄）
+Sub-Agents **must not** re-read the Graphify wiki independently; use the summary injected in their prompt.
 
-## 2. Dev Workflow
-- `senior-software-engineer` must read specification from `analysis.yaml`. Do not guess intent.
-- Develop strictly per spec. Do not add fields, models, or logic beyond `analysis.yaml`.
-- On any ambiguity or blocker discovered during coding, immediately write the query to a new file named `blocker.txt` inside the task root directory, then STOP execution immediately.
+## 3. Task Spec
 
-## 3. Edit Protocol
-- Store task plans/logs in `.claude/kingsmvpsplan/`.
+`analysis.yaml` minimum required fields:
+```yaml
+case_id: ""
+module: ""
+odoo_version: ""
+project_name: null   # null → version-only path; string → project path
+execution_mode: "MODE_A | MODE_B"
+```
+- **Stage source**: read `.pending_<stage>` flag filename inside task dir. Valid values: `confirm → analysis → final → coding → qa`.
+- `qa` is a sub-stage of coding and shares the same module serial lock.
+- task_id format: `task_<N>` (e.g. `task_3919`).
+
+## 4. Edit Protocol
+- Plans/logs → `.claude/kingsmvpsplan/`.
 - Match existing code style exactly. Zero drive-by refactoring.
-- Strict `[Step] → [Verify]` flow. Pass before proceeding.
+- Strict `[Step] → [Verify]` flow:
+  - Python: `python -m py_compile <file>`
+  - XML: `xmllint --noout <file>`
+  - Module loadable: `odoo-bin -d test --stop-after-init -i <module>` (if available)
+- **Completion order**: write `.<stage>_done` marker **first** → then `mv pending_prompt.txt done_prompt.txt` (never delete before writing marker).
 
-## 4. Odoo Constraints
-- Custom modules in `custom_addons/` only. Never modify core files.
+## 5. Odoo Constraints
 - Models: `_inherit`. Views: `inherit_id` + `xpath`. Controllers: `super()`.
-- Cannot achieve via standard extension → escalate as Hard Blocker immediately via blocker.txt.
-
-## 5. Output
-- Think in English. Output Traditional Chinese (Taiwan).
-- No preambles. Start with solution or challenge.
-- Use: 專案/資料庫/佈署/變數/函式/模組. Keep English: Variable/Function/Hook/Class/Field/Model.
+- Cannot achieve via standard Odoo extension → write `blocker.tech.txt` immediately.
 - Commit: `[Module]: Why (not what)`. File edit: `@Path | Anchor | Action`.
 
-## 6. Pipeline 自動調度
+## 6. Output Style
+繁中術語：專案/資料庫/佈署/模組. Keep English: Variable/Function/Hook/Class/Field/Model/Method/Controller.
 
-### 觸發條件（任一）
-- 使用者輸入「開工」→ Hook 自動執行 `_pipeline_run.ps1`，輸出注入 context
-- `C:\odoo\.claude\kingsmvpsplan\_PIPELINE_WAITING` 存在（PS1 手動執行後）
+## 7. Pipeline
+Triggers (either):
+- User types「開工」→ Hook injects PS1 output into context; process the `[CLAUDE-ACTION-REQUIRED]` block
+- `.claude/kingsmvpsplan/_PIPELINE_WAITING` exists AND mtime < 30 min
 
-### 處理循環（全程不得請求手動確認）
-1. 掃描所有 `pending_prompt.txt`，依 stage 分組（confirm → analysis → coding 順序；coding 含 qa）
-2. 同一 stage 的任務**以 Agent tool 並行 spawn**，不等單一任務完成再啟動下一個
-   - **confirm / analysis stage**：直接並行，無限制
-   - **coding stage（含 qa）**：先讀取各任務 `analysis.yaml` 的 `module` 欄位；
-     相同 module 的任務**序列執行**，不同 module 的任務**並行執行**
-3. 等待同一 stage 所有 Agent 完成後，再掃描下一 stage
-4. 每個任務完成後：刪除 `pending_prompt.txt` 和 `.pending_*`，寫入對應完成標記
-5. 全部處理完後執行 `pwsh -NoProfile -File "C:\odoo\.claude\_pipeline_run.ps1"` 推進 Pipeline
-6. 若有新的 `pending_prompt.txt` 出現，回到步驟 1
-7. 直到 `_pipeline_run.ps1` 輸出「無待處理任務」為止，刪除 `_PIPELINE_WAITING`
+Full pipeline spec: **`.claude/pipeline.md`**
 
-### 重要規則
-- 遇到 `blocker.txt`：立即停止並向使用者報告，但是不要顯示內容
-- 每個 `pending_prompt.txt` 必須完整執行，不得摘要或跳過任何步驟
-- coding stage 相同 module 衝突保護：序列執行，前一個完成後才啟動下一個
+## 8. Blocker Types
+| File | Situation |
+|------|-----------|
+| `blocker.spec.txt` | Spec unclear; user clarification needed |
+| `blocker.tech.txt` | Cannot implement via standard Odoo extension |
+| `blocker.agent.txt` | Agent execution error |
+| `blocker.loop.txt` | Pipeline loop exceeded safety limit |
+
+On blocker: STOP immediately. Report the file path to user. Do not display content.

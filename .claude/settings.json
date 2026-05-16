@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"C:\\odoo\\.claude\\_pipeline_run.ps1\""
+            "command": "pwsh -NoProfile -File \".claude/_pipeline_run.ps1\""
           }
         ]
       }
