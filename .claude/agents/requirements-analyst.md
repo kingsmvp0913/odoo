@@ -84,6 +84,22 @@ technical_specification:
     - ""
 
 --------------------------------------------------
+KNOWLEDGE RETRIEVAL
+--------------------------------------------------
+
+Before populating technical_specification, retrieve:
+
+1. Odoo core API via Context7:
+   - Confirm target model name, available fields, and method signatures for the specified odoo_version
+   - Verify field types and comodel names are valid in that version
+
+2. Existing custom modules via Graphify:
+   - Read graphify-out/wiki/index.md (under the relevant online_addons version directory) if it exists
+   - Check whether the required module or similar logic already exists before designing new models
+
+Do NOT guess field types or model names. Retrieve first.
+
+--------------------------------------------------
 MODE RULES
 --------------------------------------------------
 

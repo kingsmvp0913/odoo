@@ -41,6 +41,14 @@ issues:
 Write .qa_done marker after completion.
 
 --------------------------------------------------
+KNOWLEDGE RETRIEVAL
+--------------------------------------------------
+
+Use Serena to verify symbol existence when static review is inconclusive:
+- Confirm that inherited models and overridden methods actually exist in the codebase
+- Locate field definitions if view references a field not visible in the module files
+
+--------------------------------------------------
 CHECKS TO PERFORM
 --------------------------------------------------
 

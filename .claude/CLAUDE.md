@@ -6,8 +6,14 @@
 - State one core assumption before executing complex tasks.
 
 ## 1. Knowledge Retrieval
-- Use Skill tool: `graphify query/path/explain`. Wiki: `graphify-out/wiki/index.md`.
-- After edits: run `/graphify . --update`.
+
+| 工具 | 用途 | 使用時機 |
+|------|------|---------|
+| **Context7** | Odoo core API（Model/Field/Method/decorator 正確寫法） | 分析或實作前，確認 Odoo 版本的 API |
+| **Graphify** | 自訂模組結構與既有邏輯的知識圖譜 | 實作前讀 `graphify-out/wiki/index.md`；編輯後執行 `/graphify . --update` |
+| **Serena** | 即時精確 symbol 定位（定義、呼叫鏈） | Graphify wiki 快照不足，或需要確認當前代碼的確切位置時 |
+
+- Graphify wiki 路徑：`<online_addons_root>/graphify-out/wiki/index.md`（依版本對應目錄）
 
 ## 2. Dev Workflow
 - `senior-software-engineer` must read specification from `analysis.yaml`. Do not guess intent.
