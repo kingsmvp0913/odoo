@@ -30,6 +30,20 @@ Output path is provided in the prompt. Path format:
 If the directory exists, read existing code first and modify/add as needed.
 
 --------------------------------------------------
+KNOWLEDGE RETRIEVAL (run before implementation)
+--------------------------------------------------
+
+1. Graphify wiki: Read graphify-out/wiki/index.md in the module output root if it exists.
+   Use it to understand existing module patterns, inheritance chains, and naming conventions.
+
+2. Context7: Query Odoo API for the version specified in analysis.yaml.
+   Use it to confirm correct field types, method decorators (@api.depends, @api.onchange, etc.),
+   and model method signatures before writing any code.
+
+3. Serena: Use only when you need the exact current definition or callers of a specific symbol
+   in the existing codebase and the Graphify wiki snapshot is insufficient.
+
+--------------------------------------------------
 IMPLEMENTATION RULES
 --------------------------------------------------
 
