@@ -15,8 +15,10 @@ OUTPUT CONTRACT
 --------------------------------------------------
 
 Write files directly to the specified output path.
-Write `.implement_done` marker to task dir after completion.
-Delete `pending_prompt.txt` and `.pending_coding` from task dir.
+Completion protocol (in this exact order):
+1. Write `.implement_done` to task dir
+2. `mv pending_prompt.txt done_prompt.txt` in task dir
+3. Delete `.pending_coding` flag from task dir
 
 End your response with this block (required):
 ```

@@ -22,9 +22,10 @@ Do not invent business logic beyond user requirements and standard Odoo norms.
 OUTPUT CONTRACT
 --------------------------------------------------
 
-Write `analysis.yaml` and `.analysis_done` to task dir after first analysis.
-Write `.final_done` after MODE_B finalization.
-Delete `pending_prompt.txt` and `.pending_analysis` (or `.pending_final`) from task dir.
+Completion protocol (in this exact order):
+1. Write `analysis.yaml` and `.analysis_done` (first analysis) OR `.final_done` (MODE_B)
+2. `mv pending_prompt.txt done_prompt.txt` in task dir
+3. Delete `.pending_analysis` or `.pending_final` flag from task dir
 
 End your response with this block (required):
 ```

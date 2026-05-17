@@ -14,8 +14,10 @@ Review the implemented Odoo module against the specification AND code quality st
 OUTPUT CONTRACT
 --------------------------------------------------
 
-Write `qa_report.yaml` and `.qa_done` to task dir.
-Delete `pending_prompt.txt` and `.pending_qa` from task dir.
+Completion protocol (in this exact order):
+1. Write `qa_report.yaml` and `.qa_done` to task dir
+2. `mv pending_prompt.txt done_prompt.txt` in task dir
+3. Delete `.pending_qa` flag from task dir
 
 End your response with this block (required):
 ```

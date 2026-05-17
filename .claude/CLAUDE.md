@@ -1,4 +1,4 @@
-# CLAUDE.md (V8)
+# CLAUDE.md (V8.1)
 
 ## 0. Hard Rules
 - NEVER modify core Odoo files. Custom code in `custom_addons/` only.
@@ -12,18 +12,46 @@
 ## 1. Paths
 - **Task root**: `.claude/kingsmvpsplan/<stage>/<task_id>/`
 - **Spec file**: `<task_root>/analysis.yaml`
-- **Pipeline flag**: `.claude/kingsmvpsplan/_PIPELINE_WAITING` (relative to project root; TTL 30 min — skip if older)
-- PS1 scripts run on the user's Windows machine; their `C:\` absolute paths are correct for that context. When Claude executes on Linux, translate `C:\odoo` → project root, `C:\online_addons` → `/online_addons`.
+- **Pipeline flag**: `.claude/kingsmvpsplan/_PIPELINE_WAITING` (content = ISO timestamp; TTL 30 min)
+- **Loop counter**: `.claude/kingsmvpsplan/_LOOP_COUNTER.json`
+- PS1 scripts run on the user's machine; paths are computed via `$PSScriptRoot` (cross-platform). When Claude executes on Linux, translate `C:\odoo` → project root, `C:\online_addons` → `/online_addons` (or `$ONLINE_ADDONS_DIR` env var).
 
 ## 2. Knowledge Retrieval (Decision Tree)
 Execute in order. Stop as soon as sufficient.
-1. **Graphify** → `<online_addons_root>/graphify-out/wiki/index.md` (cached snapshot; read **once** per pipeline run by main orchestrator, inject summary into sub-Agent prompts)
+1. **Graphify** → `<online_addons_root>/graphify-out/wiki/index.md`
+   - Main orchestrator reads **once** per pipeline run, injects as `[WIKI-CACHE]` block into sub-Agent prompts
+   - Sub-Agents with `[WIKI-CACHE]` in prompt **must not** re-read wiki
 2. **Serena** → Only if Graphify wiki lacks the specific symbol definition or call chain
 3. **Context7** → Only to confirm Odoo native API (field types, decorators, method signatures) for the target version
 
-Sub-Agents **must not** re-read the Graphify wiki independently; use the summary injected in their prompt.
+**WIKI-CACHE injection procedure** (main orchestrator, before spawning sub-Agents):
+```
+1. Read <online_addons_root>/graphify-out/wiki/index.md
+2. Extract lines mentioning the target module (max 200 lines)
+3. Prepend to each sub-Agent prompt:
+   [WIKI-CACHE]
+   <extracted lines>
+   [/WIKI-CACHE]
+```
+If wiki file not found → skip injection; sub-Agent will read it directly.
 
 ## 3. Task Spec
+
+**Unified Marker Table** — authoritative reference for all Agents and PS1 scripts:
+
+| Claude stage | `.pending_*` flag | Done marker | Physical dir |
+|---|---|---|---|
+| analysis (initial) | `.pending_analysis` | `.analysis_done` | `confirm/` |
+| answer-check | _(PS1 only, no pending)_ | `.answer_done` | `confirm/` → `analysis/` |
+| final (MODE_B) | `.pending_final` | `.final_done` | `analysis/` |
+| coding | `.pending_coding` | `.implement_done` | `coding/` |
+| qa | `.pending_qa` | `.qa_done` | `coding/` |
+| archive | _(none)_ | _(none)_ | `final/` ← QA-passed tasks |
+
+- **Stage source**: read `.pending_<stage>` flag filename inside task dir. Valid Claude-facing stages: `analysis`, `final`, `coding`, `qa`.
+- `final/` directory = QA-passed archive, **not** a processing stage.
+- `qa` shares the same module serial lock as `coding`.
+- task_id format: `task_<N>` where N is digits only (e.g. `task_3919`).
 
 `analysis.yaml` minimum required fields:
 ```yaml
@@ -33,9 +61,6 @@ odoo_version: ""
 project_name: null   # null → version-only path; string → project path
 execution_mode: "MODE_A | MODE_B"
 ```
-- **Stage source**: read `.pending_<stage>` flag filename inside task dir. Valid values: `confirm → analysis → final → coding → qa`.
-- `qa` is a sub-stage of coding and shares the same module serial lock.
-- task_id format: `task_<N>` (e.g. `task_3919`).
 
 ## 4. Edit Protocol
 - Plans/logs → `.claude/kingsmvpsplan/`.
@@ -44,7 +69,11 @@ execution_mode: "MODE_A | MODE_B"
   - Python: `python -m py_compile <file>`
   - XML: `xmllint --noout <file>`
   - Module loadable: `odoo-bin -d test --stop-after-init -i <module>` (if available)
-- **Completion order**: write `.<stage>_done` marker **first** → then `mv pending_prompt.txt done_prompt.txt` (never delete before writing marker).
+- **Completion order** (atomic protocol):
+  1. Write done marker (e.g. `.implement_done`)
+  2. `mv pending_prompt.txt done_prompt.txt`
+  3. Delete `.pending_<stage>` flag
+  - Never delete before writing marker.
 
 ## 5. Odoo Constraints
 - Models: `_inherit`. Views: `inherit_id` + `xpath`. Controllers: `super()`.
@@ -56,8 +85,8 @@ execution_mode: "MODE_A | MODE_B"
 
 ## 7. Pipeline
 Triggers (either):
-- User types「開工」→ Hook injects PS1 output into context; process the `[CLAUDE-ACTION-REQUIRED]` block
-- `.claude/kingsmvpsplan/_PIPELINE_WAITING` exists AND mtime < 30 min
+- User types「開工」→ Hook runs `_pipeline_run.ps1`; process the `[CLAUDE-ACTION-REQUIRED]` block in output
+- `.claude/kingsmvpsplan/_PIPELINE_WAITING` exists AND content timestamp < 30 min ago
 
 Full pipeline spec: **`.claude/pipeline.md`**
 
@@ -69,4 +98,4 @@ Full pipeline spec: **`.claude/pipeline.md`**
 | `blocker.agent.txt` | Agent execution error |
 | `blocker.loop.txt` | Pipeline loop exceeded safety limit |
 
-On blocker: STOP immediately. Report the file path to user. Do not display content.
+Templates in `.claude/templates/`. On blocker: STOP immediately. Report file path only, never content.

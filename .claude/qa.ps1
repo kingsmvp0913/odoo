@@ -1,8 +1,7 @@
 # qa.ps1 - 品管階段主程式（Steps 5–6）
 # PS1 僅負責機械工作；AI QA 由 Claude terminal 非同步執行
 
-$script:ROOT = "C:\odoo"
-. "$script:ROOT\.claude\_common.ps1"
+. (Join-Path $PSScriptRoot "_common.ps1")
 
 Initialize-PipelineDirs
 

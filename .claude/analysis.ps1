@@ -1,8 +1,7 @@
 # analysis.ps1 - 需求分析階段主程式（Steps 1–3b）
 # PS1 僅負責機械工作（檔案管理）；AI 呼叫由 Claude terminal 非同步執行
 
-$script:ROOT = "C:\odoo"
-. "$script:ROOT\.claude\_common.ps1"
+. (Join-Path $PSScriptRoot "_common.ps1")
 
 if (-not $env:ODOO_PASSWORD) {
     Write-Host "[ERROR] 環境變數 ODOO_PASSWORD 未設定" -ForegroundColor Red

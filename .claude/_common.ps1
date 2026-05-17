@@ -3,17 +3,20 @@
 # ============================================================
 # 路徑常數
 # ============================================================
-$script:ROOT             = "C:\odoo"
-$script:ONLINE_ADDONS_DIR = "C:\online_addons"
+$script:ROOT             = if ($IsLinux) { Split-Path -Parent $PSScriptRoot } else { "C:\odoo" }
+$script:ONLINE_ADDONS_DIR = if ($env:ONLINE_ADDONS_DIR) { $env:ONLINE_ADDONS_DIR } elseif ($IsLinux) { "/online_addons" } else { "C:\online_addons" }
 
-$script:START_DIR    = "$script:ROOT\.claude\kingsmvpsplan\start"
-$script:CONFIRM_DIR  = "$script:ROOT\.claude\kingsmvpsplan\confirm"
-$script:ANALYSIS_DIR = "$script:ROOT\.claude\kingsmvpsplan\analysis"
-$script:CODING_DIR   = "$script:ROOT\.claude\kingsmvpsplan\coding"
-$script:FINAL_DIR    = "$script:ROOT\.claude\kingsmvpsplan\final"
+$script:CLAUDE_DIR   = $PSScriptRoot
+$script:PLAN_DIR     = Join-Path $PSScriptRoot "kingsmvpsplan"
 
-$script:PIPELINE_WAITING     = "$script:ROOT\.claude\kingsmvpsplan\_PIPELINE_WAITING"
-$script:PROJECT_VERSION_MAP_PATH = "$script:ROOT\.claude\project_version_map.json"
+$script:START_DIR    = Join-Path $script:PLAN_DIR "start"
+$script:CONFIRM_DIR  = Join-Path $script:PLAN_DIR "confirm"
+$script:ANALYSIS_DIR = Join-Path $script:PLAN_DIR "analysis"
+$script:CODING_DIR   = Join-Path $script:PLAN_DIR "coding"
+$script:FINAL_DIR    = Join-Path $script:PLAN_DIR "final"
+
+$script:PIPELINE_WAITING     = Join-Path $script:PLAN_DIR "_PIPELINE_WAITING"
+$script:PROJECT_VERSION_MAP_PATH = Join-Path $PSScriptRoot "project_version_map.json"
 
 # ============================================================
 # Odoo 連線常數
@@ -208,7 +211,7 @@ function Open-ClaudeTerminal {
         return
     }
 
-    $pendingFiles = Get-ChildItem "$script:ROOT\.claude\kingsmvpsplan" -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue
+    $pendingFiles = Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue
     if (-not $pendingFiles -or $pendingFiles.Count -eq 0) {
         Write-Host "[PIPELINE] 無待處理 AI 任務" -ForegroundColor DarkGray
         return
@@ -216,8 +219,8 @@ function Open-ClaudeTerminal {
 
     Write-Host "[PIPELINE] $($pendingFiles.Count) 個任務等待 AI 處理，開啟 Claude..." -ForegroundColor Magenta
 
-    # 寫入等待標記，Claude 讀到後自動處理 pending 任務
-    Atomic-WriteFile $script:PIPELINE_WAITING "" | Out-Null
+    # 寫入等待標記（含 ISO 時間戳，供 TTL 判斷），Claude 讀到後自動處理 pending 任務
+    Atomic-WriteFile $script:PIPELINE_WAITING (Get-Date -Format 'o') | Out-Null
 
     # 優先用 Windows Terminal，否則開新 PowerShell 視窗
     if (Get-Command "wt" -ErrorAction SilentlyContinue) {
@@ -280,7 +283,7 @@ function Get-ExistingModules {
 # ============================================================
 function Send-OdooTaskMessage {
     param([int]$taskId, [string]$message)
-    $py = Join-Path $script:ROOT ".claude\send_message.py"
+    $py = Join-Path $PSScriptRoot "send_message.py"
     if (-not (Test-Path $py)) { return }
     $r = python $py $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $taskId $message 2>&1
     if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 訊息失敗: $r" -ForegroundColor Yellow }
@@ -301,7 +304,9 @@ function BackToConfirm {
     # 清除所有 .done 標記與 pending 檔案
     @('.analysis_done', '.answer_done', '.final_done', '.implement_done', '.qa_done',
       '.pending_analysis', '.pending_final', '.pending_coding', '.pending_qa',
-      'pending_prompt.txt') | ForEach-Object {
+      'pending_prompt.txt', 'done_prompt.txt',
+      'blocker.spec.txt', 'blocker.tech.txt', 'blocker.agent.txt', 'blocker.loop.txt',
+      'agent_error.txt') | ForEach-Object {
         Remove-Item (Join-Path $confirmTaskDir $_) -Force -ErrorAction SilentlyContinue
     }
 
