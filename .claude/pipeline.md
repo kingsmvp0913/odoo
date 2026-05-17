@@ -35,19 +35,14 @@
    有效 Claude-facing stage：`analysis` / `final` / `coding` / `qa`
 3. **分批**：依 `analysis → final → coding → qa` 順序。
    `final/` 目錄為 QA 通過歸檔，不是 stage。
-4. **WIKI 快取注入**（spawn 前，每 stage 執行一次）：
-   - 讀 `<online_addons_root>/graphify-out/wiki/index.md`
-   - Grep 目標 module 相關行（最多 200 行）
-   - Prepend 到各子 Agent prompt：
-     ```
-     [WIKI-CACHE]
-     <extracted lines>
-     [/WIKI-CACHE]
-     ```
-   - wiki 不存在 → 跳過注入，子 Agent 自行讀取
+4. **WIKI 快取注入**（PS1 已在 pending_prompt.txt 內 prepend，主調度無需重複注入）：
+   - `coding.ps1` / `qa.ps1` / `analysis.ps1 STEP 3b` 呼叫 `Get-WikiCache`，自動讀取
+     `<online_addons_root>/graphify-out/wiki/index.md` 並 prepend `[WIKI-CACHE]...[/WIKI-CACHE]` 區塊
+   - wiki 不存在 → 跳過注入（返回空字串）
+   - 子 Agent 收到 `[WIKI-CACHE]` 後**不得重複讀取** wiki
 5. **並行 spawn**（同 stage 內）：
    - `analysis` / `final`：最多 **5** 個並行；超過分批
-   - `coding` / `qa`：**主調度**負責按 module 排隊（見下方「Module 序列鎖」）
+   - `coding` / `qa`：PS1 已實作 Module 序列鎖（同模組只寫一個 pending），主調度可直接並行 spawn 不同模組任務
 6. **Agent 失敗處理**：
    - 任一 Agent 返回 `status: error` → 寫 `<task_root>/agent_error.txt`（用 `.claude/templates/agent_error.txt` 格式）
    - `retry_count < 1`：主調度自動重試一次，`retry_count` +1
@@ -63,20 +58,21 @@
 9. **繼續**：若步驟 8 執行後出現新 `pending_prompt.txt` → 回步驟 1，`loop_count` +1
 10. **結束**：無新 pending 任務 → 刪除 `_PIPELINE_WAITING` 和 `_LOOP_COUNTER.json`
 
-## Module 序列鎖（主調度全權負責）
+## Module 序列鎖（PS1 負責，主調度無需額外排隊）
 
 ```
-收集 coding/qa pending 任務
+coding.ps1 / qa.ps1 執行時：
+  收集 coding/ 中已存在任務的 module 清單 → activeModules
   ↓
-讀各任務 analysis.yaml 的 module 欄位
+對每個 analysis/ 任務（coding 階段）：
+  若 module 已在 activeModules → SKIP（下輪 pipeline run 處理）
+  否則 → 寫 pending_prompt.txt，加入 activeModules
   ↓
-按 module 分群
-  ↓
-同 module 群：逐一 spawn（等前一個 Agent 完成後再啟動下一個）
-不同 module 群：可並行（仍受 5 個並行上限）
+結果：每次 pipeline run，同一模組至多一個新 coding/qa pending
 ```
 
-子 Agent **不需自鎖**。鎖的責任完全在主調度。
+主調度收到的 pending 任務已保證**不同模組**，可直接並行 spawn（上限 5 個）。
+子 Agent **不需自鎖**。
 
 ## Sub-Agent 回傳格式（強制）
 

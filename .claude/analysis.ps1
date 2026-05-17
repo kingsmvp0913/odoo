@@ -124,8 +124,15 @@ if (-not (Acquire-Lock $lock2 300)) {
                 Release-Lock $taskLock
                 $dest = Join-Path $script:CONFIRM_DIR $taskName
                 if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-                Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
-                Write-Host "[OK] $taskName → confirm/ (等待 Claude 初始分析)" -ForegroundColor Green
+                try {
+                    Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
+                    Write-Host "[OK] $taskName → confirm/ (等待 Claude 初始分析)" -ForegroundColor Green
+                } catch {
+                    # 搬移失敗：回滾 pending，避免任務目錄分裂（start/ 與 confirm/ 各一份）
+                    Remove-Item (Join-Path $taskDir.FullName "pending_prompt.txt") -Force -ErrorAction SilentlyContinue
+                    Remove-Item (Join-Path $taskDir.FullName ".pending_analysis")  -Force -ErrorAction SilentlyContinue
+                    Write-Host "[ERROR] $taskName 搬移失敗（已回滾 pending）：$_" -ForegroundColor Red
+                }
             } catch {
                 Write-Host "[ERROR] STEP 2 ${taskName}: $_" -ForegroundColor Red
             } finally {
@@ -230,10 +237,15 @@ if (-not (Acquire-Lock $lock3b 300)) {
                     -replace '__CASE_ID__', $taskName `
                     -replace '__CURRENT_TIME__', $currentTime
 
-                $fullPrompt = "ultrathink`n`n" + $prompt +
+                # STEP 3b 不搬移任務目錄（仍留在 analysis/）；coding.ps1 STEP 4 才會搬到 coding/
+                # WIKI-CACHE 注入：此時 module 已由初始分析填入 analysis.yaml
+                $parsedWiki = ConvertFrom-Yaml $currentYaml
+                $wikiCache  = Get-WikiCache -moduleName $parsedWiki['module'] -odooVersion $parsedWiki['odoo_version'] -projectName $parsedWiki['project_name']
+
+                $fullPrompt = "ultrathink`n`n" + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
                     "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
-                    "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 .final_done。完成後刪除 pending_prompt.txt 和 .pending_final。"
+                    "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 .final_done。完成後依序：(a) 寫入 .final_done (b) mv pending_prompt.txt done_prompt.txt (c) 刪除 .pending_final。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "final" -prompt $fullPrompt
                 Write-Host "[OK] $taskName → 等待 Claude 生成 MODE_B 規格" -ForegroundColor Green

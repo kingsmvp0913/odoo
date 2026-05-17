@@ -11,17 +11,29 @@ $agentPath     = Join-Path $script:ROOT ".claude\agents\senior-software-engineer
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
 $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
+# Module 序列鎖：收集 coding/ 中已有活動任務的模組（不重複處理同一模組）
+$activeModules = @{}
+Get-ChildItem $script:CODING_DIR -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+    $yamlPath = Join-Path $_.FullName "analysis.yaml"
+    if (Test-Path $yamlPath) {
+        try {
+            $p = ConvertFrom-Yaml (Get-Content $yamlPath -Raw -Encoding UTF8)
+            if ($p['module']) { $activeModules[$p['module']] = $true }
+        } catch {}
+    }
+}
+
 $analysisTasks = Get-ChildItem $script:ANALYSIS_DIR -Directory -ErrorAction SilentlyContinue
 
 foreach ($taskDir in $analysisTasks) {
-    $taskName        = $taskDir.Name
-    $taskLock        = Join-Path $taskDir.FullName "process.lock"
-    $finalDone       = Join-Path $taskDir.FullName ".final_done"
-    $implementDone   = Join-Path $taskDir.FullName ".implement_done"
+    $taskName         = $taskDir.Name
+    $taskLock         = Join-Path $taskDir.FullName "process.lock"
+    $finalDone        = Join-Path $taskDir.FullName ".final_done"
+    $implementDone    = Join-Path $taskDir.FullName ".implement_done"
     $analysisYamlPath = Join-Path $taskDir.FullName "analysis.yaml"
 
-    if (-not (Test-Path $finalDone))     { continue }
-    if (Test-Path $implementDone)        { continue }
+    if (-not (Test-Path $finalDone))  { continue }
+    if (Test-Path $implementDone)     { continue }
 
     # 已有 pending prompt，等待 Claude 處理
     if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
@@ -49,16 +61,26 @@ foreach ($taskDir in $analysisTasks) {
             Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
+        # Module 序列鎖：同一模組只允許一個活動任務
+        if ($activeModules.ContainsKey($moduleName)) {
+            Write-Host "[QUEUE] $taskName - 模組 $moduleName 序列等待（已有活動任務），下輪處理" -ForegroundColor DarkYellow
+            continue
+        }
+        $activeModules[$moduleName] = $true
+
         $modulePath  = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
-        $destTaskDir = Join-Path $script:CODING_DIR $taskName   # 任務移動後的路徑
+        $destTaskDir = Join-Path $script:CODING_DIR $taskName
 
         Write-Host "[INFO] $taskName → $modulePath" -ForegroundColor DarkCyan
 
-        $fullPrompt = $agentTemplate +
+        # WIKI-CACHE 注入：在 Agent prompt 中 prepend 模組相關 wiki 內容
+        $wikiCache = Get-WikiCache -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
+
+        $fullPrompt = "ultrathink`n`n" + $wikiCache + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$destTaskDir" +
             "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
             "`n`n【OUTPUT PATH】`n$modulePath" +
-            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後寫入 .implement_done 到【TASK DIRECTORY】`n4. 刪除 pending_prompt.txt 和 .pending_coding"
+            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後依序：(a) 寫入 .implement_done 到【TASK DIRECTORY】(b) mv pending_prompt.txt done_prompt.txt (c) 刪除 .pending_coding flag"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "coding" -prompt $fullPrompt
 

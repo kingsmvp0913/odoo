@@ -11,16 +11,18 @@ $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
 # ============================================================
 # STEP 5: coding/ → 寫 QA pending prompt（不等 AI）
+# Module 序列鎖：同一模組只啟動一個 QA 任務
 # ============================================================
 Write-Host "[STEP 5] 準備 QA 任務..." -ForegroundColor Cyan
 
+$qaModulePending = @{}
 $codingTasks = Get-ChildItem $script:CODING_DIR -Directory -ErrorAction SilentlyContinue
 
 foreach ($taskDir in $codingTasks) {
-    $taskName        = $taskDir.Name
-    $taskLock        = Join-Path $taskDir.FullName "process.lock"
-    $implementDone   = Join-Path $taskDir.FullName ".implement_done"
-    $qaDone          = Join-Path $taskDir.FullName ".qa_done"
+    $taskName         = $taskDir.Name
+    $taskLock         = Join-Path $taskDir.FullName "process.lock"
+    $implementDone    = Join-Path $taskDir.FullName ".implement_done"
+    $qaDone           = Join-Path $taskDir.FullName ".qa_done"
     $analysisYamlPath = Join-Path $taskDir.FullName "analysis.yaml"
 
     if (-not (Test-Path $implementDone)) { continue }
@@ -52,14 +54,24 @@ foreach ($taskDir in $codingTasks) {
             Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
+        # Module 序列鎖：同一模組只允許一個 QA 任務並行
+        if ($qaModulePending.ContainsKey($moduleName)) {
+            Write-Host "[QUEUE] $taskName - 模組 $moduleName QA 序列等待，下輪處理" -ForegroundColor DarkYellow
+            continue
+        }
+        $qaModulePending[$moduleName] = $true
+
         $modulePath = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
         Write-Host "[INFO] $taskName 準備 QA: $modulePath" -ForegroundColor DarkCyan
 
-        $fullPrompt = $agentTemplate +
+        # WIKI-CACHE 注入
+        $wikiCache = Get-WikiCache -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
+
+        $fullPrompt = "ultrathink`n`n" + $wikiCache + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
             "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
             "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
-            "`n`n完成後將 qa_report.yaml 和 .qa_done 寫入【TASK DIRECTORY】，並刪除 pending_prompt.txt 和 .pending_qa。"
+            "`n`n完成後依序：(a) 寫入 qa_report.yaml 和 .qa_done 到【TASK DIRECTORY】(b) mv pending_prompt.txt done_prompt.txt (c) 刪除 .pending_qa flag。"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "qa" -prompt $fullPrompt
         Write-Host "[OK] $taskName → 等待 Claude QA 檢查" -ForegroundColor Green
@@ -83,7 +95,7 @@ foreach ($taskDir in $codingTasks2) {
     $qaDone       = Join-Path $taskDir.FullName ".qa_done"
     $qaReportPath = Join-Path $taskDir.FullName "qa_report.yaml"
 
-    if (-not (Test-Path $qaDone))      { continue }
+    if (-not (Test-Path $qaDone))       { continue }
     if (-not (Test-Path $qaReportPath)) { continue }
 
     # 若 pending_prompt.txt 仍存在（QA 尚未完成），跳過
@@ -112,8 +124,12 @@ foreach ($taskDir in $codingTasks2) {
                 Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已完成，請查看 final/$taskName/</p>"
             }
         } else {
+            # 從 issues: 區塊取得第一個 description（避免誤抓 items 區的欄位）
             $reason = "QA 檢查失敗"
-            if ($qaReport -match '(?m)^\s*description:\s*"?([^"\r\n]+)"?') { $reason = $matches[1].Trim() }
+            $afterIssues = if ($qaReport -match '(?s)issues:(.*?)$') { $matches[1] } else { "" }
+            if ($afterIssues -match '(?m)^\s*description:\s*"?([^"\r\n]+?)"?\s*$') {
+                $reason = $matches[1].Trim().Trim('"').Trim("'")
+            }
 
             Release-Lock $taskLock
             BackToConfirm -taskDir $taskDir.FullName -reason $reason -stage "QA"

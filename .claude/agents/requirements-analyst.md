@@ -27,12 +27,16 @@ Completion protocol (in this exact order):
 2. `mv pending_prompt.txt done_prompt.txt` in task dir
 3. Delete `.pending_analysis` or `.pending_final` flag from task dir
 
+Stage rule for AGENT-RESULT:
+- Wrote `.analysis_done` (MODE_A initial) → `stage: analysis`
+- Wrote `.final_done` (MODE_B finalization) → `stage: final`
+
 End your response with this block (required):
 ```
 ---AGENT-RESULT---
 status: ok | blocker | error
 task_id: task_<N>
-stage: analysis
+stage: analysis   # "analysis" if wrote .analysis_done; "final" if wrote .final_done
 files_written:
   - <task_dir>/analysis.yaml
 message: MODE_A questions: <N> | MODE_B complete

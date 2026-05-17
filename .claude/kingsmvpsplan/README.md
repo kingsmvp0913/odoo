@@ -1,4 +1,4 @@
-# Kingsmvps Pipeline (V8)
+# Kingsmvps Pipeline (V8.1)
 
 輸入「**開工**」，Claude 自動完成需求分析 → 實作 → QA，無需手動確認。
 
@@ -18,19 +18,32 @@
 
 ```
 Odoo 任務
-   ↓ 自動同步
+   ↓ 自動同步 (curl.py)
 start/       新任務
-   ↓ Claude 需求分析
+   ↓ Claude 需求分析 (requirements-analyst)
 confirm/     等待 user_answer（MODE_A）或自動通過（MODE_B）
-   ↓ 答案完整後
-analysis/    Claude 產出完整技術規格（MODE_B）
-   ↓ Claude 實作
-coding/      實作中，完成後 Claude 自動執行 QA
-   ↓ QA 通過
-final/       ✓ 完成
+   ↓ 答案完整後 → .answer_done
+analysis/    Claude 產出完整技術規格（MODE_B + .final_done）
+   ↓ Claude 實作 (senior-software-engineer)
+coding/      實作中 (.implement_done)，完成後 Claude 自動執行 QA
+   ↓ QA 通過 (.qa_done)
+final/       ✓ 完成（已歸檔）
 ```
 
-QA 失敗會自動退回 `confirm/` 重跑。
+QA 失敗會自動退回 `confirm/` 重跑（含清除所有 done/pending 標記）。
+
+---
+
+## Stage 標記一覽（Unified Marker Table）
+
+| Stage | .pending_* flag | Done marker | 物理目錄 |
+|---|---|---|---|
+| analysis (初始) | `.pending_analysis` | `.analysis_done` | `confirm/` |
+| answer-check | (PS1 自動，無 pending) | `.answer_done` | `confirm/` → `analysis/` |
+| final (MODE_B) | `.pending_final` | `.final_done` | `analysis/` |
+| coding | `.pending_coding` | `.implement_done` | `coding/` |
+| qa | `.pending_qa` | `.qa_done` | `coding/` |
+| archive | — | — | `final/` |
 
 ---
 
@@ -71,6 +84,78 @@ Blocker 模板在 `.claude/templates/` 目錄。
 | 狀況 | 處置 |
 |------|------|
 | Claude 停下來說有 blocker | 查看對應任務目錄的 blocker 檔路徑，手動決策後刪除它再繼續 |
-| MODE_A 等待填寫 | 打開 `confirm/task_N/analysis.yaml`，填寫所有 `user_answer` 欄位 |
+| MODE_A 等待填寫 | 打開 `confirm/task_N/analysis.yaml`，填寫所有 `user_answer` 欄位（單行純量，不可用 YAML literal block）|
 | QA 一直失敗 | 查看 `coding/task_N/qa_report.yaml` 的 issues 說明 |
 | Pipeline 沒有自動觸發 | 確認 `_PIPELINE_WAITING` flag 是否存在且未超過 30 分鐘 |
+| Odoo 任務沒收到完成通知 | send_message.py 尚未實作，通知功能暫不可用（見下方已知限制）|
+
+---
+
+## 版本歷程
+
+### V8.1 — 2026-05-17（Opus ultrathink 全面驗證後修正）
+
+由 Opus ultrathink 驗證發現 2 CRITICAL / 7 MAJOR / 6 MINOR 共 18 項問題，本版本已全數修正：
+
+| # | 問題 | 修正位置 |
+|---|------|---------|
+| C1 | Loop Counter 未實作 | `_pipeline_run.ps1` 新增完整計數器邏輯 |
+| C2 | `send_message.py` 缺失 | 新建 `.claude/send_message.py` |
+| C3 | `odoo_version` 單引號解析含引號 | `_common.ps1` ConvertFrom-Yaml regex 修正 |
+| M1 | `project_name: null` 解析為字串 | `_common.ps1` 加 null-string → $null 轉換 |
+| M2 | `module` regex 要求前導空白 | `_common.ps1` `\s+` → `\s*` |
+| M3 | `coding.ps1` / `qa.ps1` 缺 `ultrathink` | 兩檔案 prompt 前補 `ultrathink\n\n` |
+| M4 | Module 序列鎖未實作 | `coding.ps1` / `qa.ps1` 加 activeModules 檢查 |
+| M5 | WIKI-CACHE 注入未實作 | `_common.ps1` 加 `Get-WikiCache`，三個 PS1 呼叫 |
+| M6 | `requirements-analyst.md` stage 寫死 | 改為依 done marker 類型動態填入 |
+| M7 | `analysis.ps1` STEP 2 Move 無 rollback | 加 try/catch，失敗時清除 pending_prompt |
+| M8 | QA reason regex 抓錯區塊 | `qa.ps1` 改從 `issues:` 區塊後抓 description |
+| m1 | `_pipeline_run.ps1` / `_common.ps1` 硬編碼 `C:\odoo` | 改用 `Split-Path -Parent $PSScriptRoot` |
+| m2 | `coding.ps1` / `qa.ps1` mv 指令描述不完整 | prompt 改為三步驟原子協議說明 |
+| m3 | STEP 3b 未說明不搬移原因 | 加說明注解 |
+| m4 | CLAUDE.md 第二觸發條件無說明 | §7 補充「任何訊息都先檢查 _PIPELINE_WAITING」|
+| m5 | pipeline.md Module 序列鎖責任不清 | 更新說明改為 PS1 負責 |
+| m6 | pipeline.md WIKI-CACHE 注入責任不清 | 更新說明改為 PS1 負責 |
+| m7 | `analysis.ps1` STEP 3b 缺 WIKI-CACHE | 加 Get-WikiCache 呼叫 |
+
+---
+
+## 環境設定
+
+```bash
+# 必要環境變數（在 Claude terminal 或 .env 設定）
+$env:ODOO_PASSWORD = "your_password"
+
+# 可選環境變數
+$env:ODOO_USER_ID = "79"           # 預設 79
+$env:ONLINE_ADDONS_DIR = "C:\..."  # 預設 C:\online_addons（Windows）或 /online_addons（Linux）
+```
+
+**注意**：`ODOO_PASSWORD` 未設定時 `_pipeline_run.ps1` 立即中止。
+
+---
+
+## 目錄結構
+
+```
+.claude/
+├── kingsmvpsplan/
+│   ├── start/          新任務暫存（curl.py 同步後）
+│   ├── confirm/        初始分析完成，等待 user_answer
+│   ├── analysis/       答案完整，等待 MODE_B 規格生成
+│   ├── coding/         實作與 QA 進行中
+│   └── final/          QA 通過歸檔（唯讀）
+├── agents/
+│   ├── requirements-analyst.md
+│   ├── senior-software-engineer.md
+│   └── qa-analyst.md
+├── templates/          Blocker 模板
+├── _common.ps1         共用函數庫
+├── _pipeline_run.ps1   「開工」hook 入口
+├── analysis.ps1        STEP 1-3
+├── coding.ps1          STEP 4
+├── qa.ps1              STEP 5-6
+├── curl.py             Odoo 任務同步
+├── project_version_map.json  專案版本對照表
+└── settings.json       Claude hooks 與權限設定
+```

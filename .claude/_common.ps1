@@ -3,7 +3,7 @@
 # ============================================================
 # 路徑常數
 # ============================================================
-$script:ROOT             = if ($IsLinux) { Split-Path -Parent $PSScriptRoot } else { "C:\odoo" }
+$script:ROOT             = Split-Path -Parent $PSScriptRoot
 $script:ONLINE_ADDONS_DIR = if ($env:ONLINE_ADDONS_DIR) { $env:ONLINE_ADDONS_DIR } elseif ($IsLinux) { "/online_addons" } else { "C:\online_addons" }
 
 $script:CLAUDE_DIR   = $PSScriptRoot
@@ -162,10 +162,18 @@ function ConvertFrom-Yaml {
     $result = @{}
 
     if ($yaml -match '(?m)^execution_mode:\s*(\S+)') { $result['execution_mode'] = $matches[1] }
-    if ($yaml -match '(?m)^\s+module:\s*(\S+)')      { $result['module'] = $matches[1] }
-    if ($yaml -match '(?m)^(?:\s+)?odoo_version:\s*"?([^"\r\n]+)"?') { $result['odoo_version'] = $matches[1].Trim() }
-    if ($yaml -match '(?m)^(?:\s+)?project_name:\s*"?([^"\r\n]+)"?') { $result['project_name'] = $matches[1].Trim() }
-    if ($yaml -match '(?m)^status:\s*(\S+)')          { $result['status'] = $matches[1] }
+    # \s* (not \s+) — supports both root-level and indented module fields
+    if ($yaml -match '(?m)^\s*module:\s*(\S+)')       { $result['module'] = $matches[1] }
+    # Strip surrounding single or double quotes; handle both indented and root-level
+    if ($yaml -match '(?m)^(?:\s+)?odoo_version:\s*["'']?([^"''\r\n]+?)["'']?\s*$') {
+        $result['odoo_version'] = $matches[1].Trim()
+    }
+    if ($yaml -match '(?m)^(?:\s+)?project_name:\s*["'']?([^"''\r\n]+?)["'']?\s*$') {
+        $val = $matches[1].Trim()
+        # project_name: null in YAML becomes the string "null" via regex — convert to $null
+        $result['project_name'] = if ($val -eq 'null') { $null } else { $val }
+    }
+    if ($yaml -match '(?m)^status:\s*(\S+)') { $result['status'] = $matches[1] }
 
     $result['has_null_answer'] = [regex]::IsMatch($yaml, "(?m)^\s*user_answer:\s*(null|`"`"|''|)?\s*$")
     $result['has_any_answer']  = [regex]::IsMatch($yaml, '(?m)^\s*user_answer:\s*\S')
@@ -259,6 +267,32 @@ function Get-ProjectVersion {
     $map = Load-ProjectVersionMap
     if ($map.ContainsKey($projectName)) { return $map[$projectName] }
     return $null
+}
+
+# ============================================================
+# WIKI 快取注入（供 PS1 在寫入 pending_prompt 前 prepend）
+# ============================================================
+function Get-WikiCache {
+    param([string]$moduleName, [string]$odooVersion, [string]$projectName = $null)
+    if (-not $moduleName) { return "" }
+
+    $addonsRoot = if (-not [string]::IsNullOrWhiteSpace($projectName)) {
+        Join-Path $script:ONLINE_ADDONS_DIR $projectName
+    } else {
+        $major = $odooVersion -replace '\.0$', ''
+        Join-Path $script:ONLINE_ADDONS_DIR $major
+    }
+
+    $wikiPath = Join-Path $addonsRoot "graphify-out\wiki\index.md"
+    if (-not (Test-Path $wikiPath)) { return "" }
+
+    try {
+        $lines   = Get-Content $wikiPath -Encoding UTF8
+        $matched = @($lines | Where-Object { $_ -match [regex]::Escape($moduleName) })
+        if ($matched.Count -eq 0) { return "" }
+        $block = ($matched | Select-Object -First 200) -join "`n"
+        return "[WIKI-CACHE]`n$block`n[/WIKI-CACHE]`n`n"
+    } catch { return "" }
 }
 
 # ============================================================
