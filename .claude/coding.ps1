@@ -1,8 +1,7 @@
 # coding.ps1 - 實作階段主程式（Step 4）
 # PS1 僅負責機械工作（檔案管理）；AI 呼叫由 Claude terminal 非同步執行
 
-$script:ROOT = "C:\odoo"
-. "$script:ROOT\.claude\_common.ps1"
+. (Join-Path $PSScriptRoot "_common.ps1")
 
 Initialize-PipelineDirs
 

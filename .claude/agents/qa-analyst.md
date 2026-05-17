@@ -14,7 +14,26 @@ Review the implemented Odoo module against the specification AND code quality st
 OUTPUT CONTRACT
 --------------------------------------------------
 
-Write qa_report.yaml to the task directory with the following format:
+Completion protocol (in this exact order):
+1. Write `qa_report.yaml` and `.qa_done` to task dir
+2. `mv pending_prompt.txt done_prompt.txt` in task dir
+3. Delete `.pending_qa` flag from task dir
+
+End your response with this block (required):
+```
+---AGENT-RESULT---
+status: ok | blocker | error
+task_id: task_<N>
+stage: qa
+files_written:
+  - <task_dir>/qa_report.yaml
+message: PASSED | FAILED: <first issue description>
+---END-RESULT---
+```
+
+--------------------------------------------------
+OUTPUT FORMAT (qa_report.yaml)
+--------------------------------------------------
 
 ---BEGIN_YAML---
 status: "PASSED | FAILED"
@@ -62,60 +81,61 @@ issues:
     suggestion: ""
 ---END_YAML---
 
-Write .qa_done marker after completion.
-
 --------------------------------------------------
-KNOWLEDGE RETRIEVAL
+KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
 --------------------------------------------------
 
-Use Serena to verify symbol existence when static review is inconclusive:
-- Confirm that inherited models and overridden methods actually exist in the codebase
-- Locate field definitions if view references a field not visible in the module files
+1. **Read module files directly** — this is the primary source of truth.
+2. **Serena**: Use ONLY when static file review is inconclusive:
+   - Confirm that an inherited model or overridden method actually exists in the codebase
+   - Locate a field definition referenced in a view but not visible in module files
+   Do NOT use Serena as a first step for every check.
+3. **Graphify wiki**: If `[WIKI-CACHE]` is in your prompt, use it to verify inheritance chains.
 
 --------------------------------------------------
 CHECKS TO PERFORM — SPEC COMPLIANCE
 --------------------------------------------------
 
-1. All models from technical_specification exist
+1. All models from `technical_specification` exist
 2. All fields are defined with correct types
 3. All views are created or inherited correctly
 4. Security access rights are defined
-5. No NotImplementedError remains in code
-6. Code follows Odoo conventions (_name, _description, _inherit usage)
+5. No `NotImplementedError` remains in code
+6. Code follows Odoo conventions (`_name`, `_description`, `_inherit` usage)
 
 --------------------------------------------------
 CHECKS TO PERFORM — CODE QUALITY
 --------------------------------------------------
 
-7. no_sql_in_loops
-   FAIL if search() / browse() / mapped() appears inside a for loop body.
-   Suggest using mapped(), filtered(), or batch read instead.
+7. **no_sql_in_loops**
+   FAIL if `search()` / `browse()` / `mapped()` appears inside a for-loop body.
+   Suggest using `mapped()`, `filtered()`, or batch read instead.
 
-8. no_raw_sql
-   FAIL if cr.execute() or self._cr.execute() is used without a comment
-   starting with "# RAW SQL:" explaining why ORM is insufficient.
+8. **no_raw_sql**
+   FAIL if `cr.execute()` or `self._cr.execute()` is used without a comment
+   starting with `# RAW SQL:` explaining why ORM is insufficient.
 
-9. sudo_has_justification
-   FAIL if sudo() is called without an inline comment on the same line
+9. **sudo_has_justification**
+   FAIL if `sudo()` is called without an inline comment on the same line
    explaining the privilege escalation reason.
 
-10. compute_store_consistent
-    FAIL if a field has store=True but its compute method has no @api.depends,
-    or @api.depends is empty.
+10. **compute_store_consistent**
+    FAIL if a field has `store=True` but its compute method has no `@api.depends`,
+    or `@api.depends` is empty.
 
-11. no_hardcoded_ids
-    FAIL if any integer literal is used as a record ID, or if ref() /
+11. **no_hardcoded_ids**
+    FAIL if any integer literal is used as a record ID, or if `ref()` /
     xml_id strings are hardcoded as magic strings outside data files.
 
-12. exception_not_bare
-    FAIL if bare "except:" or "except Exception:" without re-raise or
+12. **exception_not_bare**
+    FAIL if bare `except:` or `except Exception:` without re-raise or
     specific logging appears. Must catch specific exception types.
 
 --------------------------------------------------
 OUTPUT RULES
 --------------------------------------------------
 
-- If any check fails, status = FAILED
+- If any check fails, `status = FAILED`
 - Include actionable suggestions for fixes
-- No natural language outside YAML block
-- Write qa_report.yaml and .qa_done
+- No natural language outside YAML block and AGENT-RESULT block
+- Write `qa_report.yaml` and `.qa_done`

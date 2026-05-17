@@ -19,6 +19,27 @@ No file commands.
 Do not invent business logic beyond user requirements and standard Odoo norms.
 
 --------------------------------------------------
+OUTPUT CONTRACT
+--------------------------------------------------
+
+Completion protocol (in this exact order):
+1. Write `analysis.yaml` and `.analysis_done` (first analysis) OR `.final_done` (MODE_B)
+2. `mv pending_prompt.txt done_prompt.txt` in task dir
+3. Delete `.pending_analysis` or `.pending_final` flag from task dir
+
+End your response with this block (required):
+```
+---AGENT-RESULT---
+status: ok | blocker | error
+task_id: task_<N>
+stage: analysis
+files_written:
+  - <task_dir>/analysis.yaml
+message: MODE_A questions: <N> | MODE_B complete
+---END-RESULT---
+```
+
+--------------------------------------------------
 OUTPUT FORMAT
 --------------------------------------------------
 
@@ -84,35 +105,35 @@ technical_specification:
     - ""
 
 --------------------------------------------------
-KNOWLEDGE RETRIEVAL
+KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
 --------------------------------------------------
 
-Before populating technical_specification, retrieve:
+Before populating `technical_specification`, retrieve in this order:
 
-1. Odoo core API via Context7:
-   - Confirm target model name, available fields, and method signatures for the specified odoo_version
-   - Verify field types and comodel names are valid in that version
+1. **Graphify wiki**: If `[WIKI-CACHE]` is in your prompt, use it directly — do NOT re-read.
+   If absent, read `graphify-out/wiki/index.md` (under the relevant online_addons directory).
+   Check whether the required module or similar logic already exists before designing new models.
 
-2. Existing custom modules via Graphify:
-   - Read graphify-out/wiki/index.md (under the relevant online_addons version directory) if it exists
-   - Check whether the required module or similar logic already exists before designing new models
+2. **Serena**: Use ONLY if Graphify wiki lacks a specific symbol or model definition you need.
 
-Do NOT guess field types or model names. Retrieve first.
+3. **Context7**: Use ONLY to confirm Odoo native API for the target odoo_version
+   (valid field types, comodel names, method signatures).
+   Do NOT guess field types or model names — retrieve first.
 
 --------------------------------------------------
 MODE RULES
 --------------------------------------------------
 
-MODE_A: Triggered when clarification is needed. Output clarification_channel with questions.
+MODE_A: Triggered when clarification is needed. Output `clarification_channel` with questions.
 
 MODE_B: Triggered ONLY when all questions have valid non-null user_answers.
-        technical_specification MUST be fully populated.
+        `technical_specification` MUST be fully populated.
 
 --------------------------------------------------
 OUTPUT RULES
 --------------------------------------------------
 
-- Write analysis.yaml to the task directory
-- Write .analysis_done marker file after first analysis
-- Write .final_done marker file after MODE_B finalization
-- Do NOT output to stdout except the YAML block
+- Write `analysis.yaml` to the task directory
+- Write `.analysis_done` marker after first analysis
+- Write `.final_done` marker after MODE_B finalization
+- Do NOT output to stdout except the YAML block and the AGENT-RESULT block

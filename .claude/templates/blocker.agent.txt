@@ -1,0 +1,13 @@
+blocker_type: agent
+task_id: task_<N>
+stage: <current_stage>
+timestamp: <YYYY-MM-DDTHH:mm:ss>
+
+error: |
+  <錯誤訊息或例外堆疊>
+
+last_action: |
+  <發生錯誤前最後執行的動作>
+
+files_affected:
+  - <path>
