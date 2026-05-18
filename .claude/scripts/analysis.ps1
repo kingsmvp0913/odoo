@@ -10,7 +10,7 @@ if (-not $env:ODOO_PASSWORD) {
 
 Initialize-PipelineDirs
 
-$agentPath     = Join-Path $script:ROOT ".claude\agents\requirements-analyst.md"
+$agentPath     = Join-Path $script:CLAUDE_DIR "agents\requirements-analyst.md"
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
 $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
@@ -34,7 +34,7 @@ if (Test-Path $odooDisableFlag) {
     }
     $skipIds = ($processedIds | Select-Object -Unique) -join ","
 
-    $pyScript = Join-Path $script:ROOT ".claude\curl.py"
+    $pyScript = Join-Path $script:CLAUDE_DIR "tools\curl.py"
     try {
         $out = python $pyScript $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $script:ODOO_USER_ID $script:START_DIR $skipIds 2>&1
         $out | ForEach-Object { Write-Host $_ }
@@ -49,7 +49,7 @@ if (Test-Path $odooDisableFlag) {
 # ============================================================
 Write-Host "`n[STEP 2] 準備初始分析任務（start/ → confirm/）..." -ForegroundColor Cyan
 
-$lock2 = Join-Path $script:ROOT ".claude\kingsmvpsplan\global_analysis.lock"
+$lock2 = Join-Path $script:PLAN_DIR "global_analysis.lock"
 if (-not (Acquire-Lock $lock2 300)) {
     Write-Host "[SKIP] 無法取得 STEP 2 全域鎖" -ForegroundColor Yellow
 } else {
@@ -166,6 +166,8 @@ foreach ($taskDir in $confirmTasks) {
     # AI 尚未處理（.analysis_done 不存在）→ 跳過
     if (-not (Test-Path $analysisDone)) { continue }
     if (Test-Path $answerDone) { continue }
+    # AI 正在處理中（pending_prompt.txt 存在）→ 跳過，避免重複觸發
+    if (Test-Path (Join-Path $taskDir.FullName 'pending_prompt.txt')) { continue }
     if (-not (Test-Path $yamlPath)) { Write-Host "[WARN] $taskName 缺少 analysis.yaml" -ForegroundColor Yellow; continue }
 
     if (-not (Acquire-Lock $taskLock 300)) {
@@ -205,7 +207,7 @@ foreach ($taskDir in $confirmTasks) {
 # ============================================================
 Write-Host "`n[STEP 3b] 準備 MODE_B 最終規格任務..." -ForegroundColor Cyan
 
-$lock3b = Join-Path $script:ROOT ".claude\kingsmvpsplan\global_recheck.lock"
+$lock3b = Join-Path $script:PLAN_DIR "global_recheck.lock"
 if (-not (Acquire-Lock $lock3b 300)) {
     Write-Host "[SKIP] 無法取得 STEP 3b 全域鎖" -ForegroundColor Yellow
 } else {

@@ -7,7 +7,7 @@ Initialize-PipelineDirs
 
 Write-Host "[STEP 4] 準備實作任務（analysis/ → coding/）..." -ForegroundColor Cyan
 
-$agentPath     = Join-Path $script:ROOT ".claude\agents\senior-software-engineer.md"
+$agentPath     = Join-Path $script:CLAUDE_DIR "agents\senior-software-engineer.md"
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
 $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
@@ -87,8 +87,14 @@ foreach ($taskDir in $analysisTasks) {
         Release-Lock $taskLock
         $dest = Join-Path $script:CODING_DIR $taskName
         if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-        Move-Item $taskDir.FullName $script:CODING_DIR -Force
-        Write-Host "[OK] $taskName → coding/ (等待 Claude 實作)" -ForegroundColor Green
+        try {
+            Move-Item $taskDir.FullName $script:CODING_DIR -Force
+            Write-Host "[OK] $taskName → coding/ (等待 Claude 實作)" -ForegroundColor Green
+        } catch {
+            Write-Host "[ERROR] $taskName Move 失敗，清除 pending: $_" -ForegroundColor Red
+            Remove-Item (Join-Path $taskDir.FullName 'pending_prompt.txt') -Force -ErrorAction SilentlyContinue
+            Remove-Item (Join-Path $taskDir.FullName '.pending_coding') -Force -ErrorAction SilentlyContinue
+        }
     } catch {
         Write-Host "[ERROR] ${taskName}: $_" -ForegroundColor Red
     } finally {

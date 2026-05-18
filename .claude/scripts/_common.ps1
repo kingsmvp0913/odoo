@@ -3,11 +3,11 @@
 # ============================================================
 # 路徑常數
 # ============================================================
-$script:ROOT             = Split-Path -Parent $PSScriptRoot
+$script:CLAUDE_DIR       = Split-Path -Parent $PSScriptRoot
+$script:ROOT             = Split-Path -Parent $script:CLAUDE_DIR
 $script:ONLINE_ADDONS_DIR = if ($env:ONLINE_ADDONS_DIR) { $env:ONLINE_ADDONS_DIR } elseif ($IsLinux) { "/online_addons" } else { "C:\online_addons" }
 
-$script:CLAUDE_DIR   = $PSScriptRoot
-$script:PLAN_DIR     = Join-Path $PSScriptRoot "kingsmvpsplan"
+$script:PLAN_DIR     = Join-Path $script:CLAUDE_DIR "kingsmvpsplan"
 
 $script:START_DIR    = Join-Path $script:PLAN_DIR "start"
 $script:CONFIRM_DIR  = Join-Path $script:PLAN_DIR "confirm"
@@ -16,7 +16,7 @@ $script:CODING_DIR   = Join-Path $script:PLAN_DIR "coding"
 $script:FINAL_DIR    = Join-Path $script:PLAN_DIR "final"
 
 $script:PIPELINE_WAITING     = Join-Path $script:PLAN_DIR "_PIPELINE_WAITING"
-$script:PROJECT_VERSION_MAP_PATH = Join-Path $PSScriptRoot "project_version_map.json"
+$script:PROJECT_VERSION_MAP_PATH = Join-Path $script:CLAUDE_DIR "project_version_map.json"
 
 # ============================================================
 # Odoo 連線常數
@@ -185,8 +185,8 @@ function ConvertFrom-Yaml {
     $result = @{}
 
     if ($yaml -match '(?m)^execution_mode:\s*(\S+)') { $result['execution_mode'] = $matches[1] }
-    # \s* (not \s+) — supports both root-level and indented module fields
-    if ($yaml -match '(?m)^\s*module:\s*(\S+)')       { $result['module'] = $matches[1] }
+    # \s* — supports both root-level and indented module fields; strip surrounding quotes
+    if ($yaml -match '(?m)^\s*module:\s*["'']?([^"''\r\n]+?)["'']?\s*$') { $result['module'] = $matches[1].Trim() }
     # Strip surrounding single or double quotes; handle both indented and root-level
     if ($yaml -match '(?m)^(?:\s+)?odoo_version:\s*["'']?([^"''\r\n]+?)["'']?\s*$') {
         $result['odoo_version'] = $matches[1].Trim()
@@ -313,12 +313,7 @@ function Get-WikiCache {
     param([string]$moduleName, [string]$odooVersion, [string]$projectName = $null)
     if (-not $moduleName) { return "" }
 
-    $addonsRoot = if (-not [string]::IsNullOrWhiteSpace($projectName)) {
-        Join-Path $script:ONLINE_ADDONS_DIR $projectName
-    } else {
-        $major = $odooVersion -replace '\.0$', ''
-        Join-Path $script:ONLINE_ADDONS_DIR $major
-    }
+    $addonsRoot = Get-OnlineAddonsRoot -odooVersion $odooVersion -projectName $projectName -moduleName $moduleName
 
     $wikiPath = Join-Path $addonsRoot "graphify-out\wiki\index.md"
     if (-not (Test-Path $wikiPath)) { return "" }
@@ -354,9 +349,10 @@ function Get-ExistingModules {
 # ============================================================
 function Send-OdooTaskMessage {
     param([int]$taskId, [string]$message)
-    $disableFlag = Join-Path $PSScriptRoot "kingsmvpsplan\_ODOO_DISABLED"
+    if (-not $env:ODOO_PASSWORD) { return }
+    $disableFlag = Join-Path $script:PLAN_DIR "_ODOO_DISABLED"
     if (Test-Path $disableFlag) { Write-Host "[SKIP] Odoo 通知已停用" -ForegroundColor DarkGray; return }
-    $py = Join-Path $PSScriptRoot "send_message.py"
+    $py = Join-Path $script:CLAUDE_DIR "tools\send_message.py"
     if (-not (Test-Path $py)) { return }
     $r = python $py $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $taskId $message 2>&1
     if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 訊息失敗: $r" -ForegroundColor Yellow }
@@ -371,8 +367,18 @@ function BackToConfirm {
     $taskName       = Split-Path $taskDir -Leaf
     $confirmTaskDir = Join-Path $script:CONFIRM_DIR $taskName
 
+    # 移動前先釋放 process.lock（Windows 持有 handle 時無法 Move-Item）
+    $lockPath = Join-Path $taskDir "process.lock"
+    if ($script:LockHandles.ContainsKey($lockPath)) { Release-Lock $lockPath }
+    Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
+
     if (Test-Path $confirmTaskDir) { Remove-Item $confirmTaskDir -Recurse -Force }
-    Move-Item $taskDir $script:CONFIRM_DIR -Force
+    try {
+        Move-Item $taskDir $script:CONFIRM_DIR -Force
+    } catch {
+        Write-Host "[ERROR] BackToConfirm Move-Item 失敗: $_" -ForegroundColor Red
+        return
+    }
 
     # 清除所有 .done 標記與 pending 檔案
     @('.analysis_done', '.answer_done', '.final_done', '.implement_done', '.qa_done',
@@ -382,6 +388,14 @@ function BackToConfirm {
       'agent_error.txt') | ForEach-Object {
         Remove-Item (Join-Path $confirmTaskDir $_) -Force -ErrorAction SilentlyContinue
     }
+
+    # _REENTRY_COUNT 遞增（供 _pipeline_run.ps1 偵測重入次數上限）
+    $reentryFile = Join-Path $confirmTaskDir '_REENTRY_COUNT'
+    $count = 0
+    if (Test-Path $reentryFile) {
+        try { $count = [int](Get-Content $reentryFile -Raw -ErrorAction SilentlyContinue) } catch {}
+    }
+    Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
 
     $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n請修正後重新填寫 analysis.yaml 中的 user_answer。"
     Atomic-WriteFile (Join-Path $confirmTaskDir 'BACK_REASON.txt') $content | Out-Null

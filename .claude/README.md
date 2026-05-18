@@ -4,6 +4,33 @@
 
 ---
 
+## 安裝
+
+### 前置需求
+
+- PowerShell 7+（`pwsh`）
+- Python 3.x
+- Claude Code CLI（已登入）
+- Odoo 實例（任務來源）
+
+### 設定步驟
+
+1. **設定環境變數**（在 PowerShell profile 或 Claude terminal 執行）
+
+   ```powershell
+   $env:ODOO_PASSWORD = "your_password"     # 必要
+   $env:ODOO_USER_ID  = "79"                # 可選，預設 79
+   $env:ONLINE_ADDONS_DIR = "C:\online_addons"  # 可選，預設 C:\online_addons
+   ```
+
+2. **確認 `settings.json` hook 已啟用**（`.claude/settings.json` 已包含，無需手動操作）
+
+3. **確認 `project_version_map.json` 已填寫**（`.claude/project_version_map.json`，專案與 Odoo 版本對照）
+
+> `ODOO_PASSWORD` 未設定時 `_pipeline_run.ps1` 立即中止。
+
+---
+
 ## 怎麼用
 
 1. 在 Odoo 建立任務
@@ -18,7 +45,7 @@
 
 ```
 Odoo 任務
-   ↓ 自動同步 (curl.py)
+   ↓ 自動同步 (tools/curl.py)
 start/       新任務
    ↓ Claude 需求分析 (requirements-analyst)
 confirm/     等待 user_answer（MODE_A）或自動通過（MODE_B）
@@ -93,6 +120,29 @@ Blocker 模板在 `.claude/templates/` 目錄。
 
 ## 版本歷程
 
+### V8.2 — 2026-05-18（目錄重整 + 穩定性修正）
+
+**目錄重整**
+- `scripts/` — 所有 PS1 腳本集中管理
+- `tools/` — Python 工具集中管理
+- `kingsmvpsplan/README.md` → `README.md`（本文件）
+
+**穩定性修正**（共 9 項）
+
+| # | 問題 | 修正 |
+|---|------|------|
+| C1 | BackToConfirm 未寫 `_REENTRY_COUNT`，loop counter 無法偵測重入 | `_common.ps1` BackToConfirm 加遞增計數 |
+| C2 | Get-WikiCache 路徑計算未走 `Get-OnlineAddonsRoot`，project 路徑有誤 | `_common.ps1` 改呼叫 `Get-OnlineAddonsRoot` |
+| C3 | `pipeline.md` 硬編碼舊路徑 `_pipeline_run.ps1` | 改為 `scripts/_pipeline_run.ps1` |
+| C4 | BackToConfirm Move-Item 前未釋放 lock，Windows 下可能失敗 | 加 `Release-Lock` + `Remove-Item` + try/catch |
+| M1 | STEP 3a 未檢查 `pending_prompt.txt`，AI 處理中仍可被觸發 | `analysis.ps1` 加 pending_prompt 存在判斷 |
+| M2 | `_pipeline_run.ps1` 使用 `$env:PIPELINE_HOOK_MODE = ""` 清空非移除 | 改為 `Remove-Item env:PIPELINE_HOOK_MODE` |
+| M4 | `coding.ps1` Move-Item 無 rollback，失敗後 pending 殘留 | 加 try/catch，失敗時清除 pending_prompt + flag |
+| m2 | `Send-OdooTaskMessage` 無密碼保護，`ODOO_PASSWORD` 未設時仍嘗試呼叫 | 加 `if (-not $env:ODOO_PASSWORD) { return }` |
+| m3 | `module` regex 未去引號，與 `odoo_version` 行為不一致 | 改為與 `odoo_version` 相同的去引號 pattern |
+
+---
+
 ### V8.1 — 2026-05-17（Opus ultrathink 全面驗證後修正）
 
 由 Opus ultrathink 驗證發現 2 CRITICAL / 7 MAJOR / 6 MINOR 共 18 項問題，本版本已全數修正：
@@ -120,42 +170,33 @@ Blocker 模板在 `.claude/templates/` 目錄。
 
 ---
 
-## 環境設定
-
-```bash
-# 必要環境變數（在 Claude terminal 或 .env 設定）
-$env:ODOO_PASSWORD = "your_password"
-
-# 可選環境變數
-$env:ODOO_USER_ID = "79"           # 預設 79
-$env:ONLINE_ADDONS_DIR = "C:\..."  # 預設 C:\online_addons（Windows）或 /online_addons（Linux）
-```
-
-**注意**：`ODOO_PASSWORD` 未設定時 `_pipeline_run.ps1` 立即中止。
-
----
-
 ## 目錄結構
 
 ```
 .claude/
-├── kingsmvpsplan/
-│   ├── start/          新任務暫存（curl.py 同步後）
-│   ├── confirm/        初始分析完成，等待 user_answer
-│   ├── analysis/       答案完整，等待 MODE_B 規格生成
-│   ├── coding/         實作與 QA 進行中
-│   └── final/          QA 通過歸檔（唯讀）
+├── scripts/
+│   ├── _common.ps1         共用函數庫
+│   ├── _pipeline_run.ps1   「開工」hook 入口
+│   ├── analysis.ps1        STEP 1-3
+│   ├── coding.ps1          STEP 4
+│   └── qa.ps1              STEP 5-6
+├── tools/
+│   ├── curl.py             Odoo 任務同步
+│   └── send_message.py     Odoo 訊息發送
 ├── agents/
 │   ├── requirements-analyst.md
 │   ├── senior-software-engineer.md
 │   └── qa-analyst.md
-├── templates/          Blocker 模板
-├── _common.ps1         共用函數庫
-├── _pipeline_run.ps1   「開工」hook 入口
-├── analysis.ps1        STEP 1-3
-├── coding.ps1          STEP 4
-├── qa.ps1              STEP 5-6
-├── curl.py             Odoo 任務同步
+├── templates/              Blocker 模板
+├── kingsmvpsplan/
+│   ├── start/              新任務暫存（curl.py 同步後）
+│   ├── confirm/            初始分析完成，等待 user_answer
+│   ├── analysis/           答案完整，等待 MODE_B 規格生成
+│   ├── coding/             實作與 QA 進行中
+│   └── final/              QA 通過歸檔（唯讀）
+├── CLAUDE.md               Claude AI 指令
+├── pipeline.md             Pipeline 完整規格
+├── README.md               本文件
 ├── project_version_map.json  專案版本對照表
-└── settings.json       Claude hooks 與權限設定
+└── settings.json           Claude hooks 與權限設定
 ```

@@ -88,7 +88,7 @@ Triggers (either):
 - User types「開工」→ Hook runs `_pipeline_run.ps1`; process the `[CLAUDE-ACTION-REQUIRED]` block in output
 - `.claude/kingsmvpsplan/_PIPELINE_WAITING` exists AND content timestamp < 30 min ago
 
-**重要**：收到任何使用者訊息時，若 `_PIPELINE_WAITING` 存在且未超過 30 分鐘，**立即啟動 pipeline 處理邏輯**（無需「開工」）。處理完所有 pending 任務後，執行 `pwsh -NoProfile -File ".claude/_pipeline_run.ps1"` 推進下一階段。
+**重要**：收到任何使用者訊息時，若 `_PIPELINE_WAITING` 存在且未超過 30 分鐘，**立即啟動 pipeline 處理邏輯**（無需「開工」）。處理完所有 pending 任務後，執行 `pwsh -NoProfile -File ".claude/scripts/_pipeline_run.ps1"` 推進下一階段。
 
 Full pipeline spec: **`.claude/pipeline.md`**
 

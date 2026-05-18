@@ -53,7 +53,7 @@
    - 再 `mv pending_prompt.txt done_prompt.txt`
    - 再刪除 `.pending_<stage>` flag
    - 絕對不先刪後寫
-8. **推進**：全 stage 完成後執行 `pwsh -NoProfile -File ".claude/_pipeline_run.ps1"`
+8. **推進**：全 stage 完成後執行 `pwsh -NoProfile -File ".claude/scripts/_pipeline_run.ps1"`
    （Linux 上若無 pwsh：記錄「需在 Windows 端手動執行」）
 9. **繼續**：若步驟 8 執行後出現新 `pending_prompt.txt` → 回步驟 1，`loop_count` +1
 10. **結束**：無新 pending 任務 → 刪除 `_PIPELINE_WAITING` 和 `_LOOP_COUNTER.json`

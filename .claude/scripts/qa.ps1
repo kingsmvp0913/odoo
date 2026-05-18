@@ -5,7 +5,7 @@
 
 Initialize-PipelineDirs
 
-$agentPath     = Join-Path $script:ROOT ".claude\agents\qa-analyst.md"
+$agentPath     = Join-Path $script:CLAUDE_DIR "agents\qa-analyst.md"
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
 $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
