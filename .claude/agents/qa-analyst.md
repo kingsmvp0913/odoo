@@ -90,7 +90,7 @@ KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
    - Confirm that an inherited model or overridden method actually exists in the codebase
    - Locate a field definition referenced in a view but not visible in module files
    Do NOT use Serena as a first step for every check.
-3. **Graphify wiki**: If `[WIKI-CACHE]` is in your prompt, use it to verify inheritance chains.
+3. **Graphify wiki**: Read `graphify-out/wiki/index.md` ONLY if Serena cannot confirm an inheritance chain. Do NOT read proactively.
 
 --------------------------------------------------
 CHECKS TO PERFORM — SPEC COMPLIANCE
