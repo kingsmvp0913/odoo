@@ -80,9 +80,32 @@ function Initialize-PipelineDirs {
 # 模組路徑函數
 # ============================================================
 function Get-OnlineAddonsRoot {
-    param([string]$odooVersion, [string]$projectName = $null)
+    param([string]$odooVersion, [string]$projectName = $null, [string]$moduleName = $null)
     if (-not [string]::IsNullOrWhiteSpace($projectName)) {
-        $p = Join-Path $script:ONLINE_ADDONS_DIR $projectName
+        $dirEntry = Get-ProjectDir -projectName $projectName
+        if ($null -eq $dirEntry) {
+            Write-Host "[WARN] project_dir_map 找不到 '$projectName'，直接用 project_name 當目錄名（可能錯誤）" -ForegroundColor Yellow
+            $dirEntry = $projectName
+        }
+
+        # 陣列：掃描找到模組實際所在目錄；找不到則用第一個（新模組預設）
+        if ($dirEntry -is [System.Array] -or $dirEntry -is [System.Collections.IList]) {
+            $dirs = @($dirEntry)
+            if ($moduleName) {
+                foreach ($d in $dirs) {
+                    $candidate = Join-Path $script:ONLINE_ADDONS_DIR $d
+                    if (Test-Path (Join-Path $candidate $moduleName)) {
+                        return $candidate
+                    }
+                }
+            }
+            # 找不到 → 回退第一個目錄
+            $dirName = $dirs[0]
+        } else {
+            $dirName = "$dirEntry"
+        }
+
+        $p = Join-Path $script:ONLINE_ADDONS_DIR $dirName
         if (-not (Test-Path $p)) { New-Item -ItemType Directory -Force $p | Out-Null }
         return $p
     }
@@ -94,7 +117,7 @@ function Get-OnlineAddonsRoot {
 
 function Get-ModulePath {
     param([string]$moduleName, [string]$odooVersion, [string]$projectName = $null)
-    return Join-Path (Get-OnlineAddonsRoot -odooVersion $odooVersion -projectName $projectName) $moduleName
+    return Join-Path (Get-OnlineAddonsRoot -odooVersion $odooVersion -projectName $projectName -moduleName $moduleName) $moduleName
 }
 
 # ============================================================
@@ -243,18 +266,23 @@ function Open-ClaudeTerminal {
 }
 
 # ============================================================
-# 專案版本映射
+# 專案版本映射 & 目錄映射
 # ============================================================
 $script:ProjectVersionMap = $null
+$script:ProjectDirMap     = $null
 
 function Load-ProjectVersionMap {
     if ($null -ne $script:ProjectVersionMap) { return $script:ProjectVersionMap }
     $script:ProjectVersionMap = @{}
+    $script:ProjectDirMap     = @{}
     if (Test-Path $script:PROJECT_VERSION_MAP_PATH) {
         try {
             $j = Get-Content $script:PROJECT_VERSION_MAP_PATH -Raw -Encoding UTF8 | ConvertFrom-Json
             $j.project_version_map.PSObject.Properties | ForEach-Object { $script:ProjectVersionMap[$_.Name] = $_.Value }
-            Write-Host "[CONFIG] 載入 project_version_map.json，共 $($script:ProjectVersionMap.Count) 個專案" -ForegroundColor DarkCyan
+            if ($j.project_dir_map) {
+                $j.project_dir_map.PSObject.Properties | ForEach-Object { $script:ProjectDirMap[$_.Name] = $_.Value }
+            }
+            Write-Host "[CONFIG] 載入 project_version_map.json，共 $($script:ProjectVersionMap.Count) 個專案，$($script:ProjectDirMap.Count) 個目錄對應" -ForegroundColor DarkCyan
         } catch {
             Write-Host "[WARN] 無法解析 project_version_map.json: $_" -ForegroundColor Yellow
         }
@@ -266,6 +294,15 @@ function Get-ProjectVersion {
     param([string]$projectName)
     $map = Load-ProjectVersionMap
     if ($map.ContainsKey($projectName)) { return $map[$projectName] }
+    return $null
+}
+
+function Get-ProjectDir {
+    param([string]$projectName)
+    Load-ProjectVersionMap | Out-Null
+    if ($script:ProjectDirMap -and $script:ProjectDirMap.ContainsKey($projectName)) {
+        return $script:ProjectDirMap[$projectName]
+    }
     return $null
 }
 

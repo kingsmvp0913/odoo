@@ -1,7 +1,7 @@
 # CLAUDE.md (V8.1)
 
 ## 0. Hard Rules
-- NEVER modify core Odoo files. Custom code in `custom_addons/` only.
+- NEVER modify core Odoo files. Custom code in `C:/online_addons/` only (never `custom_addons/`).
 - NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks.
 - NEVER add fields/models/logic beyond `analysis.yaml` spec.
 - NEVER request human confirmation mid-pipeline.

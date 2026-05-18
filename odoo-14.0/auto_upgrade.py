@@ -39,8 +39,19 @@ PYTHON = "C:/odoo/venv_odoo14/Scripts/python.exe"
 ODOO_BIN = "C:/odoo/odoo-14.0/odoo-bin"
 # Odoo 設定檔
 ODOO_CONF = "C:/odoo/odoo-14.0/odoo.conf"
+
+# 從 odoo.conf 讀取 addons_path，排除 Odoo 本身目錄，只保留 online_addons
+def _load_custom_addons_path(conf_path: str) -> str:
+    cfg = configparser.ConfigParser()
+    cfg.read(conf_path, encoding="utf-8")
+    raw = cfg.get("options", "addons_path", fallback="")
+    paths = [p.strip().replace("\\", "/") for p in raw.split(",") if p.strip()]
+    odoo_dir = os.path.dirname(conf_path).replace("\\", "/")
+    custom = [p for p in paths if not p.startswith(odoo_dir)]
+    return ", ".join(custom)
+
 # 客製模組資料夾（只掃這裡做 auto upgrade 判斷）
-ADDONS_PATH = "C:/online_addons/14,C:/online_addons/odoo14_HRM"
+ADDONS_PATH = _load_custom_addons_path(ODOO_CONF)
 # 指定資料庫（可以用環境變數 ODOO_DB 設定）
 DB_NAME = os.getenv("ODOO_DB", "")  # 預設空白代表不指定資料庫
 # 時間判斷，按自己的習慣調整（秒）
