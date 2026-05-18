@@ -77,7 +77,7 @@ foreach ($taskDir in $codingTasks) {
             "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
             "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
             "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
-            "`n`n完成後依序：(a) 寫入 log/qa_report.yaml 和 system/.qa_done 到【TASK DIRECTORY】(b) mv system/pending_prompt.txt log/done_prompt.txt (c) 刪除 system/.pending_qa flag。"
+            "`n`n完成後依序：(a) 寫入 log/qa_report.yaml 和 system/.qa_done 到【TASK DIRECTORY】(b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_qa flag。"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "qa" -prompt $fullPrompt
         Write-Host "[OK] $taskName → 等待 Claude QA 檢查" -ForegroundColor Green

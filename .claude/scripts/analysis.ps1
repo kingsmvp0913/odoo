@@ -67,7 +67,14 @@ if (-not (Acquire-Lock $lock2 300)) {
             }
 
             if (-not (Test-Path $originalTxt)) {
-                Write-Host "[SKIP] $taskName 缺少 original.txt" -ForegroundColor Yellow
+                # 空目錄清理：無任何檔案代表是搬移殘留的空殼，直接刪除
+                $hasFiles = Get-ChildItem $taskDir.FullName -Recurse -File -ErrorAction SilentlyContinue
+                if (-not $hasFiles) {
+                    Remove-Item $taskDir.FullName -Recurse -Force -ErrorAction SilentlyContinue
+                    Write-Host "[CLEAN] $taskName 空目錄已清除" -ForegroundColor DarkGray
+                } else {
+                    Write-Host "[SKIP] $taskName 缺少 original.txt" -ForegroundColor Yellow
+                }
                 continue
             }
 
@@ -131,7 +138,7 @@ if (-not (Acquire-Lock $lock2 300)) {
                     "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
                     "`n`n【TASK DIRECTORY】`n$destTaskDir" +
                     "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +
-                    "`n`n將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) mv system/pending_prompt.txt log/done_prompt.txt (b) 刪除 system/.pending_analysis。"
+                    "`n`n將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(b) 刪除 system/.pending_analysis。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "analysis" -prompt $fullPrompt
 
@@ -139,6 +146,8 @@ if (-not (Acquire-Lock $lock2 300)) {
                 if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
                 try {
                     Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
+                    # Windows Move-Item 偶爾留下空殼目錄，強制清除
+                    Remove-Item $taskDir.FullName -Recurse -Force -ErrorAction SilentlyContinue
                     Write-Host "[OK] $taskName → confirm/ (等待 Claude 初始分析)" -ForegroundColor Green
                 } catch {
                     # 搬移失敗：回滾 pending，避免任務目錄分裂（start/ 與 confirm/ 各一份）
@@ -283,7 +292,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 $fullPrompt = "ultrathink`n`n" + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
                     "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
-                    "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) mv system/pending_prompt.txt log/done_prompt.txt (c) 刪除 system/.pending_final。"
+                    "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_final。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "final" -prompt $fullPrompt
                 Write-Host "[OK] $taskName → 等待 Claude 生成 MODE_B 規格" -ForegroundColor Green

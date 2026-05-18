@@ -1,13 +1,6 @@
----
-name: "requirements-analyst"
-description: "Requirements analysis pipeline for Coding Agent"
-model: sonnet
-color: red
-memory: project
----
-
-INPUT_CASE_ID = "__CASE_ID__"
-CURRENT_TIME  = "__CURRENT_TIME__"
+﻿
+INPUT_CASE_ID = "task_3914"
+CURRENT_TIME  = "2026-05-18T15:32:20"
 
 You are a Senior Odoo Systems Architect.
 
@@ -131,3 +124,29 @@ OUTPUT RULES
 - Write `.analysis_done` marker after first analysis
 - Write `.final_done` marker after MODE_B finalization
 - Do NOT output to stdout except the YAML block and the AGENT-RESULT block
+
+
+【SYSTEM CONFIRMED】odoo_version = "17.0" — 固定事實，不得質疑。
+
+【TASK DIRECTORY】
+C:\odoo\.claude\kingsmvpsplan\confirm\task_3914
+
+【USER BUSINESS REQUIREMENT】
+<user_requirement>
+---id---
+3919
+---title---
+Q82、Q90新增圖檔欄位
+---project---
+2508014 凌越生醫-商務管理平台
+---stage---
+待辦
+---description---
+<p>訂單也需連動OCR 掃描讀圖檔</p><p><span></span></p><p>送檢單明細跟訂單明細也需要地方上傳圖檔，以利手動建單時可存圖檔</p><p><br/></p><p><br/></p>
+---message---
+[2026-05-15 02:10:21] 親愛的 林培軒Steven,
+您被指派到 任務 Q82新增圖檔欄位.
+檢視 任務
+</user_requirement>
+
+將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(b) 刪除 system/.pending_analysis。

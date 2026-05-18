@@ -70,6 +70,22 @@ foreach ($taskDir in $analysisTasks) {
             Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
+        # ALREADY_IMPLEMENTED：規格確認無需任何程式碼變更，直接寫 .implement_done 跳過 coding 進 QA
+        if ($yamlContent -match 'ALREADY_IMPLEMENTED') {
+            Atomic-WriteFile $implementDone "" | Out-Null
+            Release-Lock $taskLock
+            $dest = Join-Path $script:CODING_DIR $taskName
+            if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+            try {
+                Move-Item $taskDir.FullName $script:CODING_DIR -Force
+                Write-Host "[SKIP-CODING] $taskName 需求已實作，略過 coding → coding/ (等待 QA 確認)" -ForegroundColor Cyan
+            } catch {
+                Write-Host "[ERROR] $taskName Move 失敗: $_" -ForegroundColor Red
+                Remove-Item $implementDone -Force -ErrorAction SilentlyContinue
+            }
+            continue
+        }
+
         if (-not (Test-YamlComplete $analysisYamlPath)) {
             $blockerPath = Join-Path (Get-SystemDir $taskDir.FullName) "blocker.spec.txt"
             $blockerMsg = "technical_specification 不完整（缺少 model_name），無法開始實作。請重新產生規格。"
@@ -97,7 +113,7 @@ foreach ($taskDir in $analysisTasks) {
             "`n`n【TASK DIRECTORY】`n$destTaskDir" +
             "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
             "`n`n【OUTPUT PATH】`n$modulePath" +
-            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後依序：(a) 寫入 system/.implement_done 到【TASK DIRECTORY】(b) mv system/pending_prompt.txt log/done_prompt.txt (c) 刪除 system/.pending_coding flag"
+            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後依序：(a) 寫入 system/.implement_done 到【TASK DIRECTORY】(b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_coding flag"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "coding" -prompt $fullPrompt
 

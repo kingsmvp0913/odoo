@@ -14,7 +14,7 @@ OUTPUT CONTRACT
 Write files directly to the specified output path.
 Completion protocol (in this exact order):
 1. Write `system/.implement_done` to task dir
-2. `mv system/pending_prompt.txt log/done_prompt.txt` in task dir
+2. Write content of `system/pending_prompt.txt` to `log/done_prompt.txt`, then DELETE `system/pending_prompt.txt` — this is a MOVE, the source file must be deleted; do NOT leave it in system/
 3. Delete `system/.pending_coding` flag from task dir
 
 End your response with this block (required):

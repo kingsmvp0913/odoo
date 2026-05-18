@@ -8,6 +8,7 @@
 - On any blocker: write `blocker.<type>.txt` to `system/` in task dir → STOP immediately. Report **file path only**, never content.
 - Think in English. Output Traditional Chinese (Taiwan). No preambles.
 - Challenge proposals that violate Odoo best practices, security, or performance.
+- NEVER modify any workflow (pipeline scripts, PS1 files, CLAUDE.md, agent prompts, hook configs, pipeline spec) without explicit user approval.
 
 ## 1. Paths
 - **Task root**: `.claude/kingsmvpsplan/<stage>/<task_id>/`
@@ -21,19 +22,20 @@ Execute in order. Stop as soon as sufficient.
 1. **Graphify** → `<online_addons_root>/graphify-out/wiki/index.md`
    - Main orchestrator reads **once** per pipeline run, injects as `[WIKI-CACHE]` block into sub-Agent prompts
    - Sub-Agents with `[WIKI-CACHE]` in prompt **must not** re-read wiki
-2. **Serena** → Only if Graphify wiki lacks the specific symbol definition or call chain
+   - **If wiki file not found → skip entirely, do NOT manually explore files, go to step 2**
+2. **Serena** → Use when Graphify wiki is absent OR lacks a specific symbol/call chain
 3. **Context7** → Only to confirm Odoo native API (field types, decorators, method signatures) for the target version
 
 **WIKI-CACHE injection procedure** (main orchestrator, before spawning sub-Agents):
 ```
 1. Read <online_addons_root>/graphify-out/wiki/index.md
-2. Extract lines mentioning the target module (max 200 lines)
-3. Prepend to each sub-Agent prompt:
+2. If file not found → skip injection entirely (sub-Agent will use Serena directly)
+3. If found → extract lines mentioning the target module (max 200 lines)
+4. Prepend to each sub-Agent prompt:
    [WIKI-CACHE]
    <extracted lines>
    [/WIKI-CACHE]
 ```
-If wiki file not found → skip injection; sub-Agent will read it directly.
 
 ## 3. Task Spec
 
@@ -107,7 +109,7 @@ Triggers (either):
 - User types「開工」→ Hook runs `_pipeline_run.ps1`; process the `[CLAUDE-ACTION-REQUIRED]` block in output
 - `.claude/kingsmvpsplan/_PIPELINE_WAITING` exists AND content timestamp < 30 min ago
 
-**重要**：收到任何使用者訊息時，若 `_PIPELINE_WAITING` 存在且未超過 30 分鐘，**立即啟動 pipeline 處理邏輯**（無需「開工」）。處理完所有 pending 任務後，執行 `pwsh -NoProfile -File ".claude/scripts/_pipeline_run.ps1"` 推進下一階段。
+**重要**：Pipeline 只能由使用者明確輸入「開工」來觸發。即使 `_PIPELINE_WAITING` 存在且未超過 30 分鐘，也**禁止**自動啟動。未收到「開工」指令前保持待命。
 
 Full pipeline spec: **`.claude/pipeline.md`**
 
