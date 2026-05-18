@@ -111,7 +111,7 @@ foreach ($taskDir in $analysisTasks) {
         # WIKI-CACHE 注入：在 Agent prompt 中 prepend 模組相關 wiki 內容
         $wikiCache = Get-WikiCache -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
 
-        $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $agentTemplate +
+        $fullPrompt = (Get-McpBudgetBlock) + $wikiCache + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$destTaskDir" +
             "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
             "`n`n【OUTPUT PATH】`n$modulePath" +
