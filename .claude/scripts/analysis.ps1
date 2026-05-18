@@ -127,7 +127,7 @@ if (-not (Acquire-Lock $lock2 300)) {
                     -replace '__CASE_ID__', $taskName `
                     -replace '__CURRENT_TIME__', $currentTime
 
-                $fullPrompt = "ultrathink`n`n" + $prompt +
+                $fullPrompt = $prompt +
                     "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
                     "`n`n【TASK DIRECTORY】`n$destTaskDir" +
                     "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +

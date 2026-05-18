@@ -76,7 +76,7 @@ foreach ($taskDir in $codingTasks) {
         # WIKI-CACHE 注入
         $wikiCache = Get-WikiCache -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
 
-        $fullPrompt = "ultrathink`n`n" + $wikiCache + $agentTemplate +
+        $fullPrompt = $wikiCache + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
             "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
             "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
