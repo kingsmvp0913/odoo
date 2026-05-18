@@ -1,4 +1,4 @@
-# CLAUDE.md (V8.1)
+# CLAUDE.md (V8.2)
 
 ## 0. Hard Rules
 - NEVER modify core Odoo files. Custom code in `C:/online_addons/` only (never `custom_addons/`).
@@ -24,7 +24,10 @@ Execute in order. Stop as soon as sufficient.
    - Sub-Agents with `[WIKI-CACHE]` in prompt **must not** re-read wiki
    - **If wiki file not found → skip entirely, do NOT manually explore files, go to step 2**
 2. **Serena** → Use when Graphify wiki is absent OR lacks a specific symbol/call chain
+   - **On `tool_use_error` or no response → immediately write `system/blocker.agent.txt` → STOP. Do NOT retry.**
+   - **Session query cap: max 3 distinct Serena queries per agent session. If still insufficient → write `system/blocker.agent.txt` → STOP.**
 3. **Context7** → Only to confirm Odoo native API (field types, decorators, method signatures) for the target version
+   - On any failure → skip silently (non-blocking; proceed with available context)
 
 **WIKI-CACHE injection procedure** (main orchestrator, before spawning sub-Agents):
 ```
@@ -46,6 +49,7 @@ Execute in order. Stop as soon as sufficient.
 | analysis (initial) | `.pending_analysis` | `.analysis_done` | `confirm/` |
 | answer-check | _(PS1 only, no pending)_ | `.answer_done` | `confirm/` → `analysis/` |
 | final (MODE_B) | `.pending_final` | `.final_done` | `analysis/` |
+| final low-conf | _(none — PS1 detects)_ | `.low_confidence` → routes back to confirm/ | `analysis/` → `confirm/` |
 | coding | `.pending_coding` | `.implement_done` | `coding/` |
 | qa | `.pending_qa` | `.qa_done` | `coding/` |
 | archive | _(none)_ | _(none)_ | `final/` ← QA-passed tasks |

@@ -1,0 +1,1 @@
+sale_order_ext: 新增 priority_level field 及相關 views，critical 觸發郵件通知

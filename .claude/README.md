@@ -1,4 +1,4 @@
-# Kingsmvps Pipeline (V8.1)
+# Kingsmvps Pipeline (V8.2)
 
 輸入「**開工**」，Claude 自動完成需求分析 → 實作 → QA，無需手動確認。
 
@@ -37,7 +37,9 @@
 2. 在 Claude 輸入「**開工**」
 3. 等待完成（任務出現在 `final/` 即代表通過 QA）
 
-有 `user_answer` 需要填寫時（MODE_A），Claude 會暫停等你在 `analysis.yaml` 填完後再繼續。
+有 `user_answer` 需要填寫時（MODE_A 或 MODE_B 低信心度），Claude 會暫停等你在 `analysis.yaml` 填完後再繼續。
+
+> **MODE_B 低信心度**：即使所有問題都已答覆，若生成規格的信心度低於 0.9，Claude 會補提新問題並退回 `confirm/` 等待補充，不會強行進入實作階段。
 
 ---
 
@@ -50,14 +52,18 @@ start/       新任務
    ↓ Claude 需求分析 (requirements-analyst)
 confirm/     等待 user_answer（MODE_A）或自動通過（MODE_B）
    ↓ 答案完整後 → .answer_done
-analysis/    Claude 產出完整技術規格（MODE_B + .final_done）
+analysis/    Claude 產出完整技術規格（MODE_B）
+   │  ├─ confidence >= 0.9 → .final_done → 進入 coding
+   │  └─ confidence < 0.9  → .low_confidence → 退回 confirm/（補提問題）
    ↓ Claude 實作 (senior-software-engineer)
 coding/      實作中 (.implement_done)，完成後 Claude 自動執行 QA
    ↓ QA 通過 (.qa_done)
 final/       ✓ 完成（已歸檔）
 ```
 
-QA 失敗會自動退回 `confirm/` 重跑（含清除所有 done/pending 標記）。
+QA 失敗智慧退回：
+- 若 `analysis.yaml` 已含 `technical_specification` → 保留 `.analysis_done` + `.answer_done`，退回 `analysis/` 重新實作（省略重跑分析）
+- 否則 → 完整退回 `confirm/`，清除所有標記重跑
 
 ---
 
@@ -68,6 +74,7 @@ QA 失敗會自動退回 `confirm/` 重跑（含清除所有 done/pending 標記
 | analysis (初始) | `.pending_analysis` | `.analysis_done` | `confirm/` |
 | answer-check | (PS1 自動，無 pending) | `.answer_done` | `confirm/` → `analysis/` |
 | final (MODE_B) | `.pending_final` | `.final_done` | `analysis/` |
+| final 低信心度 | (PS1 偵測 .low_confidence) | `.low_confidence` → 退回 confirm/ | `analysis/` → `confirm/` |
 | coding | `.pending_coding` | `.implement_done` | `coding/` |
 | qa | `.pending_qa` | `.qa_done` | `coding/` |
 | archive | — | — | `final/` |
@@ -110,11 +117,48 @@ Blocker 模板在 `.claude/templates/` 目錄。
 
 | 狀況 | 處置 |
 |------|------|
-| Claude 停下來說有 blocker | 查看對應任務目錄的 blocker 檔路徑，手動決策後刪除它再繼續 |
+| Claude 停下來說有 blocker | 查看對應任務目錄的 blocker 檔路徑，修復後 `touch system/.blocker_resolved`，再輸入「開工」 |
 | MODE_A 等待填寫 | 打開 `confirm/task_N/analysis.yaml`，填寫所有 `user_answer` 欄位（單行純量，不可用 YAML literal block）|
-| QA 一直失敗 | 查看 `coding/task_N/qa_report.yaml` 的 issues 說明 |
+| MODE_B 低信心退回 | 同上；Claude 新增的問題也在 `analysis.yaml` 的 `clarification_channel` 裡 |
+| QA 一直失敗 | 查看 `coding/task_N/log/qa_report.yaml` 的 issues 說明 |
 | Pipeline 沒有自動觸發 | 確認 `_PIPELINE_WAITING` flag 是否存在且未超過 30 分鐘 |
-| Odoo 任務沒收到完成通知 | send_message.py 尚未實作，通知功能暫不可用（見下方已知限制）|
+| 任務卡住診斷 | `find .claude/kingsmvpsplan -name "blocker.*.txt"` 一行查所有 blocker |
+| Odoo 任務沒收到完成通知 | 設定環境變數 `ODOO_PASSWORD`；未設定時通知靜默跳過 |
+
+---
+
+## V8.2 主要優化
+
+### MCP Budget 強制執行
+每個 Sub-Agent prompt 注入 `[MCP-BUDGET]` block，防止 session 內無限重試：
+- Serena 查詢上限：3 次 / session；`tool_use_error` → 立即寫 `blocker.agent.txt`，禁止 retry
+- Context7 任何失敗 → 靜默跳過
+- WIKI-CACHE 上限：60 行（由 PS1 注入，Sub-Agent 不重複讀取）
+
+### WIKI-CACHE 注入機制
+PS1 在寫入 `pending_prompt.txt` 前讀取 `graphify-out/wiki/index.md`，抽取與目標模組相關的行（上限 60 行），以 `[WIKI-CACHE]...[/WIKI-CACHE]` 格式 prepend。wiki 不存在則跳過。
+
+### MODE_B Confidence 評分
+MODE_B 完成後須評估 `confidence`（0.0–1.0）：
+- `confidence >= 0.9` → 寫 `.final_done`，`state_summary.is_complete: true`，正常推進 coding
+- `confidence < 0.9` → 寫 `.low_confidence`，PS1 自動退回 `confirm/`（刪除 `.answer_done`），等待使用者補充答覆
+
+### Smart Rollback（QA 失敗智慧復原）
+QA 失敗時依分析完整度決定退回深度：
+- `analysis.yaml` 已含 `technical_specification` → 保留 `.analysis_done` + `.answer_done`，退回 `analysis/` 直接重跑 coding（省略重新分析）
+- 否則 → 完整退回 `confirm/`，清除所有標記
+
+### Blocker Resume 機制
+解決 blocker 後只需 `touch system/.blocker_resolved`，下次執行「開工」自動清除對應的 `blocker.*.txt` 並重新入佇列。
+
+### NO_CHANGE_NEEDED / ALREADY_IMPLEMENTED 短路
+Coding 階段若 `analysis.yaml` 含此標記 → 直接寫 `.implement_done`，跳過 AI 實作，省略 coding token。
+
+### Agent Template 去重（Token 效率）
+KNOWLEDGE RETRIEVAL + Completion Protocol 已從 3 個 agent template 移除，改由 PS1 在 `pending_prompt.txt` 中統一注入，節省每次呼叫的重複 context。
+
+### ultrathink 範圍控制
+`ultrathink` prefix 僅在 STEP 3b（MODE_B 終版規格生成）注入；coding/QA 不使用。
 
 ---
 

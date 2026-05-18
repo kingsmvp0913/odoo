@@ -1,0 +1,11 @@
+blocker_type: mcp_failure
+task_id: task_9004
+stage: analysis
+timestamp: 2026-05-18T10:15:00
+tool: serena
+error: tool_use_error
+detail: |
+  Graphify wiki not found (skipped).
+  Serena query 1/3: get_symbol hr.leave → tool_use_error: connection refused (port 7070)
+  依 CLAUDE.md §2 規則：Serena tool_use_error 立即停止，不重試。
+action_taken: blocker.agent.txt written, analysis aborted

@@ -138,7 +138,8 @@ if (-not (Acquire-Lock $lock2 300)) {
                     "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
                     "`n`n【TASK DIRECTORY】`n$destTaskDir" +
                     "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +
-                    "`n`n將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(b) 刪除 system/.pending_analysis。"
+                    "`n`n將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(b) 刪除 system/.pending_analysis。" +
+                    "`n`n" + (Get-McpBudgetBlock)
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "analysis" -prompt $fullPrompt
 
@@ -206,9 +207,8 @@ if (-not (Acquire-Lock $lock3a 300)) {
                 $yaml   = Get-Content $yamlPath -Raw -Encoding UTF8
                 $parsed = ConvertFrom-Yaml $yaml
 
-                $isModeB     = ($parsed['execution_mode'] -eq 'MODE_B')
                 $noQuestions = -not [regex]::IsMatch($yaml, '(?m)^\s*user_answer:')
-                $allAnswered = $isModeB -or $noQuestions -or (-not $parsed['has_null_answer'] -and $parsed['has_any_answer'])
+                $allAnswered = $noQuestions -or (-not $parsed['has_null_answer'] -and $parsed['has_any_answer'])
 
                 if (-not $allAnswered) {
                     Write-Host "[WAIT] $taskName - 等待填寫 user_answer" -ForegroundColor DarkGray
@@ -246,14 +246,45 @@ if (-not (Acquire-Lock $lock3b 300)) {
         $analysisTasks = Get-ChildItem $script:ANALYSIS_DIR -Directory -ErrorAction SilentlyContinue
 
         foreach ($taskDir in $analysisTasks) {
-            $taskName   = $taskDir.Name
-            $taskLock   = Join-Path $taskDir.FullName "process.lock"
-            $answerDone = Join-Path (Get-SystemDir $taskDir.FullName) ".answer_done"
-            $finalDone  = Join-Path (Get-SystemDir $taskDir.FullName) ".final_done"
-            $yamlPath   = Join-Path $taskDir.FullName "analysis.yaml"
+            $taskName        = $taskDir.Name
+            $taskLock        = Join-Path $taskDir.FullName "process.lock"
+            $answerDone      = Join-Path (Get-SystemDir $taskDir.FullName) ".answer_done"
+            $finalDone       = Join-Path (Get-SystemDir $taskDir.FullName) ".final_done"
+            $lowConfidence   = Join-Path (Get-SystemDir $taskDir.FullName) ".low_confidence"
+            $yamlPath        = Join-Path $taskDir.FullName "analysis.yaml"
 
             if (Test-HasBlocker $taskDir.FullName) {
                 Write-Host "[BLOCKER] $taskName 已有 blocker 檔案，跳過（需人工處理）" -ForegroundColor Red
+                continue
+            }
+
+            # LOW-CONFIDENCE 退回：agent 信心度 < 0.9 → 刪 .answer_done，搬回 confirm/ 重新等待答覆
+            if (Test-Path $lowConfidence) {
+                if (Acquire-Lock $taskLock 300) {
+                    try {
+                        Remove-Item $lowConfidence -Force -ErrorAction Stop
+                        Remove-Item $answerDone    -Force -ErrorAction SilentlyContinue
+                        Release-Lock $taskLock
+                        $dest = Join-Path $script:CONFIRM_DIR $taskName
+                        if (Test-Path $dest) {
+                            Write-Host "[WARN] $taskName confirm/ 已有同名目錄，覆蓋前備份為 $($dest).bak" -ForegroundColor Yellow
+                            $bakPath = "$dest.bak.$(Get-Date -Format 'yyyyMMddHHmmss')"
+                            Move-Item $dest $bakPath -Force -ErrorAction SilentlyContinue
+                        }
+                        Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
+                        # 寫入退回原因（可觀測性）
+                        $logDir = Get-LogDir (Join-Path $script:CONFIRM_DIR $taskName)
+                        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force $logDir | Out-Null }
+                        $backContent = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: MODE_B`n退回原因: Agent 信心度 < 0.9，新增澄清問題，等待使用者補充答覆。`n`n請填寫 analysis.yaml 中 clarification_channel 的新 user_answer 後重新觸發。"
+                        Atomic-WriteFile (Join-Path $logDir 'back_reason.txt') $backContent | Out-Null
+                        Write-Host "[LOW-CONF] $taskName MODE_B 信心不足 → confirm/（已寫 log/back_reason.txt）" -ForegroundColor Yellow
+                    } catch {
+                        Write-Host "[ERROR] $taskName low-confidence 退回失敗: $_" -ForegroundColor Red
+                        if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
+                    }
+                } else {
+                    Write-Host "[WARN] $taskName low-confidence 無法取得鎖，下輪重試" -ForegroundColor Yellow
+                }
                 continue
             }
 
@@ -289,7 +320,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 $parsedWiki = ConvertFrom-Yaml $currentYaml
                 $wikiCache  = Get-WikiCache -moduleName $parsedWiki['module'] -odooVersion $parsedWiki['odoo_version'] -projectName $parsedWiki['project_name']
 
-                $fullPrompt = "ultrathink`n`n" + $wikiCache + $prompt +
+                $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
                     "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
                     "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_final。"

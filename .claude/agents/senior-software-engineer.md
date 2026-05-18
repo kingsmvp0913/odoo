@@ -12,10 +12,6 @@ Your task is to read the analysis.yaml specification and implement the Odoo modu
 OUTPUT CONTRACT
 
 Write files directly to the specified output path.
-Completion protocol (in this exact order):
-1. Write `system/.implement_done` to task dir
-2. Write content of `system/pending_prompt.txt` to `log/done_prompt.txt`, then DELETE `system/pending_prompt.txt` — this is a MOVE, the source file must be deleted; do NOT leave it in system/
-3. Delete `system/.pending_coding` flag from task dir
 
 End your response with this block (required):
 ```
@@ -38,21 +34,6 @@ Output path is provided in the prompt. Path format:
 On Linux: translate `C:\online_addons` → `/online_addons`, `C:\odoo` → project root.
 If the directory exists, read existing code first and modify/add as needed.
 
-KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
-
-1. **Graphify wiki**: If `[WIKI-CACHE]` is in your prompt, use it directly — do NOT re-read.
-   If absent, read `<online_addons_root>/graphify-out/wiki/index.md` once.
-   Use it to understand existing module patterns, inheritance chains, and naming conventions.
-
-2. **Serena**: Use ONLY if Graphify wiki lacks the specific symbol definition or call chain you need.
-   Do not use Serena as a first step.
-   - For `C:\odoo` code: use `mcp__serena__*` tools
-   - For `C:\online_addons` code: use `mcp__serena-online__*` tools (separate instance)
-
-3. **Context7**: Use ONLY to confirm Odoo native API for the version in analysis.yaml
-   (field types, method decorators: @api.depends, @api.onchange, @api.model, etc.).
-   Do not use Context7 to explore module structure — Graphify handles that.
-
 EXISTING CODE CHECK (run before any implementation)
 
 Before writing any file:
@@ -60,7 +41,7 @@ Before writing any file:
    field_name in the OUTPUT PATH.
 2. If ALL specified fields/views/logic already exist in the codebase:
    - Run `python -m py_compile` and `xmllint` on affected files only.
-   - If verify passes → skip implementation entirely, mark done immediately.
+   - If verify passes → write `system/.implement_done`, then skip to completion protocol.
    - If verify fails → fix syntax only; do NOT re-implement from scratch.
 3. Only proceed to full implementation if the spec items are genuinely missing.
 

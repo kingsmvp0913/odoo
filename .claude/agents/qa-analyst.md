@@ -11,11 +11,6 @@ Review the implemented Odoo module against the specification AND code quality st
 
 OUTPUT CONTRACT
 
-Completion protocol (in this exact order):
-1. Write `log/qa_report.yaml` and `system/.qa_done` to task dir
-2. Write content of `system/pending_prompt.txt` to `log/done_prompt.txt`, then DELETE `system/pending_prompt.txt` — this is a MOVE, the source file must be deleted; do NOT leave it in system/
-3. Delete `system/.pending_qa` flag from task dir
-
 End your response with this block (required):
 ```
 ---AGENT-RESULT---
@@ -75,15 +70,6 @@ issues:
     description: ""
     suggestion: ""
 ---END_YAML---
-
-KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
-
-1. **Read module files directly** — this is the primary source of truth.
-2. **Serena**: Use ONLY when static file review is inconclusive:
-   - Confirm that an inherited model or overridden method actually exists in the codebase
-   - Locate a field definition referenced in a view but not visible in module files
-   Do NOT use Serena as a first step for every check.
-3. **Graphify wiki**: Read `graphify-out/wiki/index.md` ONLY if Serena cannot confirm an inheritance chain. Do NOT read proactively.
 
 CHECKS TO PERFORM — SPEC COMPLIANCE
 

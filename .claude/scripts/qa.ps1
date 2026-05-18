@@ -73,7 +73,7 @@ foreach ($taskDir in $codingTasks) {
         $modulePath = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
         Write-Host "[INFO] $taskName 準備 QA: $modulePath" -ForegroundColor DarkCyan
 
-        $fullPrompt = $agentTemplate +
+        $fullPrompt = (Get-McpBudgetBlock) + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
             "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
             "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
@@ -134,11 +134,16 @@ foreach ($taskDir in $codingTasks2) {
             #     Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已完成，請查看 final/$taskName/</p>"
             # }
         } else {
-            # 從 issues: 區塊取得第一個 description（避免誤抓 items 區的欄位）
+            # 從 issues: 區塊取得第一個 description（支援單行與 block scalar |/>）
             $reason = "QA 檢查失敗"
             $afterIssues = if ($qaReport -match '(?s)issues:(.*?)$') { $matches[1] } else { "" }
             if ($afterIssues -match '(?m)^\s*description:\s*"?([^"\r\n]+?)"?\s*$') {
+                # 單行格式：description: "text"
                 $reason = $matches[1].Trim().Trim('"').Trim("'")
+            } elseif ($afterIssues -match '(?m)^\s*description:\s*[|>][-+]?\s*[\r\n]+((?:[ \t]+[^\r\n]+[\r\n]*)+)') {
+                # block scalar 格式：description: |\n  text\n  more text
+                $reason = ($matches[1] -split '[\r\n]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join ' '
+                if ($reason.Length -gt 120) { $reason = $reason.Substring(0, 117) + '...' }
             }
 
             Release-Lock $taskLock

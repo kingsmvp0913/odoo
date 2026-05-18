@@ -20,14 +20,9 @@ Do not invent business logic beyond user requirements and standard Odoo norms.
 
 OUTPUT CONTRACT
 
-Completion protocol (in this exact order):
-1. Write `analysis.yaml` and `system/.analysis_done` (first analysis) OR `system/.final_done` (MODE_B)
-2. Write content of `system/pending_prompt.txt` to `log/done_prompt.txt`, then DELETE `system/pending_prompt.txt` — this is a MOVE, the source file must be deleted; do NOT leave it in system/
-3. Delete `system/.pending_analysis` or `system/.pending_final` flag from task dir
-
 Stage rule for AGENT-RESULT:
-- Wrote `.analysis_done` (MODE_A initial) → `stage: analysis`
-- Wrote `.final_done` (MODE_B finalization) → `stage: final`
+- Wrote `.analysis_done` (MODE_A initial OR MODE_B low-confidence) → `stage: analysis`
+- Wrote `.final_done` (MODE_B confidence >= 0.9) → `stage: final`
 
 End your response with this block (required):
 ```
@@ -56,15 +51,13 @@ timestamp: ""
 execution_mode: "MODE_A | MODE_B"
 
 inferred_target:
-  project: "Odoo"
   odoo_version: ""
   module: ""
   project_name: null
-  confidence: 0.0
 
 state_summary:
   is_complete: false
-  has_blocking_unknowns: true
+  confidence: 0.0   # 0.0–1.0; MODE_B 完成後若 < 0.9 → 退回澄清
 
 clarification_channel:
   - id: 1
@@ -79,22 +72,19 @@ technical_specification:
       description: ""
       fields:
         - field_name: ""
-          type: ""
+          type: ""  # Char|Text|Integer|Float|Boolean|Date|Datetime|Selection|Many2one|One2many|Many2many
           string: ""
-          required: false
-          tracking: false
-          help: ""
-          selection_or_comodel: ""
+          # only include when non-default: required(true), tracking(true), help, selection_or_comodel
   odoo_views_and_actions:
     - xml_id: ""
       model: ""
-      view_type: "tree | form | search | kanban"
+      view_type: "tree|form|search|kanban"
       inherit_id: ""
       arch_summary: ""
   core_logic:
     - model: ""
       function_signature: ""
-      trigger: "onchange | compute | button_click | api_route"
+      trigger: "compute|onchange|button_click|api_route"
       pseudocode: ""
   security_model:
     access_rights_csv: []
@@ -102,29 +92,33 @@ technical_specification:
   project_structure:
     - ""
 
-KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
-
-Before populating `technical_specification`, retrieve in this order:
-
-1. **Graphify wiki**: If `[WIKI-CACHE]` is in your prompt, use it directly — do NOT re-read.
-   If absent, attempt to read `graphify-out/wiki/index.md` (under the relevant online_addons directory).
-   **If the file does not exist → skip immediately, do NOT explore files manually, proceed to step 2.**
-
-2. **Serena**: Use to find existing models, fields, and call chains.
-   - For `C:\odoo` code: use `mcp__serena__*` tools
-   - For `C:\online_addons` code: use `mcp__serena-online__*` tools (separate instance)
-   Stop as soon as you have enough context.
-
-3. **Context7**: Use ONLY to confirm Odoo native API for the target odoo_version
-   (valid field types, comodel names, method signatures).
-   Do NOT guess field types or model names — retrieve first.
-
 MODE RULES
 
 MODE_A: Triggered when clarification is needed. Output `clarification_channel` with questions.
 
 MODE_B: Triggered ONLY when all questions have valid non-null user_answers.
         `technical_specification` MUST be fully populated.
+        After generating the spec, evaluate `confidence` (0.0–1.0):
+        - confidence >= 0.9 → normal completion:
+            Set `state_summary.is_complete: true`
+            Write `analysis.yaml` and `.final_done`, stage: final
+        - confidence < 0.9  → LOW-CONFIDENCE path (see below)
+
+MODE_B LOW-CONFIDENCE (confidence < 0.9):
+  The spec is drafted but contains gaps or ambiguities. Do NOT write `.final_done`.
+  Instead:
+  1. Set `state_summary.is_complete: false`
+  2. Add NEW entries to `clarification_channel` (continue numbering after existing ones)
+     — each entry MUST identify the specific spec area that is uncertain:
+       category: "model_design | field_type | business_logic | security | ux"
+       question: "<specific question about the uncertain spec area>"
+       user_answer: null
+     — DEDUPLICATION: before adding, check existing entries. If an entry with the
+       same `category` AND substantially same `question` already exists (answered or
+       not), skip it. Do NOT add duplicate or semantically equivalent questions.
+  3. Write `analysis.yaml` and `system/.low_confidence` (signals PS1 to route back to confirm/)
+     Do NOT write `.analysis_done` again (already exists from initial analysis).
+  4. AGENT-RESULT: stage: analysis, message: "MODE_B low-confidence (confidence=<score> < 0.9): <N> issues flagged"
 
 MODE_B SHORTCUT (final spec stage only):
 If the prompt contains `[EXISTING ANALYSIS WITH USER ANSWERS]` and the enclosed YAML already has
@@ -135,6 +129,7 @@ as-is, update only the `timestamp`, and write `.final_done` immediately.
 OUTPUT RULES
 
 - Write `analysis.yaml` to the task directory
-- Write `.analysis_done` marker after first analysis
-- Write `.final_done` marker after MODE_B finalization
+- Write `.analysis_done` marker after first analysis (MODE_A)
+- Write `.final_done` marker after MODE_B finalization (confidence >= 0.9)
+- Write `.low_confidence` marker (NOT `.final_done`) when MODE_B confidence < 0.9
 - Do NOT output to stdout except the YAML block and the AGENT-RESULT block

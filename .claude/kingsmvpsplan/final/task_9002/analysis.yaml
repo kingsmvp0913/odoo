@@ -1,0 +1,15 @@
+case_id: "CASE-9002"
+module: "purchase_order_ext"
+odoo_version: "17.0"
+project_name: null
+execution_mode: "MODE_A"
+description: "採購訂單總金額計算錯誤"
+
+bug_analysis:
+  root_cause: "_amount_all() 方法在計算 amount_total 時遺漏了 tax_totals 中的 extra_lines"
+  affected_file: "purchase_order_ext/models/purchase_order.py"
+  fix_approach: "修正 _amount_all() 方法，正確加總所有稅額行"
+questions:
+  - id: q1
+    question: "是否需要同步修正歷史訂單金額？"
+    user_answer: "否，只修正新訂單"

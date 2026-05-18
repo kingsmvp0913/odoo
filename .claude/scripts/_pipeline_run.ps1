@@ -33,8 +33,12 @@ Get-ChildItem $script:PLAN_DIR -Recurse -Filter "_reentry_count" -ErrorAction Si
     }
 }
 
+# Loop 上限（可由環境變數覆蓋，方便 debug）
+$maxLoops    = if ($env:PIPELINE_MAX_LOOPS)    { [int]$env:PIPELINE_MAX_LOOPS }    else { 20 }
+$maxReentries = if ($env:PIPELINE_MAX_REENTRIES) { [int]$env:PIPELINE_MAX_REENTRIES } else { 2 }
+
 # 檢查 loop_count 上限
-if ($loopCount -gt 20) {
+if ($loopCount -gt $maxLoops) {
     $firstPending = Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" `
         -ErrorAction SilentlyContinue | Select-Object -First 1
     $blockerContent = @"
@@ -42,9 +46,10 @@ blocker_type: loop
 task_id: unknown
 timestamp: $(Get-Date -Format 'o')
 loop_count: $loopCount
+limit: $maxLoops
 limit_exceeded: loop_count
 reason: |
-  Pipeline 循環次數超過安全上限 (loop_count=$loopCount > 20)，自動停止以防死循環。
+  Pipeline 循環次數超過安全上限 (loop_count=$loopCount > $maxLoops)，自動停止以防死循環。
   run_started_at: $startedAt
 last_pending_tasks:
   - $(if ($firstPending) { $firstPending.FullName } else { 'none' })
@@ -65,7 +70,7 @@ action_required: |
         )
         Write-Host "[CRITICAL] blocker.loop.txt 已寫入: $sysDir" -ForegroundColor Red
     }
-    Write-Host "[CRITICAL] Pipeline loop_count=$loopCount 超過上限 20，中止。" -ForegroundColor Red
+    Write-Host "[CRITICAL] Pipeline loop_count=$loopCount 超過上限 $maxLoops，中止。" -ForegroundColor Red
     # 清除 WAITING flag 避免 Claude 再度觸發
     Remove-Item $script:PIPELINE_WAITING -Force -ErrorAction SilentlyContinue
     Remove-Item $counterFile -Force -ErrorAction SilentlyContinue
@@ -74,7 +79,7 @@ action_required: |
 
 # 檢查各任務重入次數上限
 foreach ($tid in @($taskReentries.Keys)) {
-    if ($taskReentries[$tid] -gt 2) {
+    if ($taskReentries[$tid] -gt $maxReentries) {
         $reentryDirs = Get-ChildItem $script:PLAN_DIR -Recurse -Directory -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -eq $tid }
         $taskDir = if ($reentryDirs) { $reentryDirs[0].FullName } else { $null }
@@ -84,9 +89,10 @@ task_id: $tid
 timestamp: $(Get-Date -Format 'o')
 loop_count: $loopCount
 task_reentries: $($taskReentries[$tid])
+limit: $maxReentries
 limit_exceeded: task_reentry
 reason: |
-  $tid 已從 QA 失敗退回 $($taskReentries[$tid]) 次，超過上限 2。
+  $tid 已從 QA 失敗退回 $($taskReentries[$tid]) 次，超過上限 $maxReentries。
   任務可能陷入反覆 BackToConfirm → rework 循環。
 action_required: |
   1. 查看任務目錄內的 log/qa_report.yaml 和 analysis.yaml
@@ -102,7 +108,7 @@ action_required: |
                 $blockerMsg,
                 [System.Text.Encoding]::UTF8
             )
-            Write-Host "[WARN] $tid 重入次數=$($taskReentries[$tid]) 超過 2，已升級為 blocker.loop.txt" -ForegroundColor Yellow
+            Write-Host "[WARN] $tid 重入次數=$($taskReentries[$tid]) 超過 $maxReentries，已升級為 blocker.loop.txt" -ForegroundColor Yellow
         }
     }
 }
@@ -115,7 +121,22 @@ $counterObj = [PSCustomObject]@{
 try { $counterObj | ConvertTo-Json -Depth 5 | Out-File $counterFile -Encoding UTF8 -Force } catch {}
 
 Write-Host "=== Pipeline 開工 $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -ForegroundColor Cyan
-Write-Host "[LOOP] loop_count=$loopCount / 20，run_started_at=$startedAt" -ForegroundColor DarkCyan
+Write-Host "[LOOP] loop_count=$loopCount / $maxLoops，run_started_at=$startedAt" -ForegroundColor DarkCyan
+
+# ============================================================
+# Blocker Resume（人工修完後 touch system/.blocker_resolved 重啟）
+# ============================================================
+Write-Host "`n[RESUME] 掃描 .blocker_resolved 標記..." -ForegroundColor Cyan
+$resolvedCount = 0
+Get-ChildItem $script:PLAN_DIR -Recurse -Filter ".blocker_resolved" -ErrorAction SilentlyContinue | ForEach-Object {
+    $sysDir   = Split-Path $_.FullName -Parent
+    $taskName = Split-Path (Split-Path $sysDir -Parent) -Leaf
+    Get-ChildItem $sysDir -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Remove-Item -Force
+    Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+    Write-Host "[RESUME] $taskName blocker 已清除，重新加入佇列" -ForegroundColor Green
+    $resolvedCount++
+}
+if ($resolvedCount -eq 0) { Write-Host "[RESUME] 無需恢復的任務" -ForegroundColor DarkGray }
 
 # 設定 hook 模式，讓子程序的 Open-ClaudeTerminal 略過開新 terminal
 $env:PIPELINE_HOOK_MODE = "1"
@@ -171,3 +192,33 @@ if ($pendingCount -gt 0) {
     Remove-Item $counterFile -Force -ErrorAction SilentlyContinue
     Write-Host "`n=== Pipeline 完成，無待處理任務 ===" -ForegroundColor Green
 }
+
+# ============================================================
+# Pipeline Run Summary（每次 run 結束寫入統計）
+# ============================================================
+$runEndTime  = Get-Date -Format 'o'
+$summaryDir  = Join-Path $script:PLAN_DIR "log"
+if (-not (Test-Path $summaryDir)) { New-Item -ItemType Directory -Force $summaryDir | Out-Null }
+
+$summaryLines = @(
+    "run_id: '$startedAt'",
+    "run_ended_at: '$runEndTime'",
+    "loop_count: $loopCount",
+    "tasks_pending_ai: $pendingCount",
+    "tasks_in_pipeline:"
+)
+$stageRoots = @($script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
+foreach ($root in $stageRoots) {
+    if (-not (Test-Path $root)) { continue }
+    $stageName = Split-Path $root -Leaf
+    Get-ChildItem $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^task_\d+$' } | ForEach-Object {
+        $hasBlocker = [bool](Get-ChildItem (Join-Path $_.FullName "system") -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
+        $hasPending = Test-Path (Join-Path $_.FullName "system" "pending_prompt.txt")
+        $st = if ($hasBlocker) { "blocker" } elseif ($hasPending) { "pending_ai" } else { "idle" }
+        $summaryLines += "  - task_id: '$($_.Name)'"
+        $summaryLines += "    stage: '$stageName'"
+        $summaryLines += "    status: '$st'"
+    }
+}
+Atomic-WriteFile (Join-Path $summaryDir "pipeline_run_summary.yaml") ($summaryLines -join "`n") | Out-Null
+Write-Host "[SUMMARY] 已寫入 log/pipeline_run_summary.yaml" -ForegroundColor DarkCyan
