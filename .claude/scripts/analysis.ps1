@@ -59,7 +59,7 @@ if (-not (Acquire-Lock $lock2 300)) {
         foreach ($taskDir in $startTasks) {
             $taskName     = $taskDir.Name
             $originalTxt  = Join-Path $taskDir.FullName "original.txt"
-            $analysisDone = Join-Path $taskDir.FullName ".analysis_done"
+            $analysisDone = Join-Path (Get-SystemDir $taskDir.FullName) ".analysis_done"
 
             if (Test-HasBlocker $taskDir.FullName) {
                 Write-Host "[BLOCKER] $taskName 已有 blocker 檔案，跳過（需人工處理）" -ForegroundColor Red
@@ -90,11 +90,11 @@ if (-not (Acquire-Lock $lock2 300)) {
             }
 
             # 已有 pending prompt，等待 Claude 處理（超過 30 分鐘則清除重新排隊）
-            if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+            if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) "pending_prompt.txt")) {
                 if (Test-PendingStale $taskDir.FullName) {
                     Clear-StalePending $taskDir.FullName
                 } else {
-                    Write-Host "[WAIT] $taskName - Claude 分析中（pending_prompt.txt 存在）" -ForegroundColor DarkGray
+                    Write-Host "[WAIT] $taskName - Claude 分析中（system/pending_prompt.txt 存在）" -ForegroundColor DarkGray
                     continue
                 }
             }
@@ -131,7 +131,7 @@ if (-not (Acquire-Lock $lock2 300)) {
                     "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
                     "`n`n【TASK DIRECTORY】`n$destTaskDir" +
                     "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +
-                    "`n`n將 analysis.yaml 和 .analysis_done 寫入【TASK DIRECTORY】，完成後刪除 pending_prompt.txt 和 .pending_analysis。"
+                    "`n`n將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) mv system/pending_prompt.txt log/done_prompt.txt (b) 刪除 system/.pending_analysis。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "analysis" -prompt $fullPrompt
 
@@ -142,8 +142,8 @@ if (-not (Acquire-Lock $lock2 300)) {
                     Write-Host "[OK] $taskName → confirm/ (等待 Claude 初始分析)" -ForegroundColor Green
                 } catch {
                     # 搬移失敗：回滾 pending，避免任務目錄分裂（start/ 與 confirm/ 各一份）
-                    Remove-Item (Join-Path $taskDir.FullName "pending_prompt.txt") -Force -ErrorAction SilentlyContinue
-                    Remove-Item (Join-Path $taskDir.FullName ".pending_analysis")  -Force -ErrorAction SilentlyContinue
+                    Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) "pending_prompt.txt") -Force -ErrorAction SilentlyContinue
+                    Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) ".pending_analysis")  -Force -ErrorAction SilentlyContinue
                     Write-Host "[ERROR] $taskName 搬移失敗（已回滾 pending）：$_" -ForegroundColor Red
                 }
             } catch {
@@ -172,8 +172,8 @@ if (-not (Acquire-Lock $lock3a 300)) {
         foreach ($taskDir in $confirmTasks) {
             $taskName     = $taskDir.Name
             $taskLock     = Join-Path $taskDir.FullName "process.lock"
-            $analysisDone = Join-Path $taskDir.FullName ".analysis_done"
-            $answerDone   = Join-Path $taskDir.FullName ".answer_done"
+            $analysisDone = Join-Path (Get-SystemDir $taskDir.FullName) ".analysis_done"
+            $answerDone   = Join-Path (Get-SystemDir $taskDir.FullName) ".answer_done"
             $yamlPath     = Join-Path $taskDir.FullName "analysis.yaml"
 
             if (Test-HasBlocker $taskDir.FullName) {
@@ -184,8 +184,8 @@ if (-not (Acquire-Lock $lock3a 300)) {
             # AI 尚未處理（.analysis_done 不存在）→ 跳過
             if (-not (Test-Path $analysisDone)) { continue }
             if (Test-Path $answerDone) { continue }
-            # AI 正在處理中（pending_prompt.txt 存在）→ 跳過，避免重複觸發
-            if (Test-Path (Join-Path $taskDir.FullName 'pending_prompt.txt')) { continue }
+            # AI 正在處理中（system/pending_prompt.txt 存在）→ 跳過，避免重複觸發
+            if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt')) { continue }
             if (-not (Test-Path $yamlPath)) { Write-Host "[WARN] $taskName 缺少 analysis.yaml" -ForegroundColor Yellow; continue }
 
             if (-not (Acquire-Lock $taskLock 300)) {
@@ -239,8 +239,8 @@ if (-not (Acquire-Lock $lock3b 300)) {
         foreach ($taskDir in $analysisTasks) {
             $taskName   = $taskDir.Name
             $taskLock   = Join-Path $taskDir.FullName "process.lock"
-            $answerDone = Join-Path $taskDir.FullName ".answer_done"
-            $finalDone  = Join-Path $taskDir.FullName ".final_done"
+            $answerDone = Join-Path (Get-SystemDir $taskDir.FullName) ".answer_done"
+            $finalDone  = Join-Path (Get-SystemDir $taskDir.FullName) ".final_done"
             $yamlPath   = Join-Path $taskDir.FullName "analysis.yaml"
 
             if (Test-HasBlocker $taskDir.FullName) {
@@ -252,7 +252,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
             if (Test-Path $finalDone) { continue }
 
             # 已有 pending prompt，等待 Claude 處理（超過 30 分鐘則清除重新排隊）
-            if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+            if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) "pending_prompt.txt")) {
                 if (Test-PendingStale $taskDir.FullName) {
                     Clear-StalePending $taskDir.FullName
                 } else {
@@ -283,7 +283,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 $fullPrompt = "ultrathink`n`n" + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
                     "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
-                    "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 .final_done。完成後依序：(a) 寫入 .final_done (b) mv pending_prompt.txt done_prompt.txt (c) 刪除 .pending_final。"
+                    "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) mv system/pending_prompt.txt log/done_prompt.txt (c) 刪除 system/.pending_final。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "final" -prompt $fullPrompt
                 Write-Host "[OK] $taskName → 等待 Claude 生成 MODE_B 規格" -ForegroundColor Green
@@ -314,7 +314,7 @@ foreach ($stage in $stageMap.Keys) {
     $dir = $stageMap[$stage]
     if (-not (Test-Path $dir)) { continue }
     Get-ChildItem $dir -Exclude "README.md" -ErrorAction SilentlyContinue | ForEach-Object {
-        $hasPending = Test-Path (Join-Path $_.FullName "pending_prompt.txt")
+        $hasPending = Test-Path (Join-Path (Get-SystemDir $_.FullName) "pending_prompt.txt")
         $suffix = if ($hasPending) { " [待 Claude]" } else { "" }
         Write-Host ("  [{0,-10}]  {1}{2}" -f $stage, $_.Name, $suffix) -ForegroundColor White
         $total++

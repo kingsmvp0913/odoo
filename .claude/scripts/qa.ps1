@@ -21,8 +21,8 @@ $codingTasks = Get-ChildItem $script:CODING_DIR -Directory -ErrorAction Silently
 foreach ($taskDir in $codingTasks) {
     $taskName         = $taskDir.Name
     $taskLock         = Join-Path $taskDir.FullName "process.lock"
-    $implementDone    = Join-Path $taskDir.FullName ".implement_done"
-    $qaDone           = Join-Path $taskDir.FullName ".qa_done"
+    $implementDone    = Join-Path (Get-SystemDir $taskDir.FullName) ".implement_done"
+    $qaDone           = Join-Path (Get-SystemDir $taskDir.FullName) ".qa_done"
     $analysisYamlPath = Join-Path $taskDir.FullName "analysis.yaml"
 
     if (Test-HasBlocker $taskDir.FullName) {
@@ -34,7 +34,7 @@ foreach ($taskDir in $codingTasks) {
     if (Test-Path $qaDone)               { continue }
 
     # 已有 pending prompt，等待 Claude 處理（超過 30 分鐘則清除重新排隊）
-    if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+    if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) "pending_prompt.txt")) {
         if (Test-PendingStale $taskDir.FullName) {
             Clear-StalePending $taskDir.FullName
         } else {
@@ -77,7 +77,7 @@ foreach ($taskDir in $codingTasks) {
             "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
             "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
             "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
-            "`n`n完成後依序：(a) 寫入 qa_report.yaml 和 .qa_done 到【TASK DIRECTORY】(b) mv pending_prompt.txt done_prompt.txt (c) 刪除 .pending_qa flag。"
+            "`n`n完成後依序：(a) 寫入 log/qa_report.yaml 和 system/.qa_done 到【TASK DIRECTORY】(b) mv system/pending_prompt.txt log/done_prompt.txt (c) 刪除 system/.pending_qa flag。"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "qa" -prompt $fullPrompt
         Write-Host "[OK] $taskName → 等待 Claude QA 檢查" -ForegroundColor Green
@@ -98,14 +98,14 @@ $codingTasks2 = Get-ChildItem $script:CODING_DIR -Directory -ErrorAction Silentl
 foreach ($taskDir in $codingTasks2) {
     $taskName     = $taskDir.Name
     $taskLock     = Join-Path $taskDir.FullName "process.lock"
-    $qaDone       = Join-Path $taskDir.FullName ".qa_done"
-    $qaReportPath = Join-Path $taskDir.FullName "qa_report.yaml"
+    $qaDone       = Join-Path (Get-SystemDir $taskDir.FullName) ".qa_done"
+    $qaReportPath = Join-Path (Get-LogDir    $taskDir.FullName) "qa_report.yaml"
 
     if (-not (Test-Path $qaDone))       { continue }
     if (-not (Test-Path $qaReportPath)) { continue }
 
-    # 若 pending_prompt.txt 仍存在（QA 尚未完成），跳過（超過 30 分鐘則清除）
-    if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+    # 若 system/pending_prompt.txt 仍存在（QA 尚未完成），跳過（超過 30 分鐘則清除）
+    if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) "pending_prompt.txt")) {
         if (Test-PendingStale $taskDir.FullName) {
             Clear-StalePending $taskDir.FullName
         } else {

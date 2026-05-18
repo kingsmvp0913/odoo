@@ -28,8 +28,8 @@ $analysisTasks = Get-ChildItem $script:ANALYSIS_DIR -Directory -ErrorAction Sile
 foreach ($taskDir in $analysisTasks) {
     $taskName         = $taskDir.Name
     $taskLock         = Join-Path $taskDir.FullName "process.lock"
-    $finalDone        = Join-Path $taskDir.FullName ".final_done"
-    $implementDone    = Join-Path $taskDir.FullName ".implement_done"
+    $finalDone        = Join-Path (Get-SystemDir $taskDir.FullName) ".final_done"
+    $implementDone    = Join-Path (Get-SystemDir $taskDir.FullName) ".implement_done"
     $analysisYamlPath = Join-Path $taskDir.FullName "analysis.yaml"
 
     if (Test-HasBlocker $taskDir.FullName) {
@@ -41,7 +41,7 @@ foreach ($taskDir in $analysisTasks) {
     if (Test-Path $implementDone)     { continue }
 
     # 已有 pending prompt，等待 Claude 處理（超過 30 分鐘則清除重新排隊）
-    if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
+    if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) "pending_prompt.txt")) {
         if (Test-PendingStale $taskDir.FullName) {
             Clear-StalePending $taskDir.FullName
         } else {
@@ -71,7 +71,7 @@ foreach ($taskDir in $analysisTasks) {
         }
 
         if (-not (Test-YamlComplete $analysisYamlPath)) {
-            $blockerPath = Join-Path $taskDir.FullName "blocker.spec.txt"
+            $blockerPath = Join-Path (Get-SystemDir $taskDir.FullName) "blocker.spec.txt"
             $blockerMsg = "technical_specification 不完整（缺少 model_name），無法開始實作。請重新產生規格。"
             Atomic-WriteFile $blockerPath $blockerMsg | Out-Null
             Write-Host "[BLOCKER] $taskName YAML 規格不完整，已寫入 blocker.spec.txt" -ForegroundColor Red
@@ -97,7 +97,7 @@ foreach ($taskDir in $analysisTasks) {
             "`n`n【TASK DIRECTORY】`n$destTaskDir" +
             "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
             "`n`n【OUTPUT PATH】`n$modulePath" +
-            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後依序：(a) 寫入 .implement_done 到【TASK DIRECTORY】(b) mv pending_prompt.txt done_prompt.txt (c) 刪除 .pending_coding flag"
+            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後依序：(a) 寫入 system/.implement_done 到【TASK DIRECTORY】(b) mv system/pending_prompt.txt log/done_prompt.txt (c) 刪除 system/.pending_coding flag"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "coding" -prompt $fullPrompt
 
@@ -109,8 +109,8 @@ foreach ($taskDir in $analysisTasks) {
             Write-Host "[OK] $taskName → coding/ (等待 Claude 實作)" -ForegroundColor Green
         } catch {
             Write-Host "[ERROR] $taskName Move 失敗，清除 pending: $_" -ForegroundColor Red
-            Remove-Item (Join-Path $taskDir.FullName 'pending_prompt.txt') -Force -ErrorAction SilentlyContinue
-            Remove-Item (Join-Path $taskDir.FullName '.pending_coding') -Force -ErrorAction SilentlyContinue
+            Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt') -Force -ErrorAction SilentlyContinue
+            Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) '.pending_coding') -Force -ErrorAction SilentlyContinue
         }
     } catch {
         Write-Host "[ERROR] ${taskName}: $_" -ForegroundColor Red

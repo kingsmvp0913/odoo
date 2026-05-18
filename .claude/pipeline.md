@@ -30,8 +30,8 @@
 
 每次進入循環前讀取並更新 `_LOOP_COUNTER.json`。
 
-1. **掃描**：收集所有 `.claude/kingsmvpsplan/*/pending_prompt.txt`
-2. **讀 stage**：每個任務目錄內找 `.pending_<stage>` flag 檔；stage = 去掉 `.pending_` 前綴。
+1. **掃描**：收集所有 `.claude/kingsmvpsplan/*/system/pending_prompt.txt`
+2. **讀 stage**：每個任務目錄的 `system/` 下找 `.pending_<stage>` flag 檔；stage = 去掉 `.pending_` 前綴。
    有效 Claude-facing stage：`analysis` / `final` / `coding` / `qa`
 3. **分批**：依 `analysis → final → coding → qa` 順序。
    `final/` 目錄為 QA 通過歸檔，不是 stage。
@@ -44,14 +44,14 @@
    - `analysis` / `final`：最多 **5** 個並行；超過分批
    - `coding` / `qa`：PS1 已實作 Module 序列鎖（同模組只寫一個 pending），主調度可直接並行 spawn 不同模組任務
 6. **Agent 失敗處理**：
-   - 任一 Agent 返回 `status: error` → 寫 `<task_root>/agent_error.txt`（用 `.claude/templates/agent_error.txt` 格式）
+   - 任一 Agent 返回 `status: error` → 寫 `<task_root>/log/agent_error.txt`（用 `.claude/templates/agent_error.txt` 格式）
    - `retry_count < 1`：主調度自動重試一次，`retry_count` +1
-   - `retry_count >= 1`：升級為 `blocker.agent.txt`，不中斷其餘任務
+   - `retry_count >= 1`：升級為 `system/blocker.agent.txt`，不中斷其餘任務
    - 當前 stage 所有 Agent 完成後，統一向使用者報告失敗清單
 7. **完成標記順序**（原子保證）：
-   - 先寫 done marker（對照 Unified Marker Table）
-   - 再 `mv pending_prompt.txt done_prompt.txt`
-   - 再刪除 `.pending_<stage>` flag
+   - 先寫 done marker 到 `system/`（對照 Unified Marker Table）
+   - 再 `mv system/pending_prompt.txt log/done_prompt.txt`
+   - 再刪除 `system/.pending_<stage>` flag
    - 絕對不先刪後寫
 8. **推進**：全 stage 完成後執行 `pwsh -NoProfile -File ".claude/scripts/_pipeline_run.ps1"`
    （Linux 上若無 pwsh：記錄「需在 Windows 端手動執行」）
@@ -121,13 +121,15 @@ QA `status = FAILED`：
 2. 將任務目錄移回 `confirm/<task_id>/`
 3. 清除以下所有檔案（BackToConfirm 清單）：
    ```
-   .analysis_done  .answer_done  .final_done  .implement_done  .qa_done
-   .pending_analysis  .pending_final  .pending_coding  .pending_qa
-   pending_prompt.txt  done_prompt.txt
-   blocker.spec.txt  blocker.tech.txt  blocker.agent.txt  blocker.loop.txt
-   agent_error.txt
+   system/ 下：
+     .analysis_done  .answer_done  .final_done  .implement_done  .qa_done
+     .pending_analysis  .pending_final  .pending_coding  .pending_qa
+     pending_prompt.txt
+     blocker.spec.txt  blocker.tech.txt  blocker.agent.txt  blocker.loop.txt
+   log/ 下：
+     done_prompt.txt  back_reason.txt  qa_report.yaml  agent_error.txt
    ```
-4. 寫 `BACK_REASON.txt` 說明退回原因
+4. 寫 `log/back_reason.txt` 說明退回原因
 5. 若 task_id 符合 `^task_(\d+)$` → 通知 Odoo 任務
 
 ## 路徑翻譯（Linux 執行環境）

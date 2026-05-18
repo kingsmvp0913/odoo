@@ -11,10 +11,13 @@ analysis/
 └── task_N/
     ├── original.txt         ← 原始 Odoo 資料
     ├── analysis.yaml        ← 含使用者答案，Claude 將更新為完整規格
-    ├── .analysis_done       ← 初始分析完成
-    ├── .answer_done         ← 答案確認完成
-    ├── .final_done          ← 最終規格完成（Claude 寫入後離開本目錄）
-    └── pending_prompt.txt   ← 等待 Claude 產出完整規格時存在
+    ├── system/
+    │   ├── .analysis_done   ← 初始分析完成
+    │   ├── .answer_done     ← 答案確認完成
+    │   ├── .final_done      ← 最終規格完成（Claude 寫入後離開本目錄）
+    │   └── pending_prompt.txt ← 等待 Claude 產出完整規格時存在
+    └── log/
+        └── done_prompt.txt  ← 完成後保留的執行記錄
 ```
 
 ## `analysis.yaml` 完整規格結構（.final_done 後）
@@ -33,11 +36,11 @@ technical_specification:
 
 ## 流程
 
-1. `analysis.ps1` STEP 3b 偵測到 `.answer_done` 存在但 `.final_done` 不存在
-2. 寫入 `pending_prompt.txt` 要求 Claude 產出完整 `technical_specification`
-3. Claude 更新 `analysis.yaml` 並寫入 `.final_done`
-4. `coding.ps1` STEP 4 偵測到 `.final_done` → 移至 `coding/`
+1. `analysis.ps1` STEP 3b 偵測到 `system/.answer_done` 存在但 `system/.final_done` 不存在
+2. 寫入 `system/pending_prompt.txt` 要求 Claude 產出完整 `technical_specification`
+3. Claude 更新 `analysis.yaml` 並寫入 `system/.final_done`
+4. `coding.ps1` STEP 4 偵測到 `system/.final_done` → 移至 `coding/`
 
 ## 離開條件
 
-`.final_done` 存在（Claude 完成最終規格產出）。
+`system/.final_done` 存在（Claude 完成最終規格產出）。

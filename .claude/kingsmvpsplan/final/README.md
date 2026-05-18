@@ -11,15 +11,18 @@ final/
 └── task_N/
     ├── original.txt         ← 原始 Odoo 資料
     ├── analysis.yaml        ← 完整規格（含 technical_specification）
-    ├── qa_report.yaml       ← QA 報告（status: PASSED）
-    ├── .analysis_done
-    ├── .answer_done
-    ├── .final_done
-    ├── .implement_done
-    └── .qa_done
+    ├── system/
+    │   ├── .analysis_done
+    │   ├── .answer_done
+    │   ├── .final_done
+    │   ├── .implement_done
+    │   └── .qa_done
+    └── log/
+        ├── qa_report.yaml   ← QA 報告（status: PASSED）
+        └── done_prompt.txt  ← 最後一次執行記錄
 ```
 
-## `qa_report.yaml` 格式
+## `log/qa_report.yaml` 格式
 
 ```yaml
 status: PASSED

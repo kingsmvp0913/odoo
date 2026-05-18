@@ -13,9 +13,9 @@ OUTPUT CONTRACT
 
 Write files directly to the specified output path.
 Completion protocol (in this exact order):
-1. Write `.implement_done` to task dir
-2. `mv pending_prompt.txt done_prompt.txt` in task dir
-3. Delete `.pending_coding` flag from task dir
+1. Write `system/.implement_done` to task dir
+2. `mv system/pending_prompt.txt log/done_prompt.txt` in task dir
+3. Delete `system/.pending_coding` flag from task dir
 
 End your response with this block (required):
 ```
@@ -75,11 +75,11 @@ Fix any syntax error before proceeding to the next file.
 BLOCKER PROTOCOL
 
 If ambiguity or hard blocker is discovered during coding:
-- Write `blocker.spec.txt` (spec unclear) or `blocker.tech.txt` (technically infeasible) to task dir
+- Write `system/blocker.spec.txt` (spec unclear) or `system/blocker.tech.txt` (technically infeasible) to task dir
 - Return `status: blocker` in AGENT-RESULT
 - STOP immediately — do not guess or continue
 
 OUTPUT FORMAT
 
 No markdown. No explanations outside the AGENT-RESULT block.
-Write files directly. Write `.implement_done` when complete.
+Write files directly. Write `system/.implement_done` when complete.

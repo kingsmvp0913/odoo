@@ -10,7 +10,7 @@ if (-not $env:ODOO_PASSWORD) {
 
 # ============================================================
 # Loop Counter 管理（防死循環）
-# max loop_count = 20；task_reentries 由 BackToConfirm 寫入 _REENTRY_COUNT
+# max loop_count = 20；task_reentries 由 BackToConfirm 寫入 system/_reentry_count
 # ============================================================
 $counterFile = Join-Path $script:PLAN_DIR "_LOOP_COUNTER.json"
 $loopCount   = 0
@@ -24,9 +24,9 @@ if (Test-Path $counterFile) {
     } catch {}
 }
 
-# 讀取各任務的重入次數（由 BackToConfirm 持久化到 _REENTRY_COUNT）
+# 讀取各任務的重入次數（由 BackToConfirm 持久化到 system/_reentry_count）
 $taskReentries = @{}
-Get-ChildItem $script:PLAN_DIR -Recurse -Filter "_REENTRY_COUNT" -ErrorAction SilentlyContinue | ForEach-Object {
+Get-ChildItem $script:PLAN_DIR -Recurse -Filter "_reentry_count" -ErrorAction SilentlyContinue | ForEach-Object {
     $tid = Split-Path (Split-Path $_.FullName -Parent) -Leaf
     if ($tid -match '^task_\d+$') {
         try { $taskReentries[$tid] = [int](Get-Content $_.FullName -Raw -EA SilentlyContinue) } catch {}
@@ -55,13 +55,15 @@ action_required: |
   4. 重新執行 pipeline
 "@
     if ($firstPending) {
-        $taskDir = Split-Path $firstPending.FullName -Parent
+        $taskDir = Split-Path (Split-Path $firstPending.FullName -Parent) -Parent
+        $sysDir  = Join-Path $taskDir "system"
+        if (-not (Test-Path $sysDir)) { New-Item -ItemType Directory -Force $sysDir | Out-Null }
         [System.IO.File]::WriteAllText(
-            (Join-Path $taskDir "blocker.loop.txt"),
+            (Join-Path $sysDir "blocker.loop.txt"),
             $blockerContent,
             [System.Text.Encoding]::UTF8
         )
-        Write-Host "[CRITICAL] blocker.loop.txt 已寫入: $taskDir" -ForegroundColor Red
+        Write-Host "[CRITICAL] blocker.loop.txt 已寫入: $sysDir" -ForegroundColor Red
     }
     Write-Host "[CRITICAL] Pipeline loop_count=$loopCount 超過上限 20，中止。" -ForegroundColor Red
     # 清除 WAITING flag 避免 Claude 再度觸發
@@ -87,14 +89,16 @@ reason: |
   $tid 已從 QA 失敗退回 $($taskReentries[$tid]) 次，超過上限 2。
   任務可能陷入反覆 BackToConfirm → rework 循環。
 action_required: |
-  1. 查看任務目錄內的 qa_report.yaml 和 analysis.yaml
-  2. 手動修正根本原因後刪除此 blocker 檔案與 _REENTRY_COUNT
+  1. 查看任務目錄內的 log/qa_report.yaml 和 analysis.yaml
+  2. 手動修正根本原因後刪除此 blocker 檔案與 system/_reentry_count
   3. 刪除 _LOOP_COUNTER.json 重置計數器
   4. 重新執行 pipeline
 "@
         if ($taskDir) {
+            $sysDir = Join-Path $taskDir "system"
+            if (-not (Test-Path $sysDir)) { New-Item -ItemType Directory -Force $sysDir | Out-Null }
             [System.IO.File]::WriteAllText(
-                (Join-Path $taskDir "blocker.loop.txt"),
+                (Join-Path $sysDir "blocker.loop.txt"),
                 $blockerMsg,
                 [System.Text.Encoding]::UTF8
             )
@@ -160,7 +164,7 @@ if ($pendingCount -gt 0) {
         Write-Host "  - $($f.FullName)" -ForegroundColor White
     }
     Write-Host ""
-    Write-Host "每個 pending_prompt.txt 由對應 Agent 自行完成原子完成協議（寫 done marker → mv pending_prompt.txt done_prompt.txt → 刪 .pending_* flag）。" -ForegroundColor Yellow
+    Write-Host "每個 system/pending_prompt.txt 由對應 Agent 自行完成原子完成協議（寫 done marker → mv system/pending_prompt.txt log/done_prompt.txt → 刪 system/.pending_* flag）。" -ForegroundColor Yellow
     Write-Host "全部完成後執行 pwsh -NoProfile -File `"$(Join-Path $PSScriptRoot '_pipeline_run.ps1')`" 推進 Pipeline。" -ForegroundColor Yellow
 } else {
     Remove-Item $script:PIPELINE_WAITING -Force -ErrorAction SilentlyContinue

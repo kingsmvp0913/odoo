@@ -5,7 +5,7 @@
 - NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks.
 - NEVER add fields/models/logic beyond `analysis.yaml` spec.
 - NEVER request human confirmation mid-pipeline.
-- On any blocker: write `blocker.<type>.txt` to task dir → STOP immediately. Report **file path only**, never content.
+- On any blocker: write `blocker.<type>.txt` to `system/` in task dir → STOP immediately. Report **file path only**, never content.
 - Think in English. Output Traditional Chinese (Taiwan). No preambles.
 - Challenge proposals that violate Odoo best practices, security, or performance.
 
@@ -39,7 +39,7 @@ If wiki file not found → skip injection; sub-Agent will read it directly.
 
 **Unified Marker Table** — authoritative reference for all Agents and PS1 scripts:
 
-| Claude stage | `.pending_*` flag | Done marker | Physical dir |
+| Claude stage | pending flag (in `system/`) | done marker (in `system/`) | Physical dir |
 |---|---|---|---|
 | analysis (initial) | `.pending_analysis` | `.analysis_done` | `confirm/` |
 | answer-check | _(PS1 only, no pending)_ | `.answer_done` | `confirm/` → `analysis/` |
@@ -48,7 +48,26 @@ If wiki file not found → skip injection; sub-Agent will read it directly.
 | qa | `.pending_qa` | `.qa_done` | `coding/` |
 | archive | _(none)_ | _(none)_ | `final/` ← QA-passed tasks |
 
-- **Stage source**: read `.pending_<stage>` flag filename inside task dir. Valid Claude-facing stages: `analysis`, `final`, `coding`, `qa`.
+**Task dir layout**:
+```
+<task_dir>/
+├── analysis.yaml          ← spec（根目錄）
+├── original.txt           ← 原始需求（根目錄）
+├── process.lock           ← 臨時排他鎖（根目錄）
+├── system/                ← 狀態機檔案（PS1 讀寫）
+│   ├── pending_prompt.txt
+│   ├── .pending_<stage>
+│   ├── .<stage>_done
+│   ├── blocker.*.txt
+│   └── _reentry_count
+└── log/                   ← 執行記錄（人工查閱）
+    ├── done_prompt.txt
+    ├── back_reason.txt
+    ├── qa_report.yaml
+    └── agent_error.txt
+```
+
+- **Stage source**: read `system/.pending_<stage>` flag filename inside task dir. Valid Claude-facing stages: `analysis`, `final`, `coding`, `qa`.
 - `final/` directory = QA-passed archive, **not** a processing stage.
 - `qa` shares the same module serial lock as `coding`.
 - task_id format: `task_<N>` where N is digits only (e.g. `task_3919`).
@@ -70,14 +89,14 @@ execution_mode: "MODE_A | MODE_B"
   - XML: `xmllint --noout <file>`
   - Module loadable: `odoo-bin -d test --stop-after-init -i <module>` (if available)
 - **Completion order** (atomic protocol):
-  1. Write done marker (e.g. `.implement_done`)
-  2. `mv pending_prompt.txt done_prompt.txt`
-  3. Delete `.pending_<stage>` flag
+  1. Write done marker (e.g. `system/.implement_done`)
+  2. `mv system/pending_prompt.txt log/done_prompt.txt`
+  3. Delete `system/.pending_<stage>` flag
   - Never delete before writing marker.
 
 ## 5. Odoo Constraints
 - Models: `_inherit`. Views: `inherit_id` + `xpath`. Controllers: `super()`.
-- Cannot achieve via standard Odoo extension → write `blocker.tech.txt` immediately.
+- Cannot achieve via standard Odoo extension → write `system/blocker.tech.txt` immediately.
 - Commit: `[Module]: Why (not what)`. File edit: `@Path | Anchor | Action`.
 
 ## 6. Output Style

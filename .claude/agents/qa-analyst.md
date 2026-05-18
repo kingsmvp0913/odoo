@@ -12,9 +12,9 @@ Review the implemented Odoo module against the specification AND code quality st
 OUTPUT CONTRACT
 
 Completion protocol (in this exact order):
-1. Write `qa_report.yaml` and `.qa_done` to task dir
-2. `mv pending_prompt.txt done_prompt.txt` in task dir
-3. Delete `.pending_qa` flag from task dir
+1. Write `log/qa_report.yaml` and `system/.qa_done` to task dir
+2. `mv system/pending_prompt.txt log/done_prompt.txt` in task dir
+3. Delete `system/.pending_qa` flag from task dir
 
 End your response with this block (required):
 ```
@@ -23,7 +23,7 @@ status: ok | blocker | error
 task_id: task_<N>
 stage: qa
 files_written:
-  - <task_dir>/qa_report.yaml
+  - <task_dir>/log/qa_report.yaml
 message: PASSED | FAILED: <first issue description>
 ---END-RESULT---
 ```
@@ -126,4 +126,4 @@ OUTPUT RULES
 - If any check fails, `status = FAILED`
 - Include actionable suggestions for fixes
 - No natural language outside YAML block and AGENT-RESULT block
-- Write `qa_report.yaml` and `.qa_done`
+- Write `log/qa_report.yaml` and `system/.qa_done`

@@ -224,12 +224,19 @@ function Atomic-WriteFile {
 }
 
 # ============================================================
+# 子目錄路徑 helpers
+# ============================================================
+function Get-SystemDir { param([string]$taskDir); Join-Path $taskDir "system" }
+function Get-LogDir    { param([string]$taskDir); Join-Path $taskDir "log" }
+
+# ============================================================
 # Pipeline Pending Prompt（寫入後由 Claude 非同步執行）
 # ============================================================
 function Write-PendingPrompt {
     param([string]$taskDir, [string]$stage, [string]$prompt)
-    Atomic-WriteFile (Join-Path $taskDir "pending_prompt.txt") $prompt | Out-Null
-    Atomic-WriteFile (Join-Path $taskDir ".pending_$stage") "" | Out-Null
+    $sysDir = Get-SystemDir $taskDir
+    Atomic-WriteFile (Join-Path $sysDir "pending_prompt.txt") $prompt | Out-Null
+    Atomic-WriteFile (Join-Path $sysDir ".pending_$stage") "" | Out-Null
 }
 
 # ============================================================
@@ -237,7 +244,7 @@ function Write-PendingPrompt {
 # ============================================================
 function Test-PendingStale {
     param([string]$taskDir, [int]$AgeMinutes = 30)
-    $pendingPath = Join-Path $taskDir "pending_prompt.txt"
+    $pendingPath = Join-Path (Get-SystemDir $taskDir) "pending_prompt.txt"
     if (-not (Test-Path $pendingPath)) { return $false }
     $age = (Get-Date) - (Get-Item $pendingPath).LastWriteTime
     return $age.TotalMinutes -gt $AgeMinutes
@@ -246,15 +253,15 @@ function Test-PendingStale {
 function Clear-StalePending {
     param([string]$taskDir)
     $taskName = Split-Path $taskDir -Leaf
-    Write-Host "[STALE] $taskName pending_prompt.txt 超過 30 分鐘，清除重新排隊" -ForegroundColor Yellow
-    Remove-Item (Join-Path $taskDir "pending_prompt.txt") -Force -ErrorAction SilentlyContinue
-    # .pending_* flag 也清除，讓下一輪 PS1 重新判斷 stage 並寫入新 pending_prompt
-    Get-ChildItem $taskDir -Filter ".pending_*" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+    $sysDir = Get-SystemDir $taskDir
+    Write-Host "[STALE] $taskName system/pending_prompt.txt 超過 30 分鐘，清除重新排隊" -ForegroundColor Yellow
+    Remove-Item (Join-Path $sysDir "pending_prompt.txt") -Force -ErrorAction SilentlyContinue
+    Get-ChildItem $sysDir -Filter ".pending_*" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 function Test-HasBlocker {
     param([string]$taskDir)
-    return [bool](Get-ChildItem $taskDir -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
+    return [bool](Get-ChildItem (Get-SystemDir $taskDir) -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
 }
 
 # ============================================================
@@ -418,17 +425,21 @@ function BackToConfirm {
         return
     }
 
-    # 清除所有 .done 標記與 pending 檔案
+    # 清除所有 system/ + log/ 下的狀態與記錄檔
+    $confirmSysDir = Get-SystemDir $confirmTaskDir
+    $confirmLogDir = Get-LogDir    $confirmTaskDir
     @('.analysis_done', '.answer_done', '.final_done', '.implement_done', '.qa_done',
       '.pending_analysis', '.pending_final', '.pending_coding', '.pending_qa',
-      'pending_prompt.txt', 'done_prompt.txt',
-      'blocker.spec.txt', 'blocker.tech.txt', 'blocker.agent.txt', 'blocker.loop.txt',
-      'agent_error.txt') | ForEach-Object {
-        Remove-Item (Join-Path $confirmTaskDir $_) -Force -ErrorAction SilentlyContinue
+      'pending_prompt.txt',
+      'blocker.spec.txt', 'blocker.tech.txt', 'blocker.agent.txt', 'blocker.loop.txt') | ForEach-Object {
+        Remove-Item (Join-Path $confirmSysDir $_) -Force -ErrorAction SilentlyContinue
+    }
+    @('done_prompt.txt', 'back_reason.txt', 'qa_report.yaml', 'agent_error.txt') | ForEach-Object {
+        Remove-Item (Join-Path $confirmLogDir $_) -Force -ErrorAction SilentlyContinue
     }
 
-    # _REENTRY_COUNT 遞增（供 _pipeline_run.ps1 偵測重入次數上限）
-    $reentryFile = Join-Path $confirmTaskDir '_REENTRY_COUNT'
+    # _reentry_count 遞增（供 _pipeline_run.ps1 偵測重入次數上限）
+    $reentryFile = Join-Path $confirmSysDir '_reentry_count'
     $count = 0
     if (Test-Path $reentryFile) {
         try { $count = [int](Get-Content $reentryFile -Raw -ErrorAction SilentlyContinue) } catch {}
@@ -436,7 +447,7 @@ function BackToConfirm {
     Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
 
     $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n請修正後重新填寫 analysis.yaml 中的 user_answer。"
-    Atomic-WriteFile (Join-Path $confirmTaskDir 'BACK_REASON.txt') $content | Out-Null
+    Atomic-WriteFile (Join-Path $confirmLogDir 'back_reason.txt') $content | Out-Null
 
     Write-Host "[BACK] $taskName 從 $stage 退回 confirm/  原因: $reason" -ForegroundColor Yellow
 

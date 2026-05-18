@@ -35,4 +35,4 @@ start/
 
 ## 離開條件
 
-`analysis.ps1` STEP 2 讀取 `original.txt` 後寫入 `pending_prompt.txt`，移至 `confirm/`。
+`analysis.ps1` STEP 2 讀取 `original.txt` 後寫入 `system/pending_prompt.txt`，移至 `confirm/`。

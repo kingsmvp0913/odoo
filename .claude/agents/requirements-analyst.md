@@ -21,9 +21,9 @@ Do not invent business logic beyond user requirements and standard Odoo norms.
 OUTPUT CONTRACT
 
 Completion protocol (in this exact order):
-1. Write `analysis.yaml` and `.analysis_done` (first analysis) OR `.final_done` (MODE_B)
-2. `mv pending_prompt.txt done_prompt.txt` in task dir
-3. Delete `.pending_analysis` or `.pending_final` flag from task dir
+1. Write `analysis.yaml` and `system/.analysis_done` (first analysis) OR `system/.final_done` (MODE_B)
+2. `mv system/pending_prompt.txt log/done_prompt.txt` in task dir
+3. Delete `system/.pending_analysis` or `system/.pending_final` flag from task dir
 
 Stage rule for AGENT-RESULT:
 - Wrote `.analysis_done` (MODE_A initial) → `stage: analysis`
