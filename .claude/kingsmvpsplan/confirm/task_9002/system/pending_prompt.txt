@@ -1,0 +1,1 @@
+請分析此 bug 並產出 analysis.yaml

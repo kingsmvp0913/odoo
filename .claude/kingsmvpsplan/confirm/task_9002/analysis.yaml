@@ -1,0 +1,6 @@
+case_id: "CASE-9002"
+module: "purchase_order_ext"
+odoo_version: "17.0"
+project_name: null
+execution_mode: "MODE_A"
+description: "採購訂單總金額計算錯誤"
