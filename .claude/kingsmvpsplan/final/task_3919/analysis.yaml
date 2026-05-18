@@ -1,0 +1,115 @@
+case_id: task_3919
+timestamp: '2026-05-18T09:54:55'
+execution_mode: MODE_B
+
+inferred_target:
+  project: Odoo
+  odoo_version: '17.0'
+  module: idx_ebs
+  project_name: 2508014 凌越生醫-商務管理平台
+  confidence: 1.0
+
+state_summary:
+  is_complete: true
+  has_blocking_unknowns: false
+
+clarification_channel:
+  - id: 1
+    category: scope
+    question: Q82 和 Q90 分別對應哪個 Odoo 表單或 Model？
+    user_answer: 不要管Q82和Q90
+  - id: 2
+    category: data_model
+    question: 送檢單明細跟訂單明細中的圖檔欄位需要哪種型態？
+    user_answer: A，但是訂單明細不要增加圖檔，原本的邏輯應該是合併訂單的時候送檢單才會有多筆，訂單明細會合併相同檢測項目，所以不需要圖片檔
+  - id: 3
+    category: scope
+    question: 「訂單也需連動OCR 掃描讀圖檔」這句話的具體意思為何？
+    user_answer: 其他，從OCR合併訂單的時候要把圖檔寫入送檢單明細的圖片欄位，我的理解是1. 送檢單/報告頁籤 要增加一個欄位存OCR圖片，可手動上傳圖片、2. OCR合併訂單的時候寫入送檢單明細也要把圖片檔寫入第一步新增欄位
+
+technical_specification:
+  odoo_models:
+    - model_name: idx.test.requisition1
+      inherit: ""
+      description: 人類醫學-送檢單，新增 Binary 圖片欄位供手動上傳及 OCR 合併時自動寫入
+      fields:
+        - field_name: image_file
+          type: Binary
+          string: 圖片
+          required: false
+          tracking: false
+          help: ""
+          selection_or_comodel: ""
+        - field_name: image_file_name
+          type: Char
+          string: 圖片檔名
+          required: false
+          tracking: false
+          help: ""
+          selection_or_comodel: ""
+
+    - model_name: idx.test.requisition2
+      inherit: ""
+      description: 小動物-送檢單，新增 Binary 圖片欄位供手動上傳及 OCR 合併時自動寫入
+      fields:
+        - field_name: image_file
+          type: Binary
+          string: 圖片
+          required: false
+          tracking: false
+          help: ""
+          selection_or_comodel: ""
+        - field_name: image_file_name
+          type: Char
+          string: 圖片檔名
+          required: false
+          tracking: false
+          help: ""
+          selection_or_comodel: ""
+
+  odoo_views_and_actions:
+    - xml_id: idx_ebs.idx_test_requisition1_form
+      model: idx.test.requisition1
+      view_type: form
+      inherit_id: ""
+      arch_summary: >
+        在 <group string="檢體資訊"> 末尾新增
+        <field name="image_file" widget="image"
+               readonly="state in ['wf_confirm','inspected','reported','sent_report']"/>
+        <field name="image_file_name" invisible="1"/>
+        （直接修改原始 view 檔，非繼承）
+
+    - xml_id: idx_ebs.idx_test_requisition2_form
+      model: idx.test.requisition2
+      view_type: form
+      inherit_id: ""
+      arch_summary: >
+        在 <group string="送檢資訊"> 末尾新增
+        <field name="image_file" widget="image"
+               readonly="state in ['wf_confirm','inspected','reported','sent_report']"/>
+        <field name="image_file_name" invisible="1"/>
+        （直接修改原始 view 檔，非繼承）
+
+  core_logic:
+    - model: idx.merge.order.wizard
+      function_signature: _merge_records_to_orders(self, records, source_model)
+      trigger: button_click
+      pseudocode: >
+        現有邏輯不變。
+        在 TestRequisition.create({...}) 的 vals dict 中補入：
+          "image_file": rec.image_file,
+          "image_file_name": rec.image_file_name,
+        適用於 source_model == "idx.sale.order.ocr1" 及 source_model == "idx.sale.order.ocr2" 兩個分支。
+        rec.image_file 已是 Base64 字串（由 OCR submit 時以 base64.b64encode 寫入），
+        直接賦值給 Binary 欄位無需再次轉換。
+
+  security_model:
+    access_rights_csv: []
+    record_rules: []
+
+  project_structure:
+    - "models/idx_test_requisition1.py  → 新增 image_file, image_file_name 欄位"
+    - "models/idx_test_requisition2.py  → 新增 image_file, image_file_name 欄位"
+    - "views/back/idx_test_requisition1.xml → form view 加入 image 欄位"
+    - "views/back/idx_test_requisition2.xml → form view 加入 image 欄位"
+    - "wizards/idx_merge_order_wizard.py → _merge_records_to_orders 補傳 image_file"

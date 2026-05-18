@@ -317,6 +317,8 @@ function Get-ExistingModules {
 # ============================================================
 function Send-OdooTaskMessage {
     param([int]$taskId, [string]$message)
+    $disableFlag = Join-Path $PSScriptRoot "kingsmvpsplan\_ODOO_DISABLED"
+    if (Test-Path $disableFlag) { Write-Host "[SKIP] Odoo 通知已停用" -ForegroundColor DarkGray; return }
     $py = Join-Path $PSScriptRoot "send_message.py"
     if (-not (Test-Path $py)) { return }
     $r = python $py $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $taskId $message 2>&1

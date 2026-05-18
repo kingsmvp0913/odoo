@@ -19,24 +19,29 @@ $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 # ============================================================
 Write-Host "[STEP 1] 同步 Odoo 任務..." -ForegroundColor Cyan
 
-$allDirs      = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
-$processedIds = @()
-foreach ($dir in $allDirs) {
-    if (Test-Path $dir) {
-        Get-ChildItem $dir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-            if ($_.Name -match '^task_(\d+)$') { $processedIds += $matches[1] }
+$odooDisableFlag = Join-Path $script:PLAN_DIR "_ODOO_DISABLED"
+if (Test-Path $odooDisableFlag) {
+    Write-Host "[SKIP] Odoo 同步已停用（刪除 _ODOO_DISABLED 可重新啟用）" -ForegroundColor DarkGray
+} else {
+    $allDirs      = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
+    $processedIds = @()
+    foreach ($dir in $allDirs) {
+        if (Test-Path $dir) {
+            Get-ChildItem $dir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+                if ($_.Name -match '^task_(\d+)$') { $processedIds += $matches[1] }
+            }
         }
     }
-}
-$skipIds = ($processedIds | Select-Object -Unique) -join ","
+    $skipIds = ($processedIds | Select-Object -Unique) -join ","
 
-$pyScript = Join-Path $script:ROOT ".claude\curl.py"
-try {
-    $out = python $pyScript $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $script:ODOO_USER_ID $script:START_DIR $skipIds 2>&1
-    $out | ForEach-Object { Write-Host $_ }
-    if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 同步失敗，exit: $LASTEXITCODE" -ForegroundColor Yellow }
-} catch {
-    Write-Host "[WARN] Odoo 同步例外: $_" -ForegroundColor Yellow
+    $pyScript = Join-Path $script:ROOT ".claude\curl.py"
+    try {
+        $out = python $pyScript $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $script:ODOO_USER_ID $script:START_DIR $skipIds 2>&1
+        $out | ForEach-Object { Write-Host $_ }
+        if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 同步失敗，exit: $LASTEXITCODE" -ForegroundColor Yellow }
+    } catch {
+        Write-Host "[WARN] Odoo 同步例外: $_" -ForegroundColor Yellow
+    }
 }
 
 # ============================================================
