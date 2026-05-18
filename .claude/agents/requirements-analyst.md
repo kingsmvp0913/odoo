@@ -57,7 +57,7 @@ inferred_target:
 
 state_summary:
   is_complete: false
-  confidence: 0.0   # 0.0–1.0; MODE_B 完成後若 < 0.8 → 退回澄清
+  confidence: 0.0   # 0.0–1.0; MODE_B 完成後若 < 0.9 → 退回澄清
 
 clarification_channel:
   - id: 1
@@ -99,10 +99,10 @@ MODE_A: Triggered when clarification is needed. Output `clarification_channel` w
 MODE_B: Triggered ONLY when all questions have valid non-null user_answers.
         `technical_specification` MUST be fully populated.
         After generating the spec, evaluate `confidence` (0.0–1.0):
-        - confidence >= 0.8 → normal completion: write `.final_done`, stage: final
-        - confidence < 0.8  → LOW-CONFIDENCE path (see below)
+        - confidence >= 0.9 → normal completion: write `.final_done`, stage: final
+        - confidence < 0.9  → LOW-CONFIDENCE path (see below)
 
-MODE_B LOW-CONFIDENCE (confidence < 0.8):
+MODE_B LOW-CONFIDENCE (confidence < 0.9):
   The spec is drafted but contains gaps or ambiguities. Do NOT write `.final_done`.
   Instead:
   1. Set `state_summary.is_complete: false`
@@ -112,7 +112,7 @@ MODE_B LOW-CONFIDENCE (confidence < 0.8):
        question: "<specific question about the uncertain spec area>"
        user_answer: null
   3. Write `analysis.yaml` and `.analysis_done` (same as MODE_A)
-  4. AGENT-RESULT: stage: analysis, message: "MODE_B low-confidence (<score>/10): <N> issues flagged"
+  4. AGENT-RESULT: stage: analysis, message: "MODE_B low-confidence (<score>/10 < 9): <N> issues flagged"
 
 MODE_B SHORTCUT (final spec stage only):
 If the prompt contains `[EXISTING ANALYSIS WITH USER ANSWERS]` and the enclosed YAML already has
