@@ -135,7 +135,6 @@ if (-not (Acquire-Lock $lock2 300)) {
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "analysis" -prompt $fullPrompt
 
-                Release-Lock $taskLock
                 $dest = Join-Path $script:CONFIRM_DIR $taskName
                 if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
                 try {
