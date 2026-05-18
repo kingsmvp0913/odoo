@@ -1,12 +1,24 @@
-# Pipeline 自動調度詳細規格 (V8.1)
+# Pipeline 自動調度詳細規格 (V8.2)
 
 ## Blocker 類型
 | 檔名 | 情境 |
 |------|------|
 | `blocker.spec.txt` | 規格不清，需使用者澄清 |
 | `blocker.tech.txt` | 技術上無法以標準 Odoo 擴展實現 |
-| `blocker.agent.txt` | Agent 執行錯誤（已升級） |
+| `blocker.agent.txt` | Agent 執行錯誤（含 MCP 工具失敗） |
 | `blocker.loop.txt` | Pipeline 循環超出安全上限 |
+
+## MCP 工具失敗處理
+
+| 工具 | 失敗行為 | 阻斷？ |
+|------|---------|--------|
+| Graphify (wiki) | 檔案不存在 → 跳過，繼續用 Serena | 否 |
+| Serena | `tool_use_error` 或無回應 → 立即 `blocker.agent.txt` → STOP | **是** |
+| Context7 | 任何錯誤 → 跳過，用已知資訊繼續 | 否 |
+
+**Session 內 Serena 查詢上限**：每個 Agent session 最多 **3 次** distinct query。超限仍不足 → 寫 `blocker.agent.txt` → STOP。
+
+> 原因：`_LOOP_COUNTER.json` 的 `loop_count` / `task_reentries` 只計跨 session 的 pipeline 循環，無法防護 session 內部的 MCP 重試迴圈，必須在 Agent 層自我截斷。
 
 遇到任何 blocker：立即 STOP，向使用者報告**檔案路徑**（不顯示內容）。
 
