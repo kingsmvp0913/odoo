@@ -108,8 +108,9 @@ CHECKS TO PERFORM — CODE QUALITY
 --------------------------------------------------
 
 7. **no_sql_in_loops**
-   FAIL if `search()` / `browse()` / `mapped()` appears inside a for-loop body.
-   Suggest using `mapped()`, `filtered()`, or batch read instead.
+   FAIL if `search()` or `browse()` appears inside a for-loop body (N+1 query risk).
+   `mapped()` and `filtered()` inside loops are ALLOWED — they are ORM helpers that batch-read, not individual DB queries.
+   Suggest replacing loop-internal `search()`/`browse()` with `mapped()` or `filtered()`.
 
 8. **no_raw_sql**
    FAIL if `cr.execute()` or `self._cr.execute()` is used without a comment
