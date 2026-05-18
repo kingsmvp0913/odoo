@@ -22,7 +22,7 @@ OUTPUT CONTRACT
 
 Stage rule for AGENT-RESULT:
 - Wrote `.analysis_done` (MODE_A initial OR MODE_B low-confidence) → `stage: analysis`
-- Wrote `.final_done` (MODE_B confidence >= 0.8) → `stage: final`
+- Wrote `.final_done` (MODE_B confidence >= 0.9) → `stage: final`
 
 End your response with this block (required):
 ```
