@@ -84,10 +84,14 @@ if (-not (Acquire-Lock $lock2 300)) {
                 continue
             }
 
-            # 已有 pending prompt，等待 Claude 處理
+            # 已有 pending prompt，等待 Claude 處理（超過 30 分鐘則清除重新排隊）
             if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
-                Write-Host "[WAIT] $taskName - Claude 分析中（pending_prompt.txt 存在）" -ForegroundColor DarkGray
-                continue
+                if (Test-PendingStale $taskDir.FullName) {
+                    Clear-StalePending $taskDir.FullName
+                } else {
+                    Write-Host "[WAIT] $taskName - Claude 分析中（pending_prompt.txt 存在）" -ForegroundColor DarkGray
+                    continue
+                }
             }
 
             $taskLock = Join-Path $taskDir.FullName "process.lock"
@@ -224,10 +228,14 @@ if (-not (Acquire-Lock $lock3b 300)) {
             if (-not (Test-Path $answerDone)) { continue }
             if (Test-Path $finalDone) { continue }
 
-            # 已有 pending prompt，等待 Claude 處理
+            # 已有 pending prompt，等待 Claude 處理（超過 30 分鐘則清除重新排隊）
             if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
-                Write-Host "[WAIT] $taskName - Claude 生成 MODE_B 中" -ForegroundColor DarkGray
-                continue
+                if (Test-PendingStale $taskDir.FullName) {
+                    Clear-StalePending $taskDir.FullName
+                } else {
+                    Write-Host "[WAIT] $taskName - Claude 生成 MODE_B 中" -ForegroundColor DarkGray
+                    continue
+                }
             }
 
             if (-not (Test-Path $yamlPath)) { Write-Host "[WARN] $taskName 缺少 analysis.yaml" -ForegroundColor Yellow; continue }

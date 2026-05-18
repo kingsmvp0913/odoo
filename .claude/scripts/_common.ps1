@@ -233,6 +233,26 @@ function Write-PendingPrompt {
 }
 
 # ============================================================
+# Stale Pending 偵測（Agent 崩潰保護）
+# ============================================================
+function Test-PendingStale {
+    param([string]$taskDir, [int]$AgeMinutes = 30)
+    $pendingPath = Join-Path $taskDir "pending_prompt.txt"
+    if (-not (Test-Path $pendingPath)) { return $false }
+    $age = (Get-Date) - (Get-Item $pendingPath).LastWriteTime
+    return $age.TotalMinutes -gt $AgeMinutes
+}
+
+function Clear-StalePending {
+    param([string]$taskDir)
+    $taskName = Split-Path $taskDir -Leaf
+    Write-Host "[STALE] $taskName pending_prompt.txt 超過 30 分鐘，清除重新排隊" -ForegroundColor Yellow
+    Remove-Item (Join-Path $taskDir "pending_prompt.txt") -Force -ErrorAction SilentlyContinue
+    # .pending_* flag 也清除，讓下一輪 PS1 重新判斷 stage 並寫入新 pending_prompt
+    Get-ChildItem $taskDir -Filter ".pending_*" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+}
+
+# ============================================================
 # 開啟 Claude Terminal（PS1 結束後觸發 AI 處理）
 # ============================================================
 function Open-ClaudeTerminal {

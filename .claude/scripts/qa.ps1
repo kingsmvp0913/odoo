@@ -28,10 +28,14 @@ foreach ($taskDir in $codingTasks) {
     if (-not (Test-Path $implementDone)) { continue }
     if (Test-Path $qaDone)               { continue }
 
-    # 已有 pending prompt，等待 Claude 處理
+    # 已有 pending prompt，等待 Claude 處理（超過 30 分鐘則清除重新排隊）
     if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
-        Write-Host "[WAIT] $taskName - Claude QA 中" -ForegroundColor DarkGray
-        continue
+        if (Test-PendingStale $taskDir.FullName) {
+            Clear-StalePending $taskDir.FullName
+        } else {
+            Write-Host "[WAIT] $taskName - Claude QA 中" -ForegroundColor DarkGray
+            continue
+        }
     }
 
     if (-not (Test-Path $analysisYamlPath)) {
@@ -98,10 +102,14 @@ foreach ($taskDir in $codingTasks2) {
     if (-not (Test-Path $qaDone))       { continue }
     if (-not (Test-Path $qaReportPath)) { continue }
 
-    # 若 pending_prompt.txt 仍存在（QA 尚未完成），跳過
+    # 若 pending_prompt.txt 仍存在（QA 尚未完成），跳過（超過 30 分鐘則清除）
     if (Test-Path (Join-Path $taskDir.FullName "pending_prompt.txt")) {
-        Write-Host "[WAIT] $taskName - Claude QA 尚未完成" -ForegroundColor DarkGray
-        continue
+        if (Test-PendingStale $taskDir.FullName) {
+            Clear-StalePending $taskDir.FullName
+        } else {
+            Write-Host "[WAIT] $taskName - Claude QA 尚未完成" -ForegroundColor DarkGray
+            continue
+        }
     }
 
     if (-not (Acquire-Lock $taskLock 300)) {
