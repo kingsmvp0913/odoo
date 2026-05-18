@@ -351,7 +351,7 @@ function BackToConfirm {
 
     Write-Host "[BACK] $taskName 從 $stage 退回 confirm/  原因: $reason" -ForegroundColor Yellow
 
-    if ($taskName -match '^task_(\d+)$') {
-        Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已從 <b>$stage</b> 退回。原因: $reason</p>"
-    }
+    # if ($taskName -match '^task_(\d+)$') {
+    #     Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已從 <b>$stage</b> 退回。原因: $reason</p>"
+    # }
 }

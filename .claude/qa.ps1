@@ -120,9 +120,9 @@ foreach ($taskDir in $codingTasks2) {
             Move-Item $taskDir.FullName $script:FINAL_DIR -Force
             Write-Host "[OK] $taskName QA 通過 → final/" -ForegroundColor Green
 
-            if ($taskName -match '^task_(\d+)$') {
-                Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已完成，請查看 final/$taskName/</p>"
-            }
+            # if ($taskName -match '^task_(\d+)$') {
+            #     Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已完成，請查看 final/$taskName/</p>"
+            # }
         } else {
             # 從 issues: 區塊取得第一個 description（避免誤抓 items 區的欄位）
             $reason = "QA 檢查失敗"
