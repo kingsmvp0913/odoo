@@ -20,11 +20,6 @@ Do not invent business logic beyond user requirements and standard Odoo norms.
 
 OUTPUT CONTRACT
 
-Completion protocol (in this exact order):
-1. Write `analysis.yaml` and `system/.analysis_done` (first analysis) OR `system/.final_done` (MODE_B)
-2. Write content of `system/pending_prompt.txt` to `log/done_prompt.txt`, then DELETE `system/pending_prompt.txt` — this is a MOVE, the source file must be deleted; do NOT leave it in system/
-3. Delete `system/.pending_analysis` or `system/.pending_final` flag from task dir
-
 Stage rule for AGENT-RESULT:
 - Wrote `.analysis_done` (MODE_A initial) → `stage: analysis`
 - Wrote `.final_done` (MODE_B finalization) → `stage: final`
@@ -101,23 +96,6 @@ technical_specification:
     record_rules: []
   project_structure:
     - ""
-
-KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
-
-Before populating `technical_specification`, retrieve in this order:
-
-1. **Graphify wiki**: If `[WIKI-CACHE]` is in your prompt, use it directly — do NOT re-read.
-   If absent, attempt to read `graphify-out/wiki/index.md` (under the relevant online_addons directory).
-   **If the file does not exist → skip immediately, do NOT explore files manually, proceed to step 2.**
-
-2. **Serena**: Use to find existing models, fields, and call chains.
-   - For `C:\odoo` code: use `mcp__serena__*` tools
-   - For `C:\online_addons` code: use `mcp__serena-online__*` tools (separate instance)
-   Stop as soon as you have enough context.
-
-3. **Context7**: Use ONLY to confirm Odoo native API for the target odoo_version
-   (valid field types, comodel names, method signatures).
-   Do NOT guess field types or model names — retrieve first.
 
 MODE RULES
 
