@@ -89,7 +89,11 @@ execution_mode: "MODE_A | MODE_B"
 
 ## 4. Edit Protocol
 - Plans/logs → `.claude/kingsmvpsplan/`.
+- **Minimum code that solves the problem.** No speculative features. No abstractions for single-use code. (Test: would a senior engineer call this overcomplicated?)
+- Touch only what you must. Don't clean up adjacent code, comments, or formatting that isn't yours.
 - Match existing code style exactly. Zero drive-by refactoring.
+- Before adding code, read exports, immediate callers, and shared utilities. "Looks orthogonal" is dangerous — if unsure why code is structured a certain way, ask.
+- If a codebase convention seems harmful, surface it explicitly. Don't fork silently.
 - Strict `[Step] → [Verify]` flow:
   - Python: `python -m py_compile <file>`
   - XML: `xmllint --noout <file>`
@@ -126,3 +130,15 @@ Full pipeline spec: **`.claude/pipeline.md`**
 | `blocker.loop.txt` | Pipeline loop exceeded safety limit |
 
 Templates in `.claude/templates/`. On blocker: STOP immediately. Report file path only, never content.
+
+## 9. General Engineering Rules
+
+**Rule 4 — Goal-Driven Execution**: Define success criteria before starting. Iterate until verified. Don't follow steps mechanically; define success and drive to it. Strong success criteria enable independent looping.
+
+**Rule 6 — Token Budgets (not advisory)**: Per-task: 4,000 tokens. Per-session: 30,000 tokens. If approaching the limit, summarize and start fresh. Surface the breach explicitly — do not silently overrun.
+
+**Rule 7 — Surface Conflicts, Don't Average Them**: If two patterns contradict, pick one (more recent / more tested). Explain why. Flag the other for cleanup. Don't blend conflicting patterns.
+
+**Rule 9 — Tests Verify Intent**: Tests must encode WHY behavior matters, not just WHAT it does. A test that can't fail when business logic changes is wrong.
+
+**Rule 12 — Fail Loud**: "Completed" is wrong if anything was skipped silently. "Tests pass" is wrong if any were skipped. Default to surfacing uncertainty, not hiding it.
