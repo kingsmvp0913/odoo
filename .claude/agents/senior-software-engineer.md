@@ -46,10 +46,23 @@ KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
 
 2. **Serena**: Use ONLY if Graphify wiki lacks the specific symbol definition or call chain you need.
    Do not use Serena as a first step.
+   - For `C:\odoo` code: use `mcp__serena__*` tools
+   - For `C:\online_addons` code: use `mcp__serena-online__*` tools (separate instance)
 
 3. **Context7**: Use ONLY to confirm Odoo native API for the version in analysis.yaml
    (field types, method decorators: @api.depends, @api.onchange, @api.model, etc.).
    Do not use Context7 to explore module structure — Graphify handles that.
+
+EXISTING CODE CHECK (run before any implementation)
+
+Before writing any file:
+1. For each field/model in `technical_specification.odoo_models`, run a targeted Grep for the
+   field_name in the OUTPUT PATH.
+2. If ALL specified fields/views/logic already exist in the codebase:
+   - Run `python -m py_compile` and `xmllint` on affected files only.
+   - If verify passes → skip implementation entirely, mark done immediately.
+   - If verify fails → fix syntax only; do NOT re-implement from scratch.
+3. Only proceed to full implementation if the spec items are genuinely missing.
 
 IMPLEMENTATION RULES
 

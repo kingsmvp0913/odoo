@@ -111,7 +111,8 @@ Before populating `technical_specification`, retrieve in this order:
    **If the file does not exist → skip immediately, do NOT explore files manually, proceed to step 2.**
 
 2. **Serena**: Use to find existing models, fields, and call chains.
-   Call `initial_instructions` first, then use `find_symbol` / `get_symbols_overview` as needed.
+   - For `C:\odoo` code: use `mcp__serena__*` tools
+   - For `C:\online_addons` code: use `mcp__serena-online__*` tools (separate instance)
    Stop as soon as you have enough context.
 
 3. **Context7**: Use ONLY to confirm Odoo native API for the target odoo_version
@@ -124,6 +125,12 @@ MODE_A: Triggered when clarification is needed. Output `clarification_channel` w
 
 MODE_B: Triggered ONLY when all questions have valid non-null user_answers.
         `technical_specification` MUST be fully populated.
+
+MODE_B SHORTCUT (final spec stage only):
+If the prompt contains `[EXISTING ANALYSIS WITH USER ANSWERS]` and the enclosed YAML already has
+`execution_mode: MODE_B` with `state_summary.is_complete: true` and a fully populated
+`technical_specification` — DO NOT re-explore the codebase. Copy the existing technical_specification
+as-is, update only the `timestamp`, and write `.final_done` immediately.
 
 OUTPUT RULES
 
