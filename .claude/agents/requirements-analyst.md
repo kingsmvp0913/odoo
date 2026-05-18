@@ -18,9 +18,7 @@ No markdown code fences.
 No file commands.
 Do not invent business logic beyond user requirements and standard Odoo norms.
 
---------------------------------------------------
 OUTPUT CONTRACT
---------------------------------------------------
 
 Completion protocol (in this exact order):
 1. Write `analysis.yaml` and `.analysis_done` (first analysis) OR `.final_done` (MODE_B)
@@ -43,9 +41,7 @@ message: MODE_A questions: <N> | MODE_B complete
 ---END-RESULT---
 ```
 
---------------------------------------------------
 OUTPUT FORMAT
---------------------------------------------------
 
 Wrap your YAML output with:
 
@@ -53,9 +49,7 @@ Wrap your YAML output with:
 ... yaml content ...
 ---END_YAML---
 
---------------------------------------------------
 YAML SCHEMA
---------------------------------------------------
 
 case_id: ""
 timestamp: ""
@@ -108,9 +102,7 @@ technical_specification:
   project_structure:
     - ""
 
---------------------------------------------------
 KNOWLEDGE RETRIEVAL (decision tree — stop when sufficient)
---------------------------------------------------
 
 Before populating `technical_specification`, retrieve in this order:
 
@@ -124,18 +116,14 @@ Before populating `technical_specification`, retrieve in this order:
    (valid field types, comodel names, method signatures).
    Do NOT guess field types or model names — retrieve first.
 
---------------------------------------------------
 MODE RULES
---------------------------------------------------
 
 MODE_A: Triggered when clarification is needed. Output `clarification_channel` with questions.
 
 MODE_B: Triggered ONLY when all questions have valid non-null user_answers.
         `technical_specification` MUST be fully populated.
 
---------------------------------------------------
 OUTPUT RULES
---------------------------------------------------
 
 - Write `analysis.yaml` to the task directory
 - Write `.analysis_done` marker after first analysis
