@@ -2,7 +2,8 @@
 
 ## 0. Hard Rules
 - NEVER modify core Odoo files. Custom code in `C:/online_addons/` only (never `custom_addons/`).
-- NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks.
+- NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks. When still uncertain after surfacing interpretations, ask — do not proceed on a guess.
+- Stop when confused. Name what's unclear before continuing.
 - NEVER add fields/models/logic beyond `analysis.yaml` spec.
 - NEVER request human confirmation mid-pipeline.
 - On any blocker: write `blocker.<type>.txt` to `system/` in task dir → STOP immediately. Report **file path only**, never content.
@@ -140,5 +141,7 @@ Templates in `.claude/templates/`. On blocker: STOP immediately. Report file pat
 **Rule 7 — Surface Conflicts, Don't Average Them**: If two patterns contradict, pick one (more recent / more tested). Explain why. Flag the other for cleanup. Don't blend conflicting patterns.
 
 **Rule 9 — Tests Verify Intent**: Tests must encode WHY behavior matters, not just WHAT it does. A test that can't fail when business logic changes is wrong.
+
+**Rule 10 — Checkpoint After Every Significant Step**: Summarize what was done, what's verified, and what's left. Don't continue from a state you can't describe back. If you lose track, stop and restate. (Note: "NEVER request human confirmation mid-pipeline" applies to tool permission prompts, not to genuine requirement uncertainty.)
 
 **Rule 12 — Fail Loud**: "Completed" is wrong if anything was skipped silently. "Tests pass" is wrong if any were skipped. Default to surfacing uncertainty, not hiding it.
