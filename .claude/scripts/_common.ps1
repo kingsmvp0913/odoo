@@ -258,6 +258,19 @@ function Test-HasBlocker {
 }
 
 # ============================================================
+# YAML 完整性驗證（防止空規格進入實作階段）
+# ============================================================
+function Test-YamlComplete {
+    param([string]$yamlPath)
+    if (-not (Test-Path $yamlPath)) { return $false }
+    $content = Get-Content $yamlPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+    if (-not $content) { return $false }
+    $hasTechSpec = $content -match '(?m)^technical_specification:'
+    $hasModel    = $content -match '(?m)^\s+model_name:\s*\S'
+    return $hasTechSpec -and $hasModel
+}
+
+# ============================================================
 # 開啟 Claude Terminal（PS1 結束後觸發 AI 處理）
 # ============================================================
 function Open-ClaudeTerminal {

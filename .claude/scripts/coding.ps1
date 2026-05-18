@@ -70,6 +70,14 @@ foreach ($taskDir in $analysisTasks) {
             Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
+        if (-not (Test-YamlComplete $analysisYamlPath)) {
+            $blockerPath = Join-Path $taskDir.FullName "blocker.spec.txt"
+            $blockerMsg = "technical_specification 不完整（缺少 model_name），無法開始實作。請重新產生規格。"
+            Atomic-WriteFile $blockerPath $blockerMsg | Out-Null
+            Write-Host "[BLOCKER] $taskName YAML 規格不完整，已寫入 blocker.spec.txt" -ForegroundColor Red
+            continue
+        }
+
         # Module 序列鎖：同一模組只允許一個活動任務
         if ($activeModules.ContainsKey($moduleName)) {
             Write-Host "[QUEUE] $taskName - 模組 $moduleName 序列等待（已有活動任務），下輪處理" -ForegroundColor DarkYellow
