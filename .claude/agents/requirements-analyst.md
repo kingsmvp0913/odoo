@@ -113,6 +113,9 @@ MODE_B LOW-CONFIDENCE (confidence < 0.9):
        category: "model_design | field_type | business_logic | security | ux"
        question: "<specific question about the uncertain spec area>"
        user_answer: null
+     — DEDUPLICATION: before adding, check existing entries. If an entry with the
+       same `category` AND substantially same `question` already exists (answered or
+       not), skip it. Do NOT add duplicate or semantically equivalent questions.
   3. Write `analysis.yaml` and `system/.low_confidence` (signals PS1 to route back to confirm/)
      Do NOT write `.analysis_done` again (already exists from initial analysis).
   4. AGENT-RESULT: stage: analysis, message: "MODE_B low-confidence (confidence=<score> < 0.9): <N> issues flagged"

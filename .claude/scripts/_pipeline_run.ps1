@@ -33,8 +33,12 @@ Get-ChildItem $script:PLAN_DIR -Recurse -Filter "_reentry_count" -ErrorAction Si
     }
 }
 
+# Loop 上限（可由環境變數覆蓋，方便 debug）
+$maxLoops    = if ($env:PIPELINE_MAX_LOOPS)    { [int]$env:PIPELINE_MAX_LOOPS }    else { 20 }
+$maxReentries = if ($env:PIPELINE_MAX_REENTRIES) { [int]$env:PIPELINE_MAX_REENTRIES } else { 2 }
+
 # 檢查 loop_count 上限
-if ($loopCount -gt 20) {
+if ($loopCount -gt $maxLoops) {
     $firstPending = Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" `
         -ErrorAction SilentlyContinue | Select-Object -First 1
     $blockerContent = @"
@@ -42,6 +46,7 @@ blocker_type: loop
 task_id: unknown
 timestamp: $(Get-Date -Format 'o')
 loop_count: $loopCount
+limit: $maxLoops
 limit_exceeded: loop_count
 reason: |
   Pipeline 循環次數超過安全上限 (loop_count=$loopCount > 20)，自動停止以防死循環。
@@ -74,7 +79,7 @@ action_required: |
 
 # 檢查各任務重入次數上限
 foreach ($tid in @($taskReentries.Keys)) {
-    if ($taskReentries[$tid] -gt 2) {
+    if ($taskReentries[$tid] -gt $maxReentries) {
         $reentryDirs = Get-ChildItem $script:PLAN_DIR -Recurse -Directory -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -eq $tid }
         $taskDir = if ($reentryDirs) { $reentryDirs[0].FullName } else { $null }
@@ -84,9 +89,10 @@ task_id: $tid
 timestamp: $(Get-Date -Format 'o')
 loop_count: $loopCount
 task_reentries: $($taskReentries[$tid])
+limit: $maxReentries
 limit_exceeded: task_reentry
 reason: |
-  $tid 已從 QA 失敗退回 $($taskReentries[$tid]) 次，超過上限 2。
+  $tid 已從 QA 失敗退回 $($taskReentries[$tid]) 次，超過上限 $maxReentries。
   任務可能陷入反覆 BackToConfirm → rework 循環。
 action_required: |
   1. 查看任務目錄內的 log/qa_report.yaml 和 analysis.yaml
