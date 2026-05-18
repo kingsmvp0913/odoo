@@ -158,51 +158,60 @@ if (-not (Acquire-Lock $lock2 300)) {
 # ============================================================
 Write-Host "`n[STEP 3a] 檢查 confirm/ 答案完整性..." -ForegroundColor Cyan
 
-$confirmTasks = Get-ChildItem $script:CONFIRM_DIR -Directory -ErrorAction SilentlyContinue
-
-foreach ($taskDir in $confirmTasks) {
-    $taskName     = $taskDir.Name
-    $taskLock     = Join-Path $taskDir.FullName "process.lock"
-    $analysisDone = Join-Path $taskDir.FullName ".analysis_done"
-    $answerDone   = Join-Path $taskDir.FullName ".answer_done"
-    $yamlPath     = Join-Path $taskDir.FullName "analysis.yaml"
-
-    # AI 尚未處理（.analysis_done 不存在）→ 跳過
-    if (-not (Test-Path $analysisDone)) { continue }
-    if (Test-Path $answerDone) { continue }
-    # AI 正在處理中（pending_prompt.txt 存在）→ 跳過，避免重複觸發
-    if (Test-Path (Join-Path $taskDir.FullName 'pending_prompt.txt')) { continue }
-    if (-not (Test-Path $yamlPath)) { Write-Host "[WARN] $taskName 缺少 analysis.yaml" -ForegroundColor Yellow; continue }
-
-    if (-not (Acquire-Lock $taskLock 300)) {
-        Write-Host "[SKIP] $taskName 已被鎖定" -ForegroundColor Yellow
-        continue
-    }
-
+$lock3a = Join-Path $script:PLAN_DIR "global_answer_check.lock"
+if (-not (Acquire-Lock $lock3a 300)) {
+    Write-Host "[SKIP] 無法取得 STEP 3a 全域鎖" -ForegroundColor Yellow
+} else {
     try {
-        $yaml   = Get-Content $yamlPath -Raw -Encoding UTF8
-        $parsed = ConvertFrom-Yaml $yaml
+        $confirmTasks = Get-ChildItem $script:CONFIRM_DIR -Directory -ErrorAction SilentlyContinue
 
-        $isModeB     = ($parsed['execution_mode'] -eq 'MODE_B')
-        $noQuestions = -not [regex]::IsMatch($yaml, '(?m)^\s*user_answer:')
-        $allAnswered = $isModeB -or $noQuestions -or (-not $parsed['has_null_answer'] -and $parsed['has_any_answer'])
+        foreach ($taskDir in $confirmTasks) {
+            $taskName     = $taskDir.Name
+            $taskLock     = Join-Path $taskDir.FullName "process.lock"
+            $analysisDone = Join-Path $taskDir.FullName ".analysis_done"
+            $answerDone   = Join-Path $taskDir.FullName ".answer_done"
+            $yamlPath     = Join-Path $taskDir.FullName "analysis.yaml"
 
-        if (-not $allAnswered) {
-            Write-Host "[WAIT] $taskName - 等待填寫 user_answer" -ForegroundColor DarkGray
-            continue
+            # AI 尚未處理（.analysis_done 不存在）→ 跳過
+            if (-not (Test-Path $analysisDone)) { continue }
+            if (Test-Path $answerDone) { continue }
+            # AI 正在處理中（pending_prompt.txt 存在）→ 跳過，避免重複觸發
+            if (Test-Path (Join-Path $taskDir.FullName 'pending_prompt.txt')) { continue }
+            if (-not (Test-Path $yamlPath)) { Write-Host "[WARN] $taskName 缺少 analysis.yaml" -ForegroundColor Yellow; continue }
+
+            if (-not (Acquire-Lock $taskLock 300)) {
+                Write-Host "[SKIP] $taskName 已被鎖定" -ForegroundColor Yellow
+                continue
+            }
+
+            try {
+                $yaml   = Get-Content $yamlPath -Raw -Encoding UTF8
+                $parsed = ConvertFrom-Yaml $yaml
+
+                $isModeB     = ($parsed['execution_mode'] -eq 'MODE_B')
+                $noQuestions = -not [regex]::IsMatch($yaml, '(?m)^\s*user_answer:')
+                $allAnswered = $isModeB -or $noQuestions -or (-not $parsed['has_null_answer'] -and $parsed['has_any_answer'])
+
+                if (-not $allAnswered) {
+                    Write-Host "[WAIT] $taskName - 等待填寫 user_answer" -ForegroundColor DarkGray
+                    continue
+                }
+
+                Atomic-WriteFile $answerDone "" | Out-Null
+
+                Release-Lock $taskLock
+                $dest = Join-Path $script:ANALYSIS_DIR $taskName
+                if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+                Move-Item $taskDir.FullName $script:ANALYSIS_DIR -Force
+                Write-Host "[OK] $taskName 答案完整 → analysis/" -ForegroundColor Green
+            } catch {
+                Write-Host "[ERROR] STEP 3a ${taskName}: $_" -ForegroundColor Red
+            } finally {
+                if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
+            }
         }
-
-        Atomic-WriteFile $answerDone "" | Out-Null
-
-        Release-Lock $taskLock
-        $dest = Join-Path $script:ANALYSIS_DIR $taskName
-        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-        Move-Item $taskDir.FullName $script:ANALYSIS_DIR -Force
-        Write-Host "[OK] $taskName 答案完整 → analysis/" -ForegroundColor Green
-    } catch {
-        Write-Host "[ERROR] STEP 3a ${taskName}: $_" -ForegroundColor Red
     } finally {
-        if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
+        Release-Lock $lock3a
     }
 }
 
