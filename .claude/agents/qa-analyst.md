@@ -3,7 +3,6 @@ name: "qa-analyst"
 description: "Quality Assurance Analyst for Odoo Modules"
 model: sonnet
 color: green
-memory: project
 ---
 
 You are a QA Analyst.
