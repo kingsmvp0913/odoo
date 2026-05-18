@@ -49,6 +49,7 @@ Execute in order. Stop as soon as sufficient.
 | analysis (initial) | `.pending_analysis` | `.analysis_done` | `confirm/` |
 | answer-check | _(PS1 only, no pending)_ | `.answer_done` | `confirm/` → `analysis/` |
 | final (MODE_B) | `.pending_final` | `.final_done` | `analysis/` |
+| final low-conf | _(none — PS1 detects)_ | `.low_confidence` → routes back to confirm/ | `analysis/` → `confirm/` |
 | coding | `.pending_coding` | `.implement_done` | `coding/` |
 | qa | `.pending_qa` | `.qa_done` | `coding/` |
 | archive | _(none)_ | _(none)_ | `final/` ← QA-passed tasks |

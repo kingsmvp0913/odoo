@@ -207,7 +207,7 @@ foreach ($root in $stageRoots) {
     $stageName = Split-Path $root -Leaf
     Get-ChildItem $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^task_\d+$' } | ForEach-Object {
         $hasBlocker = [bool](Get-ChildItem (Join-Path $_.FullName "system") -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
-        $hasPending = Test-Path (Join-Path $_.FullName "system\pending_prompt.txt")
+        $hasPending = Test-Path (Join-Path $_.FullName "system" "pending_prompt.txt")
         $st = if ($hasBlocker) { "blocker" } elseif ($hasPending) { "pending_ai" } else { "idle" }
         $summaryLines += "  - task_id: '$($_.Name)'"
         $summaryLines += "    stage: '$stageName'"

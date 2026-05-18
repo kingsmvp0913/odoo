@@ -207,9 +207,8 @@ if (-not (Acquire-Lock $lock3a 300)) {
                 $yaml   = Get-Content $yamlPath -Raw -Encoding UTF8
                 $parsed = ConvertFrom-Yaml $yaml
 
-                $isModeB     = ($parsed['execution_mode'] -eq 'MODE_B')
                 $noQuestions = -not [regex]::IsMatch($yaml, '(?m)^\s*user_answer:')
-                $allAnswered = $isModeB -or $noQuestions -or (-not $parsed['has_null_answer'] -and $parsed['has_any_answer'])
+                $allAnswered = $noQuestions -or (-not $parsed['has_null_answer'] -and $parsed['has_any_answer'])
 
                 if (-not $allAnswered) {
                     Write-Host "[WAIT] $taskName - 等待填寫 user_answer" -ForegroundColor DarkGray
@@ -247,14 +246,34 @@ if (-not (Acquire-Lock $lock3b 300)) {
         $analysisTasks = Get-ChildItem $script:ANALYSIS_DIR -Directory -ErrorAction SilentlyContinue
 
         foreach ($taskDir in $analysisTasks) {
-            $taskName   = $taskDir.Name
-            $taskLock   = Join-Path $taskDir.FullName "process.lock"
-            $answerDone = Join-Path (Get-SystemDir $taskDir.FullName) ".answer_done"
-            $finalDone  = Join-Path (Get-SystemDir $taskDir.FullName) ".final_done"
-            $yamlPath   = Join-Path $taskDir.FullName "analysis.yaml"
+            $taskName        = $taskDir.Name
+            $taskLock        = Join-Path $taskDir.FullName "process.lock"
+            $answerDone      = Join-Path (Get-SystemDir $taskDir.FullName) ".answer_done"
+            $finalDone       = Join-Path (Get-SystemDir $taskDir.FullName) ".final_done"
+            $lowConfidence   = Join-Path (Get-SystemDir $taskDir.FullName) ".low_confidence"
+            $yamlPath        = Join-Path $taskDir.FullName "analysis.yaml"
 
             if (Test-HasBlocker $taskDir.FullName) {
                 Write-Host "[BLOCKER] $taskName 已有 blocker 檔案，跳過（需人工處理）" -ForegroundColor Red
+                continue
+            }
+
+            # LOW-CONFIDENCE 退回：agent 信心度 < 0.9 → 刪 .answer_done，搬回 confirm/ 重新等待答覆
+            if (Test-Path $lowConfidence) {
+                if (Acquire-Lock $taskLock 300) {
+                    try {
+                        Remove-Item $lowConfidence -Force -ErrorAction SilentlyContinue
+                        Remove-Item $answerDone    -Force -ErrorAction SilentlyContinue
+                        Release-Lock $taskLock
+                        $dest = Join-Path $script:CONFIRM_DIR $taskName
+                        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+                        Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
+                        Write-Host "[LOW-CONF] $taskName MODE_B 信心不足 → confirm/（等待使用者補充答覆）" -ForegroundColor Yellow
+                    } catch {
+                        Write-Host "[ERROR] $taskName low-confidence 退回失敗: $_" -ForegroundColor Red
+                        if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
+                    }
+                }
                 continue
             }
 

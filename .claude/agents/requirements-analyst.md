@@ -99,7 +99,9 @@ MODE_A: Triggered when clarification is needed. Output `clarification_channel` w
 MODE_B: Triggered ONLY when all questions have valid non-null user_answers.
         `technical_specification` MUST be fully populated.
         After generating the spec, evaluate `confidence` (0.0–1.0):
-        - confidence >= 0.9 → normal completion: write `.final_done`, stage: final
+        - confidence >= 0.9 → normal completion:
+            Set `state_summary.is_complete: true`
+            Write `analysis.yaml` and `.final_done`, stage: final
         - confidence < 0.9  → LOW-CONFIDENCE path (see below)
 
 MODE_B LOW-CONFIDENCE (confidence < 0.9):
@@ -111,7 +113,8 @@ MODE_B LOW-CONFIDENCE (confidence < 0.9):
        category: "model_design | field_type | business_logic | security | ux"
        question: "<specific question about the uncertain spec area>"
        user_answer: null
-  3. Write `analysis.yaml` and `.analysis_done` (same as MODE_A)
+  3. Write `analysis.yaml` and `system/.low_confidence` (signals PS1 to route back to confirm/)
+     Do NOT write `.analysis_done` again (already exists from initial analysis).
   4. AGENT-RESULT: stage: analysis, message: "MODE_B low-confidence (<score>/10 < 9): <N> issues flagged"
 
 MODE_B SHORTCUT (final spec stage only):
@@ -123,6 +126,7 @@ as-is, update only the `timestamp`, and write `.final_done` immediately.
 OUTPUT RULES
 
 - Write `analysis.yaml` to the task directory
-- Write `.analysis_done` marker after first analysis
-- Write `.final_done` marker after MODE_B finalization
+- Write `.analysis_done` marker after first analysis (MODE_A)
+- Write `.final_done` marker after MODE_B finalization (confidence >= 0.9)
+- Write `.low_confidence` marker (NOT `.final_done`) when MODE_B confidence < 0.9
 - Do NOT output to stdout except the YAML block and the AGENT-RESULT block
