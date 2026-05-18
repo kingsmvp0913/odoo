@@ -70,15 +70,17 @@ foreach ($taskDir in $analysisTasks) {
             Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
-        # ALREADY_IMPLEMENTED：規格確認無需任何程式碼變更，直接寫 .implement_done 跳過 coding 進 QA
-        if ($yamlContent -match 'ALREADY_IMPLEMENTED') {
+        # ALREADY_IMPLEMENTED / NO_CHANGE_NEEDED：無需任何程式碼變更，直接寫 .implement_done 跳過 coding 進 QA
+        $skipCoding  = ($yamlContent -match 'ALREADY_IMPLEMENTED') -or ($yamlContent -match 'NO_CHANGE_NEEDED')
+        $skipReason  = if ($yamlContent -match 'NO_CHANGE_NEEDED') { "分析確認無需修改" } else { "需求已實作" }
+        if ($skipCoding) {
             Atomic-WriteFile $implementDone "" | Out-Null
             Release-Lock $taskLock
             $dest = Join-Path $script:CODING_DIR $taskName
             if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
             try {
                 Move-Item $taskDir.FullName $script:CODING_DIR -Force
-                Write-Host "[SKIP-CODING] $taskName 需求已實作，略過 coding → coding/ (等待 QA 確認)" -ForegroundColor Cyan
+                Write-Host "[SKIP-CODING] $taskName $skipReason → coding/ (等待 QA 確認)" -ForegroundColor Cyan
             } catch {
                 Write-Host "[ERROR] $taskName Move 失敗: $_" -ForegroundColor Red
                 Remove-Item $implementDone -Force -ErrorAction SilentlyContinue
@@ -109,7 +111,7 @@ foreach ($taskDir in $analysisTasks) {
         # WIKI-CACHE 注入：在 Agent prompt 中 prepend 模組相關 wiki 內容
         $wikiCache = Get-WikiCache -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
 
-        $fullPrompt = "ultrathink`n`n" + $wikiCache + $agentTemplate +
+        $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$destTaskDir" +
             "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
             "`n`n【OUTPUT PATH】`n$modulePath" +

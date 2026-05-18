@@ -73,7 +73,7 @@ foreach ($taskDir in $codingTasks) {
         $modulePath = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
         Write-Host "[INFO] $taskName 準備 QA: $modulePath" -ForegroundColor DarkCyan
 
-        $fullPrompt = $agentTemplate +
+        $fullPrompt = (Get-McpBudgetBlock) + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
             "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
             "`n`n【IMPLEMENTATION PATH】`n$modulePath" +

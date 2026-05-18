@@ -117,6 +117,21 @@ try { $counterObj | ConvertTo-Json -Depth 5 | Out-File $counterFile -Encoding UT
 Write-Host "=== Pipeline 開工 $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -ForegroundColor Cyan
 Write-Host "[LOOP] loop_count=$loopCount / 20，run_started_at=$startedAt" -ForegroundColor DarkCyan
 
+# ============================================================
+# Blocker Resume（人工修完後 touch system/.blocker_resolved 重啟）
+# ============================================================
+Write-Host "`n[RESUME] 掃描 .blocker_resolved 標記..." -ForegroundColor Cyan
+$resolvedCount = 0
+Get-ChildItem $script:PLAN_DIR -Recurse -Filter ".blocker_resolved" -ErrorAction SilentlyContinue | ForEach-Object {
+    $sysDir   = Split-Path $_.FullName -Parent
+    $taskName = Split-Path (Split-Path $sysDir -Parent) -Leaf
+    Get-ChildItem $sysDir -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Remove-Item -Force
+    Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+    Write-Host "[RESUME] $taskName blocker 已清除，重新加入佇列" -ForegroundColor Green
+    $resolvedCount++
+}
+if ($resolvedCount -eq 0) { Write-Host "[RESUME] 無需恢復的任務" -ForegroundColor DarkGray }
+
 # 設定 hook 模式，讓子程序的 Open-ClaudeTerminal 略過開新 terminal
 $env:PIPELINE_HOOK_MODE = "1"
 
@@ -171,3 +186,33 @@ if ($pendingCount -gt 0) {
     Remove-Item $counterFile -Force -ErrorAction SilentlyContinue
     Write-Host "`n=== Pipeline 完成，無待處理任務 ===" -ForegroundColor Green
 }
+
+# ============================================================
+# Pipeline Run Summary（每次 run 結束寫入統計）
+# ============================================================
+$runEndTime  = Get-Date -Format 'o'
+$summaryDir  = Join-Path $script:PLAN_DIR "log"
+if (-not (Test-Path $summaryDir)) { New-Item -ItemType Directory -Force $summaryDir | Out-Null }
+
+$summaryLines = @(
+    "run_id: '$startedAt'",
+    "run_ended_at: '$runEndTime'",
+    "loop_count: $loopCount",
+    "tasks_pending_ai: $pendingCount",
+    "tasks_in_pipeline:"
+)
+$stageRoots = @($script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
+foreach ($root in $stageRoots) {
+    if (-not (Test-Path $root)) { continue }
+    $stageName = Split-Path $root -Leaf
+    Get-ChildItem $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^task_\d+$' } | ForEach-Object {
+        $hasBlocker = [bool](Get-ChildItem (Join-Path $_.FullName "system") -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
+        $hasPending = Test-Path (Join-Path $_.FullName "system\pending_prompt.txt")
+        $st = if ($hasBlocker) { "blocker" } elseif ($hasPending) { "pending_ai" } else { "idle" }
+        $summaryLines += "  - task_id: '$($_.Name)'"
+        $summaryLines += "    stage: '$stageName'"
+        $summaryLines += "    status: '$st'"
+    }
+}
+Atomic-WriteFile (Join-Path $summaryDir "pipeline_run_summary.yaml") ($summaryLines -join "`n") | Out-Null
+Write-Host "[SUMMARY] 已寫入 log/pipeline_run_summary.yaml" -ForegroundColor DarkCyan

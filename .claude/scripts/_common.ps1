@@ -367,9 +367,16 @@ function Get-WikiCache {
         $lines   = Get-Content $wikiPath -Encoding UTF8
         $matched = @($lines | Where-Object { $_ -match [regex]::Escape($moduleName) })
         if ($matched.Count -eq 0) { return "" }
-        $block = ($matched | Select-Object -First 200) -join "`n"
+        $block = ($matched | Select-Object -First 60) -join "`n"
         return "[WIKI-CACHE]`n$block`n[/WIKI-CACHE]`n`n"
     } catch { return "" }
+}
+
+# ============================================================
+# MCP Budget 區塊（注入 pending_prompt.txt，防 session 內無限重試）
+# ============================================================
+function Get-McpBudgetBlock {
+    return "[MCP-BUDGET]`nserena_queries_remaining: 3`non_serena_tool_use_error: write system/blocker.agent.txt immediately → STOP. Do NOT retry.`non_budget_exhausted: write system/blocker.agent.txt immediately → STOP.`ncontext7_on_failure: skip silently, proceed with available context.`n[/MCP-BUDGET]`n`n"
 }
 
 # ============================================================
@@ -404,54 +411,92 @@ function Send-OdooTaskMessage {
 }
 
 # ============================================================
-# 退回 confirm/ 機制（清除所有標記含 pending files）
+# 退回機制（4-B：若分析已完成則保留分析成果回 analysis/；否則完整退回 confirm/）
 # ============================================================
 function BackToConfirm {
     param([string]$taskDir, [string]$reason, [string]$stage)
 
-    $taskName       = Split-Path $taskDir -Leaf
-    $confirmTaskDir = Join-Path $script:CONFIRM_DIR $taskName
+    $taskName = Split-Path $taskDir -Leaf
 
-    # 移動前先釋放 process.lock（Windows 持有 handle 時無法 Move-Item）
+    # 移動前先釋放 process.lock
     $lockPath = Join-Path $taskDir "process.lock"
     if ($script:LockHandles.ContainsKey($lockPath)) { Release-Lock $lockPath }
     Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
 
-    if (Test-Path $confirmTaskDir) { Remove-Item $confirmTaskDir -Recurse -Force }
-    try {
-        Move-Item $taskDir $script:CONFIRM_DIR -Force
-    } catch {
-        Write-Host "[ERROR] BackToConfirm Move-Item 失敗: $_" -ForegroundColor Red
-        return
+    # 判斷分析是否已完整（有 technical_specification 或 analysis_result）
+    $yamlPath         = Join-Path $taskDir "analysis.yaml"
+    $analysisComplete = $false
+    if (Test-Path $yamlPath) {
+        $yc = Get-Content $yamlPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+        if ($yc -match 'technical_specification:' -or $yc -match 'analysis_result:') {
+            $analysisComplete = $true
+        }
     }
 
-    # 清除所有 system/ + log/ 下的狀態與記錄檔
-    $confirmSysDir = Get-SystemDir $confirmTaskDir
-    $confirmLogDir = Get-LogDir    $confirmTaskDir
-    @('.analysis_done', '.answer_done', '.final_done', '.implement_done', '.qa_done',
-      '.pending_analysis', '.pending_final', '.pending_coding', '.pending_qa',
-      'pending_prompt.txt',
-      'blocker.spec.txt', 'blocker.tech.txt', 'blocker.agent.txt', 'blocker.loop.txt') | ForEach-Object {
-        Remove-Item (Join-Path $confirmSysDir $_) -Force -ErrorAction SilentlyContinue
+    if ($analysisComplete) {
+        # ── Smart Rollback：保留 .analysis_done + .answer_done，退回 analysis/ ──
+        $destDir = Join-Path $script:ANALYSIS_DIR $taskName
+        if (Test-Path $destDir) { Remove-Item $destDir -Recurse -Force }
+        try {
+            Move-Item $taskDir $script:ANALYSIS_DIR -Force
+        } catch {
+            Write-Host "[ERROR] BackToConfirm (Smart) Move-Item 失敗: $_" -ForegroundColor Red
+            return
+        }
+
+        $destSysDir = Get-SystemDir $destDir
+        $destLogDir = Get-LogDir    $destDir
+        # 只清除 final 之後的 markers（保留 .analysis_done .answer_done）
+        @('.final_done', '.implement_done', '.qa_done',
+          '.pending_final', '.pending_coding', '.pending_qa',
+          'pending_prompt.txt',
+          'blocker.spec.txt', 'blocker.tech.txt', 'blocker.agent.txt', 'blocker.loop.txt') | ForEach-Object {
+            Remove-Item (Join-Path $destSysDir $_) -Force -ErrorAction SilentlyContinue
+        }
+        @('done_prompt.txt', 'qa_report.yaml', 'agent_error.txt') | ForEach-Object {
+            Remove-Item (Join-Path $destLogDir $_) -Force -ErrorAction SilentlyContinue
+        }
+
+        $reentryFile = Join-Path $destSysDir '_reentry_count'
+        $count = 0
+        if (Test-Path $reentryFile) { try { $count = [int](Get-Content $reentryFile -Raw -EA SilentlyContinue) } catch {} }
+        Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
+
+        $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n[Smart Rollback] 分析成果已保留（.analysis_done + .answer_done），從 final 規格階段重試，無需重跑分析。"
+        Atomic-WriteFile (Join-Path $destLogDir 'back_reason.txt') $content | Out-Null
+
+        Write-Host "[BACK-SMART] $taskName 從 $stage → analysis/（保留分析，省重跑）原因: $reason" -ForegroundColor Yellow
+    } else {
+        # ── 完整退回 confirm/（分析尚未完成，需從頭來過）──
+        $confirmTaskDir = Join-Path $script:CONFIRM_DIR $taskName
+        if (Test-Path $confirmTaskDir) { Remove-Item $confirmTaskDir -Recurse -Force }
+        try {
+            Move-Item $taskDir $script:CONFIRM_DIR -Force
+        } catch {
+            Write-Host "[ERROR] BackToConfirm Move-Item 失敗: $_" -ForegroundColor Red
+            return
+        }
+
+        $confirmSysDir = Get-SystemDir $confirmTaskDir
+        $confirmLogDir = Get-LogDir    $confirmTaskDir
+        @('.analysis_done', '.answer_done', '.final_done', '.implement_done', '.qa_done',
+          '.pending_analysis', '.pending_final', '.pending_coding', '.pending_qa',
+          'pending_prompt.txt',
+          'blocker.spec.txt', 'blocker.tech.txt', 'blocker.agent.txt', 'blocker.loop.txt') | ForEach-Object {
+            Remove-Item (Join-Path $confirmSysDir $_) -Force -ErrorAction SilentlyContinue
+        }
+        @('done_prompt.txt', 'back_reason.txt', 'qa_report.yaml', 'agent_error.txt') | ForEach-Object {
+            Remove-Item (Join-Path $confirmLogDir $_) -Force -ErrorAction SilentlyContinue
+        }
+
+        $reentryFile = Join-Path $confirmSysDir '_reentry_count'
+        $count = 0
+        if (Test-Path $reentryFile) { try { $count = [int](Get-Content $reentryFile -Raw -EA SilentlyContinue) } catch {} }
+        Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
+
+        $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n請修正後重新填寫 analysis.yaml 中的 user_answer。"
+        Atomic-WriteFile (Join-Path $confirmLogDir 'back_reason.txt') $content | Out-Null
+
+        Write-Host "[BACK] $taskName 從 $stage 退回 confirm/  原因: $reason" -ForegroundColor Yellow
     }
-    @('done_prompt.txt', 'back_reason.txt', 'qa_report.yaml', 'agent_error.txt') | ForEach-Object {
-        Remove-Item (Join-Path $confirmLogDir $_) -Force -ErrorAction SilentlyContinue
-    }
-
-    # _reentry_count 遞增（供 _pipeline_run.ps1 偵測重入次數上限）
-    $reentryFile = Join-Path $confirmSysDir '_reentry_count'
-    $count = 0
-    if (Test-Path $reentryFile) {
-        try { $count = [int](Get-Content $reentryFile -Raw -ErrorAction SilentlyContinue) } catch {}
-    }
-    Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
-
-    $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n請修正後重新填寫 analysis.yaml 中的 user_answer。"
-    Atomic-WriteFile (Join-Path $confirmLogDir 'back_reason.txt') $content | Out-Null
-
-    Write-Host "[BACK] $taskName 從 $stage 退回 confirm/  原因: $reason" -ForegroundColor Yellow
-
-    # if ($taskName -match '^task_(\d+)$') {
-    #     Send-OdooTaskMessage -taskId ([int]$matches[1]) -message "<p>【Pipeline】任務已從 <b>$stage</b> 退回。原因: $reason</p>"
-    # }
 }

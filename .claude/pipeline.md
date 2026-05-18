@@ -49,7 +49,7 @@
    `final/` 目錄為 QA 通過歸檔，不是 stage。
 4. **WIKI 快取注入**（PS1 已在 pending_prompt.txt 內 prepend，主調度無需重複注入）：
    - `coding.ps1` / `qa.ps1` / `analysis.ps1 STEP 3b` 呼叫 `Get-WikiCache`，自動讀取
-     `<online_addons_root>/graphify-out/wiki/index.md` 並 prepend `[WIKI-CACHE]...[/WIKI-CACHE]` 區塊
+     `<online_addons_root>/graphify-out/wiki/index.md` 並 prepend `[WIKI-CACHE]...[/WIKI-CACHE]` 區塊（最多 60 行）
    - wiki 不存在 → 跳過注入（返回空字串）
    - 子 Agent 收到 `[WIKI-CACHE]` 後**不得重複讀取** wiki
 5. **並行 spawn**（同 stage 內）：
@@ -95,13 +95,28 @@ coding.ps1 / qa.ps1 執行時：
 status: ok | blocker | error
 task_id: task_<N>
 stage: <stage>
+mcp_used:
+  wiki_cache_hit: true | false
+  serena_queries: 0          # 實際使用次數（超過 3 視為異常）
+  context7_queries: 0
 files_written:
   - <relative_path>   # 僅列新建或修改的檔案；done_prompt.txt 和 .pending_* 不列入
 message: <最多 1 行說明>
 ---END-RESULT---
 ```
 
-主調度只解析此區塊。需要細節時直接讀對應檔案。
+主調度只解析此區塊。若 `serena_queries > 3` → 主調度升級為 `blocker.agent.txt`。需要細節時直接讀對應檔案。
+
+## Stage 專用 Prompt 規則（Token 效率）
+
+PS1 生成 `pending_prompt.txt` 時只注入該 stage 真正需要的部分：
+
+| Stage | 應包含 | 不應包含 |
+|-------|--------|---------|
+| analysis | original.txt 內容、[MCP-BUDGET] | analysis.yaml 全文 |
+| final | analysis.yaml 的 questions + user_answer 區塊 | technical_specification |
+| coding | technical_specification 區塊、[MCP-BUDGET]、[WIKI-CACHE] | bug_analysis 等其他欄位 |
+| qa | implementation_summary.txt、[MCP-BUDGET] | analysis.yaml 全文 |
 
 ## _PIPELINE_WAITING TTL 檢查
 
@@ -126,23 +141,57 @@ if os.path.exists(flag):
         # 不觸發 pipeline
 ```
 
-## QA 失敗退回流程
+## QA 失敗退回流程（Smart Rollback）
 
 QA `status = FAILED`：
 1. 讀 `qa_report.yaml` 的第一個 error description
-2. 將任務目錄移回 `confirm/<task_id>/`
-3. 清除以下所有檔案（BackToConfirm 清單）：
-   ```
-   system/ 下：
-     .analysis_done  .answer_done  .final_done  .implement_done  .qa_done
-     .pending_analysis  .pending_final  .pending_coding  .pending_qa
-     pending_prompt.txt
-     blocker.spec.txt  blocker.tech.txt  blocker.agent.txt  blocker.loop.txt
-   log/ 下：
-     done_prompt.txt  back_reason.txt  qa_report.yaml  agent_error.txt
-   ```
-4. 寫 `log/back_reason.txt` 說明退回原因
-5. 若 task_id 符合 `^task_(\d+)$` → 通知 Odoo 任務
+2. **判斷 analysis.yaml 是否含 `technical_specification` 或 `analysis_result`**：
+   - **是（分析已完整）→ Smart Rollback**：
+     - 移至 `analysis/<task_id>/`（不回 confirm/）
+     - 清除 `.final_done` `.implement_done` `.qa_done` `.pending_*` `pending_prompt.txt` blocker.*
+     - **保留** `.analysis_done` `.answer_done`（省略重跑分析）
+     - coding.ps1 STEP 4 / analysis.ps1 STEP 3b 自動接手
+   - **否（分析未完成）→ 完整退回**：
+     - 移至 `confirm/<task_id>/`，清除所有 markers（同舊行為）
+3. 寫 `log/back_reason.txt` 說明退回原因與模式
+4. 若 task_id 符合 `^task_(\d+)$` → 通知 Odoo 任務
+
+## Blocker Resume 機制
+
+blocker 後人工修復流程：
+1. 修復問題（Serena port、Graphify 路徑等）
+2. `touch <task_dir>/system/.blocker_resolved`
+3. 觸發「開工」
+4. `_pipeline_run.ps1` 啟動時自動掃描 `.blocker_resolved`：
+   - 刪除所有 `blocker.*.txt`
+   - 刪除 `.blocker_resolved`
+   - 保留 `.pending_<stage>`（原 stage 重試）
+   - 輸出 `[RESUME] task_N blocker 已清除，重新加入佇列`
+
+## Pipeline Run Summary
+
+每次 `_pipeline_run.ps1` 結束時自動寫入 `.claude/kingsmvpsplan/log/pipeline_run_summary.yaml`：
+
+```yaml
+run_id: '<ISO 時間戳>'
+run_ended_at: '<ISO 時間戳>'
+loop_count: 3
+tasks_pending_ai: 2
+tasks_in_pipeline:
+  - task_id: 'task_9001'
+    stage: 'coding'
+    status: 'pending_ai'
+  - task_id: 'task_9004'
+    stage: 'confirm'
+    status: 'blocker'
+```
+
+## 診斷速查
+
+一行查所有 blocker：
+```bash
+find .claude/kingsmvpsplan -name "blocker.*.txt" -exec echo "==={}" \; -exec grep -E "error_code:|tool:" {} \;
+```
 
 ## 路徑翻譯（Linux 執行環境）
 

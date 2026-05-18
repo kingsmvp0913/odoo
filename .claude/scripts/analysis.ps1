@@ -138,7 +138,8 @@ if (-not (Acquire-Lock $lock2 300)) {
                     "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
                     "`n`n【TASK DIRECTORY】`n$destTaskDir" +
                     "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +
-                    "`n`n將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(b) 刪除 system/.pending_analysis。"
+                    "`n`n將 analysis.yaml 和 system/.analysis_done 寫入【TASK DIRECTORY】，完成後依序：(a) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(b) 刪除 system/.pending_analysis。" +
+                    "`n`n" + (Get-McpBudgetBlock)
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "analysis" -prompt $fullPrompt
 
@@ -289,7 +290,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 $parsedWiki = ConvertFrom-Yaml $currentYaml
                 $wikiCache  = Get-WikiCache -moduleName $parsedWiki['module'] -odooVersion $parsedWiki['odoo_version'] -projectName $parsedWiki['project_name']
 
-                $fullPrompt = "ultrathink`n`n" + $wikiCache + $prompt +
+                $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
                     "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
                     "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_final。"
