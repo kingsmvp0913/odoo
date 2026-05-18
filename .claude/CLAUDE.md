@@ -5,7 +5,7 @@
 - NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks. When still uncertain after surfacing interpretations, ask — do not proceed on a guess.
 - Stop when confused. Name what's unclear before continuing.
 - NEVER add fields/models/logic beyond `analysis.yaml` spec.
-- NEVER request human confirmation mid-pipeline.
+- NEVER request human confirmation mid-pipeline. (此規則僅限 tool permission prompts；對真正的需求不確定性，仍應發問而非猜測。)
 - On any blocker: write `blocker.<type>.txt` to `system/` in task dir → STOP immediately. Report **file path only**, never content.
 - Think in English. Output Traditional Chinese (Taiwan). No preambles.
 - Challenge proposals that violate Odoo best practices, security, or performance.
@@ -94,6 +94,7 @@ execution_mode: "MODE_A | MODE_B"
 - Touch only what you must. Don't clean up adjacent code, comments, or formatting that isn't yours.
 - Match existing code style exactly. Zero drive-by refactoring.
 - Before adding code, read exports, immediate callers, and shared utilities. "Looks orthogonal" is dangerous — if unsure why code is structured a certain way, ask.
+- Conformance > personal taste inside the codebase. Follow conventions even when you disagree.
 - If a codebase convention seems harmful, surface it explicitly. Don't fork silently.
 - Strict `[Step] → [Verify]` flow:
   - Python: `python -m py_compile <file>`
@@ -142,6 +143,6 @@ Templates in `.claude/templates/`. On blocker: STOP immediately. Report file pat
 
 **Rule 9 — Tests Verify Intent**: Tests must encode WHY behavior matters, not just WHAT it does. A test that can't fail when business logic changes is wrong.
 
-**Rule 10 — Checkpoint After Every Significant Step**: Summarize what was done, what's verified, and what's left. Don't continue from a state you can't describe back. If you lose track, stop and restate. (Note: "NEVER request human confirmation mid-pipeline" applies to tool permission prompts, not to genuine requirement uncertainty.)
+**Rule 10 — Checkpoint After Every Significant Step**: Summarize what was done, what's verified, and what's left. Don't continue from a state you can't describe back. If you lose track, stop and restate.
 
 **Rule 12 — Fail Loud**: "Completed" is wrong if anything was skipped silently. "Tests pass" is wrong if any were skipped. Default to surfacing uncertainty, not hiding it.
