@@ -41,7 +41,7 @@ Before writing any file:
    field_name in the OUTPUT PATH.
 2. If ALL specified fields/views/logic already exist in the codebase:
    - Run `python -m py_compile` and `xmllint` on affected files only.
-   - If verify passes → skip implementation entirely, mark done immediately.
+   - If verify passes → write `system/.implement_done`, then skip to completion protocol.
    - If verify fails → fix syntax only; do NOT re-implement from scratch.
 3. Only proceed to full implementation if the spec items are genuinely missing.
 

@@ -266,13 +266,24 @@ if (-not (Acquire-Lock $lock3b 300)) {
                         Remove-Item $answerDone    -Force -ErrorAction SilentlyContinue
                         Release-Lock $taskLock
                         $dest = Join-Path $script:CONFIRM_DIR $taskName
-                        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+                        if (Test-Path $dest) {
+                            Write-Host "[WARN] $taskName confirm/ 已有同名目錄，覆蓋前備份為 $($dest).bak" -ForegroundColor Yellow
+                            $bakPath = "$dest.bak.$(Get-Date -Format 'yyyyMMddHHmmss')"
+                            Move-Item $dest $bakPath -Force -ErrorAction SilentlyContinue
+                        }
                         Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
-                        Write-Host "[LOW-CONF] $taskName MODE_B 信心不足 → confirm/（等待使用者補充答覆）" -ForegroundColor Yellow
+                        # 寫入退回原因（可觀測性）
+                        $logDir = Get-LogDir (Join-Path $script:CONFIRM_DIR $taskName)
+                        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force $logDir | Out-Null }
+                        $backContent = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: MODE_B`n退回原因: Agent 信心度 < 0.9，新增澄清問題，等待使用者補充答覆。`n`n請填寫 analysis.yaml 中 clarification_channel 的新 user_answer 後重新觸發。"
+                        Atomic-WriteFile (Join-Path $logDir 'back_reason.txt') $backContent | Out-Null
+                        Write-Host "[LOW-CONF] $taskName MODE_B 信心不足 → confirm/（已寫 log/back_reason.txt）" -ForegroundColor Yellow
                     } catch {
                         Write-Host "[ERROR] $taskName low-confidence 退回失敗: $_" -ForegroundColor Red
                         if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
                     }
+                } else {
+                    Write-Host "[WARN] $taskName low-confidence 無法取得鎖，下輪重試" -ForegroundColor Yellow
                 }
                 continue
             }

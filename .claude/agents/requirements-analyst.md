@@ -115,7 +115,7 @@ MODE_B LOW-CONFIDENCE (confidence < 0.9):
        user_answer: null
   3. Write `analysis.yaml` and `system/.low_confidence` (signals PS1 to route back to confirm/)
      Do NOT write `.analysis_done` again (already exists from initial analysis).
-  4. AGENT-RESULT: stage: analysis, message: "MODE_B low-confidence (<score>/10 < 9): <N> issues flagged"
+  4. AGENT-RESULT: stage: analysis, message: "MODE_B low-confidence (confidence=<score> < 0.9): <N> issues flagged"
 
 MODE_B SHORTCUT (final spec stage only):
 If the prompt contains `[EXISTING ANALYSIS WITH USER ANSWERS]` and the enclosed YAML already has
