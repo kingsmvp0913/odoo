@@ -32,6 +32,11 @@ foreach ($taskDir in $analysisTasks) {
     $implementDone    = Join-Path $taskDir.FullName ".implement_done"
     $analysisYamlPath = Join-Path $taskDir.FullName "analysis.yaml"
 
+    if (Test-HasBlocker $taskDir.FullName) {
+        Write-Host "[BLOCKER] $taskName 已有 blocker 檔案，跳過（需人工處理）" -ForegroundColor Red
+        continue
+    }
+
     if (-not (Test-Path $finalDone))  { continue }
     if (Test-Path $implementDone)     { continue }
 

@@ -252,6 +252,11 @@ function Clear-StalePending {
     Get-ChildItem $taskDir -Filter ".pending_*" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
+function Test-HasBlocker {
+    param([string]$taskDir)
+    return [bool](Get-ChildItem $taskDir -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
+}
+
 # ============================================================
 # 開啟 Claude Terminal（PS1 結束後觸發 AI 處理）
 # ============================================================

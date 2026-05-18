@@ -61,6 +61,11 @@ if (-not (Acquire-Lock $lock2 300)) {
             $originalTxt  = Join-Path $taskDir.FullName "original.txt"
             $analysisDone = Join-Path $taskDir.FullName ".analysis_done"
 
+            if (Test-HasBlocker $taskDir.FullName) {
+                Write-Host "[BLOCKER] $taskName 已有 blocker 檔案，跳過（需人工處理）" -ForegroundColor Red
+                continue
+            }
+
             if (-not (Test-Path $originalTxt)) {
                 Write-Host "[SKIP] $taskName 缺少 original.txt" -ForegroundColor Yellow
                 continue
@@ -171,6 +176,11 @@ if (-not (Acquire-Lock $lock3a 300)) {
             $analysisDone = Join-Path $taskDir.FullName ".analysis_done"
             $answerDone   = Join-Path $taskDir.FullName ".answer_done"
             $yamlPath     = Join-Path $taskDir.FullName "analysis.yaml"
+
+            if (Test-HasBlocker $taskDir.FullName) {
+                Write-Host "[BLOCKER] $taskName 已有 blocker 檔案，跳過（需人工處理）" -ForegroundColor Red
+                continue
+            }
 
             # AI 尚未處理（.analysis_done 不存在）→ 跳過
             if (-not (Test-Path $analysisDone)) { continue }
