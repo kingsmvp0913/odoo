@@ -51,15 +51,12 @@ timestamp: ""
 execution_mode: "MODE_A | MODE_B"
 
 inferred_target:
-  project: "Odoo"
   odoo_version: ""
   module: ""
   project_name: null
-  confidence: 0.0
 
 state_summary:
   is_complete: false
-  has_blocking_unknowns: true
 
 clarification_channel:
   - id: 1
@@ -74,22 +71,19 @@ technical_specification:
       description: ""
       fields:
         - field_name: ""
-          type: ""
+          type: ""  # Char|Text|Integer|Float|Boolean|Date|Datetime|Selection|Many2one|One2many|Many2many
           string: ""
-          required: false
-          tracking: false
-          help: ""
-          selection_or_comodel: ""
+          # only include when non-default: required(true), tracking(true), help, selection_or_comodel
   odoo_views_and_actions:
     - xml_id: ""
       model: ""
-      view_type: "tree | form | search | kanban"
+      view_type: "tree|form|search|kanban"
       inherit_id: ""
       arch_summary: ""
   core_logic:
     - model: ""
       function_signature: ""
-      trigger: "onchange | compute | button_click | api_route"
+      trigger: "compute|onchange|button_click|api_route"
       pseudocode: ""
   security_model:
     access_rights_csv: []
