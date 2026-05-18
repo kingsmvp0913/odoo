@@ -1,6 +1,0 @@
-case_id: "CASE-9001"
-module: "sale_order_ext"
-odoo_version: "17.0"
-project_name: "SalesPlus"
-execution_mode: "MODE_B"
-description: "新增客戶優先級別欄位到銷售訂單"
