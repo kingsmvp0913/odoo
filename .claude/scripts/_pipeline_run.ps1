@@ -49,7 +49,7 @@ loop_count: $loopCount
 limit: $maxLoops
 limit_exceeded: loop_count
 reason: |
-  Pipeline 循環次數超過安全上限 (loop_count=$loopCount > 20)，自動停止以防死循環。
+  Pipeline 循環次數超過安全上限 (loop_count=$loopCount > $maxLoops)，自動停止以防死循環。
   run_started_at: $startedAt
 last_pending_tasks:
   - $(if ($firstPending) { $firstPending.FullName } else { 'none' })
@@ -70,7 +70,7 @@ action_required: |
         )
         Write-Host "[CRITICAL] blocker.loop.txt 已寫入: $sysDir" -ForegroundColor Red
     }
-    Write-Host "[CRITICAL] Pipeline loop_count=$loopCount 超過上限 20，中止。" -ForegroundColor Red
+    Write-Host "[CRITICAL] Pipeline loop_count=$loopCount 超過上限 $maxLoops，中止。" -ForegroundColor Red
     # 清除 WAITING flag 避免 Claude 再度觸發
     Remove-Item $script:PIPELINE_WAITING -Force -ErrorAction SilentlyContinue
     Remove-Item $counterFile -Force -ErrorAction SilentlyContinue
@@ -108,7 +108,7 @@ action_required: |
                 $blockerMsg,
                 [System.Text.Encoding]::UTF8
             )
-            Write-Host "[WARN] $tid 重入次數=$($taskReentries[$tid]) 超過 2，已升級為 blocker.loop.txt" -ForegroundColor Yellow
+            Write-Host "[WARN] $tid 重入次數=$($taskReentries[$tid]) 超過 $maxReentries，已升級為 blocker.loop.txt" -ForegroundColor Yellow
         }
     }
 }
@@ -121,7 +121,7 @@ $counterObj = [PSCustomObject]@{
 try { $counterObj | ConvertTo-Json -Depth 5 | Out-File $counterFile -Encoding UTF8 -Force } catch {}
 
 Write-Host "=== Pipeline 開工 $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -ForegroundColor Cyan
-Write-Host "[LOOP] loop_count=$loopCount / 20，run_started_at=$startedAt" -ForegroundColor DarkCyan
+Write-Host "[LOOP] loop_count=$loopCount / $maxLoops，run_started_at=$startedAt" -ForegroundColor DarkCyan
 
 # ============================================================
 # Blocker Resume（人工修完後 touch system/.blocker_resolved 重啟）

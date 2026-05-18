@@ -262,7 +262,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
             if (Test-Path $lowConfidence) {
                 if (Acquire-Lock $taskLock 300) {
                     try {
-                        Remove-Item $lowConfidence -Force -ErrorAction SilentlyContinue
+                        Remove-Item $lowConfidence -Force -ErrorAction Stop
                         Remove-Item $answerDone    -Force -ErrorAction SilentlyContinue
                         Release-Lock $taskLock
                         $dest = Join-Path $script:CONFIRM_DIR $taskName

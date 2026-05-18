@@ -447,7 +447,7 @@ function BackToConfirm {
         $destSysDir = Get-SystemDir $destDir
         $destLogDir = Get-LogDir    $destDir
         # 只清除 final 之後的 markers（保留 .analysis_done .answer_done）
-        @('.final_done', '.implement_done', '.qa_done',
+        @('.final_done', '.implement_done', '.qa_done', '.low_confidence',
           '.pending_final', '.pending_coding', '.pending_qa',
           'pending_prompt.txt',
           'blocker.spec.txt', 'blocker.tech.txt', 'blocker.agent.txt', 'blocker.loop.txt') | ForEach-Object {
