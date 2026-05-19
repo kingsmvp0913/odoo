@@ -49,8 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "Start-Process powershell -WindowStyle Hidden -ArgumentList '-Command \"(New-Object System.Media.SoundPlayer ''C:\\odoo\\.claude\\tools\\notice.wav'').PlaySync()\"' -Wait;",
-            "shell": "powershell",
+            "command": "pwsh -NoProfile -Command \"try { (New-Object System.Media.SoundPlayer 'C:\\odoo\\.claude\\tools\\notice.wav').PlaySync() } catch {}\"",
             "statusMessage": "Claude waiting for input..."
           }
         ]
