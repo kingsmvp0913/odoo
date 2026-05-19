@@ -2,9 +2,10 @@
 
 ## 0. Hard Rules
 - NEVER modify core Odoo files. Custom code in `C:/online_addons/` only (never `custom_addons/`).
-- NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks.
+- NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks. When still uncertain after surfacing interpretations, ask — do not proceed on a guess.
+- Stop when confused. Name what's unclear before continuing.
 - NEVER add fields/models/logic beyond `analysis.yaml` spec.
-- NEVER request human confirmation mid-pipeline.
+- NEVER request human confirmation mid-pipeline. (此規則僅限 tool permission prompts；對真正的需求不確定性，仍應發問而非猜測。)
 - On any blocker: write `blocker.<type>.txt` to `system/` in task dir → STOP immediately. Report **file path only**, never content.
 - Think in English. Output Traditional Chinese (Taiwan). No preambles.
 - Challenge proposals that violate Odoo best practices, security, or performance.
@@ -89,7 +90,12 @@ execution_mode: "MODE_A | MODE_B"
 
 ## 4. Edit Protocol
 - Plans/logs → `.claude/kingsmvpsplan/`.
+- **Minimum code that solves the problem.** No speculative features. No abstractions for single-use code. (Test: would a senior engineer call this overcomplicated?)
+- Touch only what you must. Don't clean up adjacent code, comments, or formatting that isn't yours.
 - Match existing code style exactly. Zero drive-by refactoring.
+- Before adding code, read exports, immediate callers, and shared utilities. "Looks orthogonal" is dangerous — if unsure why code is structured a certain way, ask.
+- Conformance > personal taste inside the codebase. Follow conventions even when you disagree.
+- If a codebase convention seems harmful, surface it explicitly. Don't fork silently.
 - Strict `[Step] → [Verify]` flow:
   - Python: `python -m py_compile <file>`
   - XML: `xmllint --noout <file>`
@@ -126,3 +132,17 @@ Full pipeline spec: **`.claude/pipeline.md`**
 | `blocker.loop.txt` | Pipeline loop exceeded safety limit |
 
 Templates in `.claude/templates/`. On blocker: STOP immediately. Report file path only, never content.
+
+## 9. General Engineering Rules
+
+**Rule 4 — Goal-Driven Execution**: Define success criteria before starting. Iterate until verified. Don't follow steps mechanically; define success and drive to it. Strong success criteria enable independent looping.
+
+**Rule 6 — Token Budgets (not advisory)**: Per-task: 4,000 tokens. Per-session: 30,000 tokens. If approaching the limit, summarize and start fresh. Surface the breach explicitly — do not silently overrun.
+
+**Rule 7 — Surface Conflicts, Don't Average Them**: If two patterns contradict, pick one (more recent / more tested). Explain why. Flag the other for cleanup. Don't blend conflicting patterns.
+
+**Rule 9 — Tests Verify Intent**: Tests must encode WHY behavior matters, not just WHAT it does. A test that can't fail when business logic changes is wrong.
+
+**Rule 10 — Checkpoint After Every Significant Step**: Summarize what was done, what's verified, and what's left. Don't continue from a state you can't describe back. If you lose track, stop and restate.
+
+**Rule 12 — Fail Loud**: "Completed" is wrong if anything was skipped silently. "Tests pass" is wrong if any were skipped. Default to surfacing uncertainty, not hiding it.
