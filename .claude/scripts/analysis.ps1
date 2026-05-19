@@ -193,6 +193,27 @@ if (-not (Acquire-Lock $lock3a 300)) {
                 continue
             }
 
+            # 特例：.final_done 已存在於 confirm/（Agent 跳過正常路徑直接寫入，如 ALREADY_IMPLEMENTED）
+            # 補齊缺失 markers → 推進到 analysis/，讓 coding.ps1 接手
+            $sysDir3a = Get-SystemDir $taskDir.FullName
+            if (Test-Path (Join-Path $sysDir3a ".final_done")) {
+                if (Acquire-Lock $taskLock 300) {
+                    try {
+                        if (-not (Test-Path $analysisDone)) { Atomic-WriteFile $analysisDone "" | Out-Null }
+                        if (-not (Test-Path $answerDone))   { Atomic-WriteFile $answerDone   "" | Out-Null }
+                        Release-Lock $taskLock
+                        $dest = Join-Path $script:ANALYSIS_DIR $taskName
+                        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+                        Move-Item $taskDir.FullName $script:ANALYSIS_DIR -Force
+                        Write-Host "[PROMOTE] $taskName confirm/ 發現 .final_done，補齊 markers → analysis/" -ForegroundColor Cyan
+                    } catch {
+                        Write-Host "[ERROR] $taskName PROMOTE 失敗: $_" -ForegroundColor Red
+                        if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
+                    }
+                }
+                continue
+            }
+
             # AI 尚未處理（.analysis_done 不存在）→ 跳過
             if (-not (Test-Path $analysisDone)) { continue }
             if (Test-Path $answerDone) { continue }
@@ -353,7 +374,6 @@ $stageMap = [ordered]@{
     confirm  = $script:CONFIRM_DIR
     analysis = $script:ANALYSIS_DIR
     coding   = $script:CODING_DIR
-    final    = $script:FINAL_DIR
 }
 $total = 0
 foreach ($stage in $stageMap.Keys) {

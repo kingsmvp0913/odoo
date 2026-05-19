@@ -1,0 +1,261 @@
+case_id: "task_3914"
+timestamp: "2026-05-19T10:27:11"
+execution_mode: "MODE_B"
+
+inferred_target:
+  odoo_version: "17.0"
+  module: "idx_ebs"
+  project_name: "2508014 凌越生醫-商務管理平台"
+
+state_summary:
+  is_complete: true
+  confidence: 0.95
+
+clarification_channel: []
+
+technical_specification:
+  odoo_models:
+    - model_name: "idx.test.requisition1"
+      inherit: ""
+      description: "人類醫學送檢單 — 已含 image_file / image_file_name 欄位，無需新增"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+          help: "手動建單時可手動上傳圖片，不觸發OCR辨識"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          help: "配合 Binary 欄位使用"
+
+    - model_name: "idx.test.requisition2"
+      inherit: ""
+      description: "小動物送檢單 — 已含 image_file / image_file_name 欄位，無需新增"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+          help: "手動建單時可手動上傳圖片，不觸發OCR辨識"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          help: "配合 Binary 欄位使用"
+
+    - model_name: "idx.sale.order.ocr1"
+      inherit: ""
+      description: "人類醫學OCR明細 — 已含 image_file / image_file_name，OCR上傳圖片時同步寫入"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          help: "OCR辨識時自動寫入；attachment=True"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+
+    - model_name: "idx.sale.order.ocr2"
+      inherit: ""
+      description: "小動物OCR明細 — 已含 image_file / image_file_name，OCR上傳圖片時同步寫入"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          help: "OCR辨識時自動寫入；attachment=True"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+
+    - model_name: "sale.order.report"
+      inherit: ""
+      description: "送檢單/報告單身 — 已含 image_file / image_file_name"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          help: "手動建單時上傳的圖片檔案；attachment=True"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          help: "圖片檔案名稱，配合 Binary 欄位使用"
+
+    - model_name: "sale.order.line"
+      inherit: ""
+      description: "訂單明細 — 已含 image_file / image_file_name（需求確認：訂單明細不增加，欄位保留）"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          help: "手動建單時上傳的圖片檔案；attachment=True"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+
+  odoo_views_and_actions:
+    - xml_id: "idx_ebs.idx_test_requisition1_form_view"
+      model: "idx.test.requisition1"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已於表單檢體資料區域顯示 image_file (widget=image)，image_file_name invisible=1"
+
+    - xml_id: "idx_ebs.idx_test_requisition2_form_view"
+      model: "idx.test.requisition2"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已於表單檢體資料區域顯示 image_file (widget=image)，image_file_name invisible=1"
+
+    - xml_id: "idx_ebs.idx_sale_order_ocr1_list_view"
+      model: "idx.sale.order.ocr1"
+      view_type: "tree"
+      inherit_id: ""
+      arch_summary: "已於列表顯示 image_file (widget=binary, optional=show)，image_file_name column_invisible=1"
+
+    - xml_id: "idx_ebs.idx_sale_order_ocr2_list_view"
+      model: "idx.sale.order.ocr2"
+      view_type: "tree"
+      inherit_id: ""
+      arch_summary: "已於列表顯示 image_file (widget=binary)，image_file_name column_invisible=1"
+
+    - xml_id: "idx_ebs.idx_sale_order_form_inherit_image"
+      model: "sale.order"
+      view_type: "form"
+      inherit_id: "idx_ebs.idx_sale_order_inherit_form_view"
+      arch_summary: "送檢單/報告頁籤 report_ids tree 的 note 欄位後已加入 image_file_name + image_file (widget=binary, optional=show)"
+
+    - xml_id: "idx_ebs.idx_sale_order_line_form_inherit_image"
+      model: "sale.order"
+      view_type: "form"
+      inherit_id: "sale.view_order_form"
+      arch_summary: "訂單明細頁籤 order_line tree 的 note 欄位後已加入 image_file_name + image_file；需求確認訂單明細不增加，此欄位保留不移除"
+
+  core_logic:
+    - model: "idx.merge.order.wizard"
+      function_signature: "_merge_records_to_orders(self, records, source_model)"
+      trigger: "button_click"
+      pseudocode: |
+        # 已實作：OCR明細合併訂單時，TestRequisition.create() 傳入 image_file 與 image_file_name
+        # ocr1 路徑：'image_file': rec.image_file, 'image_file_name': rec.image_file_name
+        # ocr2 路徑：'image_file': rec.image_file, 'image_file_name': rec.image_file_name
+        # 無需修改
+
+    - model: "IdxOCRController"
+      function_signature: "submit_ocr(self, **kwargs)"
+      trigger: "api_route"
+      pseudocode: |
+        # OCR 辨識後以 base64 存入 ocr record 的 image_file / image_file_name
+        # 後續 merge 時帶入送檢單 — 已實作，無需修改
+
+    - model: "sale.order.report"
+      function_signature: "_check_duplicate_submission(self)"
+      trigger: "button_click"
+      pseudocode: |
+        # QA修正：消除 _check_duplicate_submission() 中的 N+1 query
+        #
+        # 原問題：
+        #   for rec in self:
+        #       self.env[model_name].search([('order_report_id','=',rec.id)], limit=1)  # line 616 — N次查詢
+        #       self.env[model_name].search_count(domain)                                # line 632 — N次查詢
+        #
+        # 修正策略：在 loop 外分兩批（category='0' / category!='0'）預取所有關聯 requisition，
+        # 以 dict 建立 order_report_id -> requisition record 的映射，loop 內改為 dict.get() 查找。
+        # 重複送檢判斷（第二次 search_count）改為在 loop 外一次性批量查詢，同樣以 set 存放 id，
+        # loop 內做 O(1) set 判斷。
+        #
+        # 修正後 pseudocode：
+        # def _check_duplicate_submission(self):
+        #     today = datetime.today()
+        #     ninety_days_ago = today - timedelta(days=90)
+        #
+        #     cat0_ids = self.filtered(lambda r: r.category == '0').ids
+        #     cat1_ids = self.filtered(lambda r: r.category != '0').ids
+        #
+        #     req1_map = {}   # order_report_id -> requisition1 record
+        #     req2_map = {}   # order_report_id -> requisition2 record
+        #
+        #     # Step 1：loop 外批量取得各 category 的 requisition，建 dict 映射
+        #     if cat0_ids:
+        #         req1_recs = self.env['idx.test.requisition1'].search(
+        #             [('order_report_id', 'in', cat0_ids)])
+        #         for r in req1_recs:
+        #             if r.order_report_id.id not in req1_map:
+        #                 req1_map[r.order_report_id.id] = r
+        #
+        #     if cat1_ids:
+        #         req2_recs = self.env['idx.test.requisition2'].search(
+        #             [('order_report_id', 'in', cat1_ids)])
+        #         for r in req2_recs:
+        #             if r.order_report_id.id not in req2_map:
+        #                 req2_map[r.order_report_id.id] = r
+        #
+        #     # Step 2：loop 外批量查重複送檢，結果存入 set
+        #     dup_report_ids = set()
+        #
+        #     if req1_map:
+        #         req1_exclude_ids = [r.id for r in req1_map.values()]
+        #         candidates1 = self.env['idx.test.requisition1'].search([
+        #             ('create_date', '>=', ninety_days_ago),
+        #             ('id', 'not in', req1_exclude_ids),
+        #         ])
+        #         cand1_keys = {(c.patient_name, c.birth_date) for c in candidates1}
+        #         for report_id, req in req1_map.items():
+        #             if (req.patient_name, req.birth_date) in cand1_keys:
+        #                 dup_report_ids.add(report_id)
+        #
+        #     if req2_map:
+        #         req2_exclude_ids = [r.id for r in req2_map.values()]
+        #         candidates2 = self.env['idx.test.requisition2'].search([
+        #             ('create_date', '>=', ninety_days_ago),
+        #             ('id', 'not in', req2_exclude_ids),
+        #         ])
+        #         cand2_keys = {(c.patient_name, c.owner_name) for c in candidates2}
+        #         for report_id, req in req2_map.items():
+        #             if (req.patient_name, req.owner_name) in cand2_keys:
+        #                 dup_report_ids.add(report_id)
+        #
+        #     # Step 3：loop 內改為 O(1) dict/set 查找，完全無 DB query
+        #     for rec in self:
+        #         req_map = req1_map if rec.category == '0' else req2_map
+        #         requisition_id = req_map.get(rec.id)
+        #         if not requisition_id:
+        #             continue
+        #         if rec.id in dup_report_ids:
+        #             return {
+        #                 "type": "ir.actions.client",
+        #                 "tag": "display_notification",
+        #                 "params": {
+        #                     "title": _("重複送檢警告"),
+        #                     "message": _("該訂單於90天內已有送檢紀錄。"),
+        #                     "sticky": True,
+        #                     "type": "warning",
+        #                     "next": {"type": "ir.actions.client", "tag": "soft_reload"},
+        #                 },
+        #             }
+        #     return None
+
+  security_model:
+    access_rights_csv: []
+    record_rules: []
+
+  project_structure:
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition1.py  # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition2.py  # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr1.py    # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr2.py    # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/sale_order_report.py      # _check_duplicate_submission() N+1 修正目標"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/sale_order_line.py        # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/wizards/idx_merge_order_wizard.py # image_file 合併邏輯已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition1.xml # image widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition2.xml # image widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_sale_order_ocr1.xml   # binary widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_sale_order_ocr2.xml   # binary widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/sale_order.xml            # 送檢單/報告 image binary 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/controllers/idx_ocr.py               # OCR 圖片上傳邏輯已存在"
+
+implementation_status:
+  verdict: "NEEDS_FIX"
+  summary: |
+    原 ALREADY_IMPLEMENTED 判定因 QA 發現 N+1 query 問題而需修正。
+    sale_order_report._check_duplicate_submission() 在 for-loop 內執行兩次 search()（lines 616, 632），
+    當 self 包含大量記錄時造成 O(N) DB 查詢。
+    修正方案：loop 外預取 requisition 記錄並建立 dict 映射，再批量查重複送檢並存入 set，
+    loop 內全部改為 O(1) dict.get() / set 判斷，總 DB 查詢數降為固定 4 次（req1查找、req2查找、候選1查找、候選2查找）。
+    其餘 image_file / image_file_name 功能已實作，無需修改。

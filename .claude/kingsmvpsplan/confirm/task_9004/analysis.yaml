@@ -1,6 +1,0 @@
-case_id: "CASE-9004"
-module: "hr_leave_ext"
-odoo_version: "17.0"
-project_name: null
-execution_mode: "MODE_A"
-description: "請假申請審核狀態同步異常"

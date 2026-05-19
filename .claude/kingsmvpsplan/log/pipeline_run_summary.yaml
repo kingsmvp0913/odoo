@@ -1,20 +1,8 @@
-﻿run_id: '05/18/2026 15:26:42'
-run_ended_at: '2026-05-19T10:02:16.1734753+08:00'
-loop_count: 15
+﻿run_id: '2026-05-19T10:27:09.8653539+08:00'
+run_ended_at: '2026-05-19T10:27:12.5667441+08:00'
+loop_count: 0
 tasks_pending_ai: 1
 tasks_in_pipeline:
   - task_id: 'task_3914'
-    stage: 'confirm'
-    status: 'idle'
-  - task_id: 'task_9004'
-    stage: 'confirm'
-    status: 'blocker'
-  - task_id: 'task_9001'
-    stage: 'final'
-    status: 'idle'
-  - task_id: 'task_9002'
-    stage: 'final'
-    status: 'idle'
-  - task_id: 'task_9003'
-    stage: 'final'
-    status: 'idle'
+    stage: 'analysis'
+    status: 'pending_ai'

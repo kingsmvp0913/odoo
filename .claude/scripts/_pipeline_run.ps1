@@ -244,7 +244,7 @@ $summaryLines = @(
     "tasks_pending_ai: $pendingCount",
     "tasks_in_pipeline:"
 )
-$stageRoots = @($script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
+$stageRoots = @($script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR)
 foreach ($root in $stageRoots) {
     if (-not (Test-Path $root)) { continue }
     $stageName = Split-Path $root -Leaf
