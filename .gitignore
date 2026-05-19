@@ -37,3 +37,7 @@ odoo-[0-9]*.*/custom_addons
 
 
 .claude/settings.local.json
+
+# --- kingsmvpsplan: 只同步 README.md，其餘全忽略（細則在子目錄 .gitignore）---
+.claude/kingsmvpsplan/**
+!.claude/kingsmvpsplan/.gitignore
