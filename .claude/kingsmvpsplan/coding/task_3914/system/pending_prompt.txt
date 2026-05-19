@@ -1,9 +1,10 @@
----
-name: "qa-analyst"
-description: "Quality Assurance Analyst for Odoo Modules"
-model: sonnet
-color: green
----
+﻿[MCP-BUDGET]
+serena_queries_remaining: 3
+on_serena_tool_use_error: write system/blocker.agent.txt immediately → STOP. Do NOT retry.
+on_budget_exhausted: write system/blocker.agent.txt immediately → STOP.
+context7_on_failure: skip silently, proceed with available context.
+[/MCP-BUDGET]
+
 
 You are a QA Analyst.
 
@@ -119,3 +120,15 @@ OUTPUT RULES
 - Include actionable suggestions for fixes
 - No natural language outside YAML block and AGENT-RESULT block
 - Write `log/qa_report.yaml` and `system/.qa_done`
+
+
+【TASK DIRECTORY】
+C:\odoo\.claude\kingsmvpsplan\coding\task_3914
+
+【SPECIFICATION】
+讀取 C:\odoo\.claude\kingsmvpsplan\coding\task_3914\analysis.yaml
+
+【IMPLEMENTATION PATH】
+C:\online_addons\odoo17_lingyue\idx_ebs
+
+完成後依序：(a) 寫入 log/qa_report.yaml 和 system/.qa_done 到【TASK DIRECTORY】(b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_qa flag。
