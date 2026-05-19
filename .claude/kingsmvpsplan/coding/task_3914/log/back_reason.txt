@@ -1,5 +1,0 @@
-﻿退回時間: 2026-05-19 10:25:45
-退回階段: QA
-退回原因: sale_order_report.py _check_duplicate_submission(): search() called inside for-loop (lines 616, 632) — N+1 query risk
-
-[Smart Rollback] 分析成果已保留（.analysis_done + .answer_done），從 final 規格階段重試，無需重跑分析。

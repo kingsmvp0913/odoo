@@ -1,1 +1,0 @@
-新增 priority_level 欄位到 sale.order，用於標示客戶重要性

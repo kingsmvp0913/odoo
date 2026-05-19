@@ -1,9 +1,0 @@
-task_id: task_9002
-status: PASSED
-tested_at: "2026-05-18T10:05:00"
-checks:
-  - name: "py_compile"
-    result: PASS
-  - name: "bug_fix_verification"
-    result: PASS
-    detail: "含稅總額計算正確，測試訂單金額符合預期，extra_lines 正確加總"
