@@ -1,8 +1,8 @@
-﻿run_id: '05/19/2026 10:27:09'
-run_ended_at: '2026-05-19T10:50:58.9187353+08:00'
-loop_count: 6
+﻿run_id: '05/19/2026 16:06:55'
+run_ended_at: '2026-05-19T16:07:50.5726984+08:00'
+loop_count: 1
 tasks_pending_ai: 1
 tasks_in_pipeline:
   - task_id: 'task_3918'
-    stage: 'confirm'
+    stage: 'analysis'
     status: 'pending_ai'

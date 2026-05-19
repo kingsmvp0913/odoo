@@ -1,0 +1,98 @@
+case_id: "task_3918"
+timestamp: "2026-05-19T15:59:15"
+execution_mode: "MODE_B"
+
+inferred_target:
+  odoo_version: "17.0"
+  module: "idx_ebs"
+  project_name: "2508014 凌越生醫-商務管理平台"
+
+state_summary:
+  is_complete: true
+  confidence: 0.95
+  implementation_verdict: "NO_CHANGE_NEEDED"
+
+clarification_channel: []
+
+technical_specification:
+  odoo_models:
+    - model_name: "idx.test.requisition1"
+      inherit: ""
+      description: "人類醫學送檢單 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+    - model_name: "idx.test.requisition2"
+      inherit: ""
+      description: "小動物送檢單 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+    - model_name: "idx.sale.order.ocr1"
+      inherit: ""
+      description: "OCR明細1 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+    - model_name: "idx.sale.order.ocr2"
+      inherit: ""
+      description: "OCR明細2 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+  odoo_views_and_actions:
+    - xml_id: "idx_ebs.view_idx_test_requisition1_form"
+      model: "idx.test.requisition1"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=image，state 唯讀控制"
+    - xml_id: "idx_ebs.view_idx_test_requisition2_form"
+      model: "idx.test.requisition2"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=image，state 唯讀控制"
+    - xml_id: "idx_ebs.view_idx_sale_order_ocr1_tree"
+      model: "idx.sale.order.ocr1"
+      view_type: "tree"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=binary optional=show"
+    - xml_id: "idx_ebs.view_idx_sale_order_ocr2_form"
+      model: "idx.sale.order.ocr2"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=binary"
+  core_logic:
+    - model: "idx.merge.order.wizard"
+      function_signature: "_create_orders_from_ocr(self)"
+      trigger: "button_click"
+      pseudocode: |
+        OCR合併時已寫入：
+        requisition.create({ image_file: ocr.image_file, image_file_name: ocr.image_file_name })
+        適用 ocr1→requisition1 與 ocr2→requisition2 兩個分支
+  security_model:
+    access_rights_csv: []
+    record_rules: []
+  project_structure:
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition1.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition2.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr1.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr2.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition1.xml"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition2.xml"
+    - "online_addons/odoo17_lingyue/idx_ebs/wizards/idx_merge_order_wizard.py"

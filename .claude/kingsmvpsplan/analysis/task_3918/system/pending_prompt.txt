@@ -1,13 +1,15 @@
----
-name: "requirements-analyst"
-description: "Requirements analysis pipeline for Coding Agent"
-model: sonnet
-color: red
-memory: project
----
+﻿ultrathink
 
-INPUT_CASE_ID = "__CASE_ID__"
-CURRENT_TIME  = "__CURRENT_TIME__"
+[MCP-BUDGET]
+serena_queries_remaining: 3
+on_serena_tool_use_error: write system/blocker.agent.txt immediately → STOP. Do NOT retry.
+on_budget_exhausted: write system/blocker.agent.txt immediately → STOP.
+context7_on_failure: skip silently, proceed with available context.
+[/MCP-BUDGET]
+
+
+INPUT_CASE_ID = "task_3918"
+CURRENT_TIME  = "2026-05-19T16:06:56"
 
 You are a Senior Odoo Systems Architect.
 
@@ -144,3 +146,112 @@ OUTPUT RULES
 - Write `.final_done` marker after MODE_B finalization (confidence >= 0.9)
 - Write `.low_confidence` marker (NOT `.final_done`) when MODE_B confidence < 0.9
 - Do NOT output to stdout except the YAML block and the AGENT-RESULT block
+
+
+【TASK DIRECTORY】
+C:\odoo\.claude\kingsmvpsplan\analysis\task_3918
+
+【EXISTING ANALYSIS WITH USER ANSWERS】
+<analysis_yaml>
+case_id: "task_3918"
+timestamp: "2026-05-19T15:59:15"
+execution_mode: "MODE_B"
+
+inferred_target:
+  odoo_version: "17.0"
+  module: "idx_ebs"
+  project_name: "2508014 凌越生醫-商務管理平台"
+
+state_summary:
+  is_complete: true
+  confidence: 0.95
+  implementation_verdict: "NO_CHANGE_NEEDED"
+
+clarification_channel: []
+
+technical_specification:
+  odoo_models:
+    - model_name: "idx.test.requisition1"
+      inherit: ""
+      description: "人類醫學送檢單 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+    - model_name: "idx.test.requisition2"
+      inherit: ""
+      description: "小動物送檢單 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+    - model_name: "idx.sale.order.ocr1"
+      inherit: ""
+      description: "OCR明細1 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+    - model_name: "idx.sale.order.ocr2"
+      inherit: ""
+      description: "OCR明細2 - image_file/image_file_name 欄位已存在"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+  odoo_views_and_actions:
+    - xml_id: "idx_ebs.view_idx_test_requisition1_form"
+      model: "idx.test.requisition1"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=image，state 唯讀控制"
+    - xml_id: "idx_ebs.view_idx_test_requisition2_form"
+      model: "idx.test.requisition2"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=image，state 唯讀控制"
+    - xml_id: "idx_ebs.view_idx_sale_order_ocr1_tree"
+      model: "idx.sale.order.ocr1"
+      view_type: "tree"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=binary optional=show"
+    - xml_id: "idx_ebs.view_idx_sale_order_ocr2_form"
+      model: "idx.sale.order.ocr2"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已顯示 image_file widget=binary"
+  core_logic:
+    - model: "idx.merge.order.wizard"
+      function_signature: "_create_orders_from_ocr(self)"
+      trigger: "button_click"
+      pseudocode: |
+        OCR合併時已寫入：
+        requisition.create({ image_file: ocr.image_file, image_file_name: ocr.image_file_name })
+        適用 ocr1→requisition1 與 ocr2→requisition2 兩個分支
+  security_model:
+    access_rights_csv: []
+    record_rules: []
+  project_structure:
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition1.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition2.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr1.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr2.py"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition1.xml"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition2.xml"
+    - "online_addons/odoo17_lingyue/idx_ebs/wizards/idx_merge_order_wizard.py"
+
+</analysis_yaml>
+
+使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_final。
