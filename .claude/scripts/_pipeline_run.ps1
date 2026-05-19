@@ -130,11 +130,48 @@ Write-Host "`n[RESUME] 掃描 .blocker_resolved 標記..." -ForegroundColor Cyan
 $resolvedCount = 0
 Get-ChildItem $script:PLAN_DIR -Recurse -Filter ".blocker_resolved" -ErrorAction SilentlyContinue | ForEach-Object {
     $sysDir   = Split-Path $_.FullName -Parent
-    $taskName = Split-Path (Split-Path $sysDir -Parent) -Leaf
-    Get-ChildItem $sysDir -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Remove-Item -Force
-    Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
-    Write-Host "[RESUME] $taskName blocker 已清除，重新加入佇列" -ForegroundColor Green
-    $resolvedCount++
+    $taskDir  = Split-Path $sysDir -Parent
+    $taskName = Split-Path $taskDir -Leaf
+
+    # P1-03: 排除 final/ 目錄（歸檔任務不應被 resume 掃描）
+    if ($taskDir -like "*$($script:FINAL_DIR)*") {
+        Write-Host "[SKIP] $taskName 在 final/，忽略 .blocker_resolved" -ForegroundColor DarkGray
+        return
+    }
+
+    $blockers = Get-ChildItem $sysDir -Filter "blocker.*.txt" -ErrorAction SilentlyContinue
+    $refused  = $false
+    foreach ($b in @($blockers)) {
+        # P0-02: blocker.loop → 計數器未重置則拒絕 resume，防止立即再觸發上限
+        if ($b.Name -eq 'blocker.loop.txt') {
+            if (Test-Path $counterFile) {
+                try {
+                    $cf = Get-Content $counterFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                    if ([int]$cf.loop_count -gt $maxLoops) {
+                        Write-Host "[REFUSE] $taskName blocker.loop resume 被拒：_LOOP_COUNTER.json 計數未重置（loop_count=$($cf.loop_count) > $maxLoops），請先刪除 _LOOP_COUNTER.json" -ForegroundColor Red
+                        $refused = $true
+                    }
+                } catch {}
+            }
+        }
+        # P0-02: blocker.spec → 警告 analysis.yaml 若未更新
+        if ($b.Name -eq 'blocker.spec.txt' -and -not $refused) {
+            $yamlPath = Join-Path $taskDir "analysis.yaml"
+            if ((Test-Path $yamlPath) -and (Test-Path $b.FullName)) {
+                if ((Get-Item $yamlPath).LastWriteTime -le $b.LastWriteTime) {
+                    Write-Host "[WARN] $taskName blocker.spec resume：analysis.yaml mtime 未更新，規格可能未修補" -ForegroundColor Yellow
+                }
+            }
+        }
+        if (-not $refused) {
+            Remove-Item $b.FullName -Force -ErrorAction SilentlyContinue
+        }
+    }
+    if (-not $refused) {
+        Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+        Write-Host "[RESUME] $taskName blocker 已清除，重新加入佇列" -ForegroundColor Green
+        $resolvedCount++
+    }
 }
 if ($resolvedCount -eq 0) { Write-Host "[RESUME] 無需恢復的任務" -ForegroundColor DarkGray }
 

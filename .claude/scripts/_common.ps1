@@ -265,6 +265,27 @@ function Test-HasBlocker {
 }
 
 # ============================================================
+# Crash 修復（P0-03）：done marker 存在但 pending 殘留時補完原子協議
+# ============================================================
+function Resolve-CrashState {
+    param([string]$taskDir, [string]$stage, [string]$doneMarker)
+    $sysDir        = Get-SystemDir $taskDir
+    $logDir        = Get-LogDir    $taskDir
+    $doneFlag      = Join-Path $sysDir $doneMarker
+    $pendingFlag   = Join-Path $sysDir ".pending_$stage"
+    $pendingPrompt = Join-Path $sysDir "pending_prompt.txt"
+    if (-not (Test-Path $doneFlag)) { return }
+    if (-not (Test-Path $pendingFlag) -and -not (Test-Path $pendingPrompt)) { return }
+    $taskName = Split-Path $taskDir -Leaf
+    Write-Host "[CRASH-FIX] $taskName $stage crash 殘留，補完原子協議" -ForegroundColor Yellow
+    if (Test-Path $pendingPrompt) {
+        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force $logDir | Out-Null }
+        Move-Item $pendingPrompt (Join-Path $logDir 'done_prompt.txt') -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item $pendingFlag -Force -ErrorAction SilentlyContinue
+}
+
+# ============================================================
 # YAML 完整性驗證（防止空規格進入實作階段）
 # ============================================================
 function Test-YamlComplete {
@@ -360,7 +381,7 @@ function Get-WikiCache {
 
     $addonsRoot = Get-OnlineAddonsRoot -odooVersion $odooVersion -projectName $projectName -moduleName $moduleName
 
-    $wikiPath = Join-Path $addonsRoot "graphify-out\wiki\index.md"
+    $wikiPath = [IO.Path]::Combine($addonsRoot, 'graphify-out', 'wiki', 'index.md')
     if (-not (Test-Path $wikiPath)) { return "" }
 
     try {
@@ -461,6 +482,18 @@ function BackToConfirm {
         $count = 0
         if (Test-Path $reentryFile) { try { $count = [int](Get-Content $reentryFile -Raw -EA SilentlyContinue) } catch {} }
         Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
+
+        # P1-01: QA 失敗退回時注入 _qa_failure_hint，防止 MODE_B SHORTCUT 跳過修正直接複製舊規格
+        if ($stage -eq "QA" -and (Test-Path $yamlPath)) {
+            try {
+                $yc = Get-Content $yamlPath -Raw -Encoding UTF8
+                if ($yc -notmatch '_qa_failure_hint:') {
+                    $hint = $reason -replace "'", "''"
+                    $yc  = $yc.TrimEnd() + "`n_qa_failure_hint: '$hint'`n"
+                    Atomic-WriteFile $yamlPath $yc | Out-Null
+                }
+            } catch {}
+        }
 
         $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n[Smart Rollback] 分析成果已保留（.analysis_done + .answer_done），從 final 規格階段重試，無需重跑分析。"
         Atomic-WriteFile (Join-Path $destLogDir 'back_reason.txt') $content | Out-Null

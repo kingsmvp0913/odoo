@@ -80,6 +80,8 @@ if (-not (Acquire-Lock $lock2 300)) {
 
             # 已分析完但未移動（上次意外中斷的容錯）
             if (Test-Path $analysisDone) {
+                # P1-02: 補移前先修復可能的 crash 殘留（done marker 存在但 pending 未清）
+                Resolve-CrashState -taskDir $taskDir.FullName -stage "analysis" -doneMarker ".analysis_done"
                 $taskLock = Join-Path $taskDir.FullName "process.lock"
                 if (Acquire-Lock $taskLock 300) {
                     try {
@@ -194,8 +196,12 @@ if (-not (Acquire-Lock $lock3a 300)) {
             # AI 尚未處理（.analysis_done 不存在）→ 跳過
             if (-not (Test-Path $analysisDone)) { continue }
             if (Test-Path $answerDone) { continue }
-            # AI 正在處理中（system/pending_prompt.txt 存在）→ 跳過，避免重複觸發
-            if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt')) { continue }
+            # AI 正在處理中（system/pending_prompt.txt 存在）→ 超過 30 分鐘則清除重新排隊，否則跳過
+            # P1-04: 補充 stale 偵測（與 STEP 2 / STEP 3b 行為一致）
+            if (Test-Path (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt')) {
+                if (Test-PendingStale $taskDir.FullName) { Clear-StalePending $taskDir.FullName }
+                else { continue }
+            }
             if (-not (Test-Path $yamlPath)) { Write-Host "[WARN] $taskName 缺少 analysis.yaml" -ForegroundColor Yellow; continue }
 
             if (-not (Acquire-Lock $taskLock 300)) {

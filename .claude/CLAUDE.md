@@ -47,7 +47,7 @@ Execute in order. Stop as soon as sufficient.
 | qa | `.pending_qa` | `.qa_done` | `coding/` |
 | archive | _(none)_ | _(none)_ | `final/` ← QA-passed tasks |
 
-> **`final low-conf` 注意**：PS1 偵測到 `.low_confidence` 後，移回 `confirm/` 時必須同時重建 `.pending_analysis` + `pending_prompt.txt`，否則下一輪掃描無法撿到此任務。
+> **`final low-conf` 注意**：PS1 偵測到 `.low_confidence` 後，移回 `confirm/`（保留 `.analysis_done`，不重建 `.pending_analysis`）。下一輪 STEP 3a 偵測到 `.analysis_done` 存在、`.answer_done` 不存在，等使用者填完新問題的 `user_answer` 後自動繼續，**不會重跑 MODE_A**。
 
 **Task dir layout**:
 ```

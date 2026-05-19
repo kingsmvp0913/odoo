@@ -30,6 +30,9 @@ foreach ($taskDir in $codingTasks) {
         continue
     }
 
+    # P0-03: done marker 存在但 pending 殘留 → 補完原子協議，不重新執行
+    Resolve-CrashState -taskDir $taskDir.FullName -stage "qa" -doneMarker ".qa_done"
+
     if (-not (Test-Path $implementDone)) { continue }
     if (Test-Path $qaDone)               { continue }
 

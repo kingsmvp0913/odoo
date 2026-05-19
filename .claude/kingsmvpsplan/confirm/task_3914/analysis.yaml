@@ -1,0 +1,215 @@
+case_id: "task_3914"
+timestamp: "2026-05-19T09:30:20"
+execution_mode: "MODE_B"
+
+inferred_target:
+  project: "Odoo"
+  odoo_version: "17.0"
+  module: "idx_ebs"
+  project_name: "2508014 凌越生醫-商務管理平台"
+  confidence: 0.98
+
+state_summary:
+  is_complete: true
+  has_blocking_unknowns: false
+
+clarification_channel: []
+
+technical_specification:
+  odoo_models:
+    - model_name: "idx.test.requisition1"
+      inherit: ""
+      description: "人類醫學送檢單 — 已含 image_file / image_file_name 欄位，無需新增"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+          required: false
+          tracking: false
+          help: "手動建單時可手動上傳圖片，不觸發OCR辨識"
+          selection_or_comodel: ""
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          required: false
+          tracking: false
+          help: "配合 Binary 欄位使用"
+          selection_or_comodel: ""
+
+    - model_name: "idx.test.requisition2"
+      inherit: ""
+      description: "小動物送檢單 — 已含 image_file / image_file_name 欄位，無需新增"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片"
+          required: false
+          tracking: false
+          help: "手動建單時可手動上傳圖片，不觸發OCR辨識"
+          selection_or_comodel: ""
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          required: false
+          tracking: false
+          help: "配合 Binary 欄位使用"
+          selection_or_comodel: ""
+
+    - model_name: "idx.sale.order.ocr1"
+      inherit: ""
+      description: "人類醫學OCR明細 — 已含 image_file / image_file_name，OCR上傳圖片時同步寫入"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          required: false
+          tracking: false
+          help: "OCR辨識時自動寫入；attachment=True"
+          selection_or_comodel: ""
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          required: false
+          tracking: false
+          help: ""
+          selection_or_comodel: ""
+
+    - model_name: "idx.sale.order.ocr2"
+      inherit: ""
+      description: "小動物OCR明細 — 已含 image_file / image_file_name，OCR上傳圖片時同步寫入"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          required: false
+          tracking: false
+          help: "OCR辨識時自動寫入；attachment=True"
+          selection_or_comodel: ""
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          required: false
+          tracking: false
+          help: ""
+          selection_or_comodel: ""
+
+    - model_name: "sale.order.report"
+      inherit: ""
+      description: "送檢單/報告單身 — 已含 image_file / image_file_name"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          required: false
+          tracking: false
+          help: "手動建單時上傳的圖片檔案；attachment=True"
+          selection_or_comodel: ""
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          required: false
+          tracking: false
+          help: "圖片檔案名稱，配合 Binary 欄位使用"
+          selection_or_comodel: ""
+
+    - model_name: "sale.order.line"
+      inherit: ""
+      description: "訂單明細 — 已含 image_file / image_file_name（需求確認：訂單明細不增加，欄位保留）"
+      fields:
+        - field_name: "image_file"
+          type: "Binary"
+          string: "圖片檔"
+          required: false
+          tracking: false
+          help: "手動建單時上傳的圖片檔案；attachment=True"
+          selection_or_comodel: ""
+        - field_name: "image_file_name"
+          type: "Char"
+          string: "圖片檔名"
+          required: false
+          tracking: false
+          help: ""
+          selection_or_comodel: ""
+
+  odoo_views_and_actions:
+    - xml_id: "idx_ebs.idx_test_requisition1_form_view"
+      model: "idx.test.requisition1"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已於表單檢體資料區域顯示 image_file (widget=image)，image_file_name invisible=1"
+
+    - xml_id: "idx_ebs.idx_test_requisition2_form_view"
+      model: "idx.test.requisition2"
+      view_type: "form"
+      inherit_id: ""
+      arch_summary: "已於表單檢體資料區域顯示 image_file (widget=image)，image_file_name invisible=1"
+
+    - xml_id: "idx_ebs.idx_sale_order_ocr1_list_view"
+      model: "idx.sale.order.ocr1"
+      view_type: "tree"
+      inherit_id: ""
+      arch_summary: "已於列表顯示 image_file (widget=binary, optional=show)，image_file_name column_invisible=1"
+
+    - xml_id: "idx_ebs.idx_sale_order_ocr2_list_view"
+      model: "idx.sale.order.ocr2"
+      view_type: "tree"
+      inherit_id: ""
+      arch_summary: "已於列表顯示 image_file (widget=binary)，image_file_name column_invisible=1"
+
+    - xml_id: "idx_ebs.idx_sale_order_form_inherit_image"
+      model: "sale.order"
+      view_type: "form"
+      inherit_id: "idx_ebs.idx_sale_order_inherit_form_view"
+      arch_summary: "送檢單/報告頁籤 report_ids tree 的 note 欄位後已加入 image_file_name + image_file (widget=binary, optional=show)"
+
+    - xml_id: "idx_ebs.idx_sale_order_line_form_inherit_image"
+      model: "sale.order"
+      view_type: "form"
+      inherit_id: "sale.view_order_form"
+      arch_summary: "訂單明細頁籤 order_line tree 的 note 欄位後已加入 image_file_name + image_file；需求確認訂單明細不增加，此欄位保留不移除"
+
+  core_logic:
+    - model: "idx.merge.order.wizard"
+      function_signature: "_merge_records_to_orders(self, records, source_model)"
+      trigger: "button_click"
+      pseudocode: |
+        # 已實作：OCR明細合併訂單時，TestRequisition.create() 傳入 image_file 與 image_file_name
+        # ocr1 路徑：'image_file': rec.image_file, 'image_file_name': rec.image_file_name
+        # ocr2 路徑：'image_file': rec.image_file, 'image_file_name': rec.image_file_name
+        # 無需修改
+
+    - model: "IdxOCRController"
+      function_signature: "submit_ocr(self, **kwargs)"
+      trigger: "api_route"
+      pseudocode: |
+        # OCR 辨識後以 base64 存入 ocr record 的 image_file / image_file_name
+        # 後續 merge 時帶入送檢單 — 已實作，無需修改
+
+  security_model:
+    access_rights_csv: []
+    record_rules: []
+
+  project_structure:
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition1.py  # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_test_requisition2.py  # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr1.py    # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/idx_sale_order_ocr2.py    # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/sale_order_report.py      # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/models/sale_order_line.py        # image_file, image_file_name 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/wizards/idx_merge_order_wizard.py # image_file 合併邏輯已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition1.xml # image widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_test_requisition2.xml # image widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_sale_order_ocr1.xml   # binary widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/idx_sale_order_ocr2.xml   # binary widget 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/views/back/sale_order.xml            # 送檢單/報告 image binary 已存在"
+    - "online_addons/odoo17_lingyue/idx_ebs/controllers/idx_ocr.py               # OCR 圖片上傳邏輯已存在"
+
+implementation_status:
+  verdict: "ALREADY_IMPLEMENTED"
+  summary: |
+    需求所要求的四項功能均已在 idx_ebs 模組中完整實作：
+    1. idx.test.requisition1 / idx.test.requisition2 已有 image_file（widget=image）欄位，支援手動上傳圖片。
+    2. idx.merge.order.wizard._merge_records_to_orders() 合併 OCR 明細時，已將 image_file / image_file_name 一併寫入送檢單。
+    3. 訂單明細（sale.order.line）雖有 image_file 欄位，需求確認訂單明細不增加新功能，現況符合。
+    4. 檢體資料手動上傳圖片無 OCR 辨識觸發邏輯，符合「手動上傳不須進行OCR辨識」的要求。
+    本任務無需任何程式碼修改，可直接進行 QA 驗收。

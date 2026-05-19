@@ -123,8 +123,13 @@ MODE_B LOW-CONFIDENCE (confidence < 0.9):
 MODE_B SHORTCUT (final spec stage only):
 If the prompt contains `[EXISTING ANALYSIS WITH USER ANSWERS]` and the enclosed YAML already has
 `execution_mode: MODE_B` with `state_summary.is_complete: true` and a fully populated
-`technical_specification` — DO NOT re-explore the codebase. Copy the existing technical_specification
-as-is, update only the `timestamp`, and write `.final_done` immediately.
+`technical_specification` — AND the YAML does NOT contain `_qa_failure_hint:` —
+DO NOT re-explore the codebase. Copy the existing technical_specification as-is, update only the
+`timestamp`, and write `.final_done` immediately.
+
+SHORTCUT EXCEPTION: If the YAML contains `_qa_failure_hint:`, the previous implementation failed QA.
+DO NOT use SHORTCUT. Re-explore the codebase, read `log/back_reason.txt` for QA failure details,
+revise the `technical_specification` to fix the issue, then proceed as normal MODE_B.
 
 OUTPUT RULES
 
