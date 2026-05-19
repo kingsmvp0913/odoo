@@ -73,17 +73,25 @@ foreach ($taskDir in $analysisTasks) {
             Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
-        # ALREADY_IMPLEMENTED / NO_CHANGE_NEEDED：無需任何程式碼變更，直接寫 .implement_done 跳過 coding 進 QA
+        # ALREADY_IMPLEMENTED / NO_CHANGE_NEEDED：無需任何程式碼變更，直接寫 .implement_done + 自動 QA PASS，跳過 QA agent
         $skipCoding  = ($yamlContent -match 'ALREADY_IMPLEMENTED') -or ($yamlContent -match 'NO_CHANGE_NEEDED')
         $skipReason  = if ($yamlContent -match 'NO_CHANGE_NEEDED') { "分析確認無需修改" } else { "需求已實作" }
         if ($skipCoding) {
             Atomic-WriteFile $implementDone "" | Out-Null
+
+            # 自動 QA PASS：無新代碼，直接寫 qa_report.yaml + .qa_done，略過 QA agent
+            $logDir     = Get-LogDir    $taskDir.FullName
+            $sysDir     = Get-SystemDir $taskDir.FullName
+            $qaReport   = "status: `"PASSED`"`nchecked_at: `"$(Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')`"`nitems: []`nissues:`n  - severity: `"warning`"`n    description: `"SKIP-QA: $skipReason — no new code written; code quality checks not applicable`"`n    suggestion: `"`"`n"
+            Atomic-WriteFile (Join-Path $logDir  "qa_report.yaml") $qaReport | Out-Null
+            Atomic-WriteFile (Join-Path $sysDir  ".qa_done")        ""         | Out-Null
+
             Release-Lock $taskLock
             $dest = Join-Path $script:CODING_DIR $taskName
             if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
             try {
                 Move-Item $taskDir.FullName $script:CODING_DIR -Force
-                Write-Host "[SKIP-CODING] $taskName $skipReason → coding/ (等待 QA 確認)" -ForegroundColor Cyan
+                Write-Host "[SKIP-CODING] $taskName $skipReason → coding/ (自動 QA PASS)" -ForegroundColor Cyan
             } catch {
                 Write-Host "[ERROR] $taskName Move 失敗: $_" -ForegroundColor Red
                 Remove-Item $implementDone -Force -ErrorAction SilentlyContinue
