@@ -1,7 +1,7 @@
-# CLAUDE.md (V8.2)
+# CLAUDE.md (V8.3)
 
 ## 0. Hard Rules
-- NEVER modify core Odoo files. Custom code in `C:/online_addons/` only (never `custom_addons/`).
+- NEVER modify core Odoo files. Custom code in `$ONLINE_ADDONS_DIR` (`C:\online_addons\` on Windows, `/online_addons` on Linux) only. Never touch `custom_addons/`.
 - NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks. When still uncertain after surfacing interpretations, ask — do not proceed on a guess.
 - Stop when confused. Name what's unclear before continuing.
 - NEVER add fields/models/logic beyond `analysis.yaml` spec.
@@ -16,30 +16,22 @@
 - **Spec file**: `<task_root>/analysis.yaml`
 - **Pipeline flag**: `.claude/kingsmvpsplan/_PIPELINE_WAITING` (content = ISO timestamp; TTL 30 min)
 - **Loop counter**: `.claude/kingsmvpsplan/_LOOP_COUNTER.json`
-- PS1 scripts run on the user's machine; paths are computed via `$PSScriptRoot` (cross-platform). When Claude executes on Linux, translate `C:\odoo` → project root, `C:\online_addons` → `/online_addons` (or `$ONLINE_ADDONS_DIR` env var).
+- PS1 scripts run on the user's machine; paths are computed via `$PSScriptRoot` (cross-platform). When Claude executes on Linux, translate `C:\odoo` → project root, `C:\online_addons` → `$ONLINE_ADDONS_DIR` (fallback: `/online_addons`).
+- Agent 寫入專案檔案時一律使用相對路徑或環境變數，**禁止寫死任何絕對路徑**（包括 `C:\` 或 `/home/...`）。
 
 ## 2. Knowledge Retrieval (Decision Tree)
 Execute in order. Stop as soon as sufficient.
 1. **Graphify** → `<online_addons_root>/graphify-out/wiki/index.md`
-   - Main orchestrator reads **once** per pipeline run, injects as `[WIKI-CACHE]` block into sub-Agent prompts
-   - Sub-Agents with `[WIKI-CACHE]` in prompt **must not** re-read wiki
+   - PS1 已在 `pending_prompt.txt` 內 prepend `[WIKI-CACHE]` 區塊（最多 60 行）；Agent 收到後直接使用，**不得重讀** wiki 檔案
    - **If wiki file not found → skip entirely, do NOT manually explore files, go to step 2**
 2. **Serena** → Use when Graphify wiki is absent OR lacks a specific symbol/call chain
    - **On `tool_use_error` or no response → immediately write `system/blocker.agent.txt` → STOP. Do NOT retry.**
    - **Session query cap: max 3 distinct Serena queries per agent session. If still insufficient → write `system/blocker.agent.txt` → STOP.**
 3. **Context7** → Only to confirm Odoo native API (field types, decorators, method signatures) for the target version
    - On any failure → skip silently (non-blocking; proceed with available context)
+   - Session query cap: max **5** calls; after limit skip silently (non-blocking)
 
-**WIKI-CACHE injection procedure** (main orchestrator, before spawning sub-Agents):
-```
-1. Read <online_addons_root>/graphify-out/wiki/index.md
-2. If file not found → skip injection entirely (sub-Agent will use Serena directly)
-3. If found → extract lines mentioning the target module (max 200 lines)
-4. Prepend to each sub-Agent prompt:
-   [WIKI-CACHE]
-   <extracted lines>
-   [/WIKI-CACHE]
-```
+**WIKI-CACHE 注入**：由 PS1（`Get-WikiCache`）在生成 `pending_prompt.txt` 時自動 prepend（最多 60 行）。主調度不需重複注入。子 Agent 收到 `[WIKI-CACHE]` 後直接使用，不得重讀 wiki 檔案。
 
 ## 3. Task Spec
 
@@ -50,10 +42,12 @@ Execute in order. Stop as soon as sufficient.
 | analysis (initial) | `.pending_analysis` | `.analysis_done` | `confirm/` |
 | answer-check | _(PS1 only, no pending)_ | `.answer_done` | `confirm/` → `analysis/` |
 | final (MODE_B) | `.pending_final` | `.final_done` | `analysis/` |
-| final low-conf | _(none — PS1 detects)_ | `.low_confidence` → routes back to confirm/ | `analysis/` → `confirm/` |
+| final low-conf | _(PS1 偵測後重建)_ | `.low_confidence` → routes back to confirm/ | `analysis/` → `confirm/` |
 | coding | `.pending_coding` | `.implement_done` | `coding/` |
 | qa | `.pending_qa` | `.qa_done` | `coding/` |
 | archive | _(none)_ | _(none)_ | `final/` ← QA-passed tasks |
+
+> **`final low-conf` 注意**：PS1 偵測到 `.low_confidence` 後，移回 `confirm/` 時必須同時重建 `.pending_analysis` + `pending_prompt.txt`，否則下一輪掃描無法撿到此任務。
 
 **Task dir layout**:
 ```
@@ -74,6 +68,7 @@ Execute in order. Stop as soon as sufficient.
     └── agent_error.txt
 ```
 
+- `process.lock` 生命週期：由 PS1 在鎖定 task 目錄前建立（排他鎖），操作完成後釋放刪除。TTL 30 分鐘；下一輪 PS1 若發現逾時鎖，強制刪除後繼續。**Claude Agent 不得建立或刪除此檔**。
 - **Stage source**: read `system/.pending_<stage>` flag filename inside task dir. Valid Claude-facing stages: `analysis`, `final`, `coding`, `qa`.
 - `final/` directory = QA-passed archive, **not** a processing stage.
 - `qa` shares the same module serial lock as `coding`.
@@ -85,7 +80,7 @@ case_id: ""
 module: ""
 odoo_version: ""
 project_name: null   # null → version-only path; string → project path
-execution_mode: "MODE_A | MODE_B"
+execution_mode: "MODE_A"  # enum: MODE_A（直接實作）或 MODE_B（先確認再實作）
 ```
 
 ## 4. Edit Protocol
@@ -105,25 +100,26 @@ execution_mode: "MODE_A | MODE_B"
   2. `mv system/pending_prompt.txt log/done_prompt.txt`
   3. Delete `system/.pending_<stage>` flag
   - Never delete before writing marker.
+- **Crash 修復**：掃描時若發現 done marker 存在但 `.pending_<stage>` 仍在（中斷狀態），補完剩餘步驟（`mv pending_prompt.txt → rm flag`）後繼續，不重新執行任務。
 
 ## 5. Odoo Constraints
 - Models: `_inherit`. Views: `inherit_id` + `xpath`. Controllers: `super()`.
-- Cannot achieve via standard Odoo extension → write `system/blocker.tech.txt` immediately.
+- Cannot achieve via standard Odoo extension → write `system/blocker.tech.txt` (see §8).
 - Commit: `[Module]: Why (not what)`. File edit: `@Path | Anchor | Action`.
 
 ## 6. Output Style
 繁中術語：專案/資料庫/佈署/模組. Keep English: Variable/Function/Hook/Class/Field/Model/Method/Controller.
 
 ## 7. Pipeline
-Triggers (either):
-- User types「開工」→ Hook runs `_pipeline_run.ps1`; process the `[CLAUDE-ACTION-REQUIRED]` block in output
-- `.claude/kingsmvpsplan/_PIPELINE_WAITING` exists AND content timestamp < 30 min ago
+觸發條件（唯一）：使用者輸入「開工」→ Hook 執行 `_pipeline_run.ps1`；處理輸出中的 `[CLAUDE-ACTION-REQUIRED]` 區塊。
 
-**重要**：Pipeline 只能由使用者明確輸入「開工」來觸發。即使 `_PIPELINE_WAITING` 存在且未超過 30 分鐘，也**禁止**自動啟動。未收到「開工」指令前保持待命。
+`_PIPELINE_WAITING`：純狀態旗標（**非觸發條件**），表示 PS1 機械處理已完成、有任務等待 AI。Claude **不得**因此旗標自動啟動，未收到「開工」前保持待命。TTL 30 分鐘（過期由 PS1 清除，不觸發任何流程）。
 
 Full pipeline spec: **`.claude/pipeline.md`**
 
 ## 8. Blocker Types
+（詳細規格與 Resume 流程見 `.claude/pipeline.md`）
+
 | File | Situation |
 |------|-----------|
 | `blocker.spec.txt` | Spec unclear; user clarification needed |

@@ -1,4 +1,4 @@
-# Pipeline 自動調度詳細規格 (V8.2)
+# Pipeline 自動調度詳細規格 (V8.3)
 
 ## Blocker 類型
 | 檔名 | 情境 |
@@ -9,16 +9,19 @@
 | `blocker.loop.txt` | Pipeline 循環超出安全上限 |
 
 ## MCP 工具失敗處理
+（Agent 可操作規則見 CLAUDE.md §2；本節為 pipeline 層彙總）
 
 | 工具 | 失敗行為 | 阻斷？ |
 |------|---------|--------|
 | Graphify (wiki) | 檔案不存在 → 跳過，繼續用 Serena | 否 |
 | Serena | `tool_use_error` 或無回應 → 立即 `blocker.agent.txt` → STOP | **是** |
-| Context7 | 任何錯誤 → 跳過，用已知資訊繼續 | 否 |
+| Context7 | 任何錯誤 → 跳過，用已知資訊繼續；session 上限 5 次 | 否 |
 
-**Session 內 Serena 查詢上限**：每個 Agent session 最多 **3 次** distinct query。超限仍不足 → 寫 `blocker.agent.txt` → STOP。
+**Session 內查詢上限**：
+- Serena：每個 Agent session 最多 **3 次** distinct query。超限仍不足 → 寫 `blocker.agent.txt` → STOP。
+- Context7：每個 Agent session 最多 **5 次**；超限後跳過（非阻斷），改用已知資訊繼續。
 
-> 原因：`_LOOP_COUNTER.json` 的 `loop_count` / `task_reentries` 只計跨 session 的 pipeline 循環，無法防護 session 內部的 MCP 重試迴圈，必須在 Agent 層自我截斷。
+> 原因：`_LOOP_COUNTER.json` 的 `loop_count` 只計跨 session 的 pipeline 循環，無法防護 session 內部的 MCP 重試迴圈，必須在 Agent 層自我截斷。
 
 遇到任何 blocker：立即 STOP，向使用者報告**檔案路徑**（不顯示內容）。
 
@@ -28,14 +31,13 @@
 ```json
 {
   "run_started_at": "2026-01-01T00:00:00",
-  "loop_count": 0,
-  "task_reentries": { "task_3919": 1 }
+  "loop_count": 0
 }
 ```
 
 規則：
-- 同一 pipeline run：`loop_count` 最多 **20**；超限寫 `blocker.loop.txt`
-- 同一 `task_id`：`task_reentries[id]` 最多 **2**；超限將該任務改判 blocker
+- 同一 pipeline run：`loop_count > 20` 時寫 `blocker.loop.txt`（`loop_count` 從 0 起算，PS1 以 `-gt 20` 判斷，即允許最多第 21 圈）
+- 同一 `task_id` 的重入次數：持久化於各 task 的 `system/_reentry_count`（**不存入此 JSON**），最多 **2**；超限將該任務改判 `blocker.loop.txt`
 - run 正常結束時刪除 `_LOOP_COUNTER.json`
 
 ## 處理循環（全程不得請求手動確認）
@@ -46,7 +48,7 @@
 2. **讀 stage**：每個任務目錄的 `system/` 下找 `.pending_<stage>` flag 檔；stage = 去掉 `.pending_` 前綴。
    有效 Claude-facing stage：`analysis` / `final` / `coding` / `qa`
 3. **分批**：依 `analysis → final → coding → qa` 順序。
-   `final/` 目錄為 QA 通過歸檔，不是 stage。
+   `final/` 目錄為 QA 通過歸檔，不是 stage（注意：stage 名 `final` 與歸檔目錄 `final/` 同名；掃描時必須明確只掃 `confirm/` / `analysis/` / `coding/` 下的 task，排除歸檔目錄）。
 4. **WIKI 快取注入**（PS1 已在 pending_prompt.txt 內 prepend，主調度無需重複注入）：
    - `coding.ps1` / `qa.ps1` / `analysis.ps1 STEP 3b` 呼叫 `Get-WikiCache`，自動讀取
      `<online_addons_root>/graphify-out/wiki/index.md` 並 prepend `[WIKI-CACHE]...[/WIKI-CACHE]` 區塊（最多 60 行）
@@ -54,7 +56,7 @@
    - 子 Agent 收到 `[WIKI-CACHE]` 後**不得重複讀取** wiki
 5. **並行 spawn**（同 stage 內）：
    - `analysis` / `final`：最多 **5** 個並行；超過分批
-   - `coding` / `qa`：PS1 已實作 Module 序列鎖（同模組只寫一個 pending），主調度可直接並行 spawn 不同模組任務
+   - `coding` / `qa`：最多 **5** 個並行（PS1 Module 序列鎖已保證不同模組；超過 5 個時分批）
 6. **Agent 失敗處理**：
    - 任一 Agent 返回 `status: error` → 寫 `<task_root>/log/agent_error.txt`（用 `.claude/templates/agent_error.txt` 格式）
    - `retry_count < 1`：主調度自動重試一次，`retry_count` +1
@@ -66,7 +68,7 @@
    - 再刪除 `system/.pending_<stage>` flag
    - 絕對不先刪後寫
 8. **推進**：全 stage 完成後執行 `pwsh -NoProfile -File ".claude/scripts/_pipeline_run.ps1"`
-   （Linux 上若無 pwsh：記錄「需在 Windows 端手動執行」）
+   （Linux 上若無 pwsh：寫 `system/blocker.tech.txt` 並 STOP；通知使用者須在 Windows 端手動執行後觸發「開工」）
 9. **繼續**：若步驟 8 執行後出現新 `pending_prompt.txt` → 回步驟 1，`loop_count` +1
 10. **結束**：無新 pending 任務 → 刪除 `_PIPELINE_WAITING` 和 `_LOOP_COUNTER.json`
 
@@ -88,7 +90,7 @@ coding.ps1 / qa.ps1 執行時：
 
 ## Sub-Agent 回傳格式（強制）
 
-每個 sub-Agent 的最終回傳必須以此區塊結尾（總共最多 20 行）：
+每個 sub-Agent 的最終回傳必須以此區塊結尾（`files_written` 條目不計入行數；其餘欄位合計最多 20 行）：
 
 ```
 ---AGENT-RESULT---
@@ -118,11 +120,13 @@ PS1 生成 `pending_prompt.txt` 時只注入該 stage 真正需要的部分：
 | coding | technical_specification 區塊、[MCP-BUDGET]、[WIKI-CACHE] | bug_analysis 等其他欄位 |
 | qa | implementation_summary.txt、[MCP-BUDGET] | analysis.yaml 全文 |
 
-## _PIPELINE_WAITING TTL 檢查
+## _PIPELINE_WAITING TTL 清理（過期清旗，非觸發）
 
 flag 檔內容為建立時的 ISO 8601 時間戳（由 `_pipeline_run.ps1` 與 `Open-ClaudeTerminal` 寫入）。
 
-觸發前檢查：
+> **重要**：TTL 過期僅清除旗標，**不觸發任何 pipeline 流程**。Claude 對此旗標的唯一合法動作是「不行動」。
+
+過期清旗邏輯（供 PS1 參考）：
 ```python
 import os
 from datetime import datetime, timezone
@@ -136,23 +140,23 @@ if os.path.exists(flag):
     except ValueError:
         import time
         age = time.time() - os.path.getmtime(flag)
-    if age > 1800:  # 30 分鐘
+    if age > 1800:  # 30 分鐘後清旗；不觸發任何流程
         os.remove(flag)
-        # 不觸發 pipeline
 ```
 
 ## QA 失敗退回流程（Smart Rollback）
 
 QA `status = FAILED`：
 1. 讀 `qa_report.yaml` 的第一個 error description
-2. **判斷 analysis.yaml 是否含 `technical_specification` 或 `analysis_result`**：
+2. **判斷 analysis.yaml 是否含 `technical_specification` 或 `analysis_result`**（PS1 以子字串比對判斷；注意：僅能偵測欄位名稱出現，無法驗證值非空）：
    - **是（分析已完整）→ Smart Rollback**：
      - 移至 `analysis/<task_id>/`（不回 confirm/）
      - 清除 `.final_done` `.implement_done` `.qa_done` `.pending_*` `pending_prompt.txt` blocker.*
      - **保留** `.analysis_done` `.answer_done`（省略重跑分析）
-     - coding.ps1 STEP 4 / analysis.ps1 STEP 3b 自動接手
+     - 下一輪 `_pipeline_run.ps1` 執行時，`coding.ps1 STEP 4`（若含 `technical_specification`）或 `analysis.ps1 STEP 3b` 掃描 `analysis/` 目錄，自動重建 `.pending_coding` / `.pending_final` 與 `pending_prompt.txt`
    - **否（分析未完成）→ 完整退回**：
-     - 移至 `confirm/<task_id>/`，清除所有 markers（同舊行為）
+     - 移至 `confirm/<task_id>/`，清除所有 markers
+     - **必須重建** `.pending_analysis` 與 `pending_prompt.txt`（否則下一輪掃描無法撿到此任務）
 3. 寫 `log/back_reason.txt` 說明退回原因與模式
 4. 若 task_id 符合 `^task_(\d+)$` → 通知 Odoo 任務
 
@@ -163,7 +167,9 @@ blocker 後人工修復流程：
 2. `touch <task_dir>/system/.blocker_resolved`
 3. 觸發「開工」
 4. `_pipeline_run.ps1` 啟動時自動掃描 `.blocker_resolved`：
-   - 刪除所有 `blocker.*.txt`
+   - 若存在 `blocker.loop.txt`：**必須同時確認 `_LOOP_COUNTER.json` 已刪除或 `loop_count` 已重置**，否則拒絕 resume（避免立即再觸發上限）
+   - 若存在 `blocker.spec.txt`：驗證 `analysis.yaml` 的 mtime > blocker 建立時間，確認使用者已回填規格（未回填則輸出警告，仍可繼續但風險自負）
+   - 刪除所有符合條件的 `blocker.*.txt`
    - 刪除 `.blocker_resolved`
    - 保留 `.pending_<stage>`（原 stage 重試）
    - 輸出 `[RESUME] task_N blocker 已清除，重新加入佇列`
