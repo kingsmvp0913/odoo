@@ -82,7 +82,7 @@ foreach ($taskDir in $analysisTasks) {
             # 自動 QA PASS：無新代碼，直接寫 qa_report.yaml + .qa_done，略過 QA agent
             $logDir     = Get-LogDir    $taskDir.FullName
             $sysDir     = Get-SystemDir $taskDir.FullName
-            $qaReport   = "status: `"PASSED`"`nchecked_at: `"$(Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')`"`nitems: []`nissues:`n  - severity: `"warning`"`n    description: `"SKIP-QA: $skipReason — no new code written; code quality checks not applicable`"`n    suggestion: `"`"`n"
+            $qaReport   = "status: PASSED`nchecked_at: `"$(Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')`"`nitems: []`nissues:`n  - severity: warning`n    description: `"SKIP-QA: $skipReason — no new code written; code quality checks not applicable`"`n    suggestion: `"`"`n"
             Atomic-WriteFile (Join-Path $logDir  "qa_report.yaml") $qaReport | Out-Null
             Atomic-WriteFile (Join-Path $sysDir  ".qa_done")        ""         | Out-Null
 

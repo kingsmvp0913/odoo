@@ -31,6 +31,7 @@ $script:ODOO_USER_ID  = if ($env:ODOO_USER_ID) { [int]$env:ODOO_USER_ID } else {
 # ============================================================
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
 
 # ============================================================
 # 檔案鎖（真正排他鎖：持有 handle 直到 Release-Lock）
@@ -184,7 +185,7 @@ function ConvertFrom-Yaml {
     param([string]$yaml)
     $result = @{}
 
-    if ($yaml -match '(?m)^execution_mode:\s*(\S+)') { $result['execution_mode'] = $matches[1] }
+    if ($yaml -match '(?m)^execution_mode:\s*["'']?(\w+)["'']?\s*$') { $result['execution_mode'] = $matches[1] }
     # \s* — supports both root-level and indented module fields; strip surrounding quotes
     if ($yaml -match '(?m)^\s*module:\s*["'']?([^"''\r\n]+?)["'']?\s*$') { $result['module'] = $matches[1].Trim() }
     # Strip surrounding single or double quotes; handle both indented and root-level
@@ -196,7 +197,7 @@ function ConvertFrom-Yaml {
         # project_name: null in YAML becomes the string "null" via regex — convert to $null
         $result['project_name'] = if ($val -eq 'null') { $null } else { $val }
     }
-    if ($yaml -match '(?m)^status:\s*(\S+)') { $result['status'] = $matches[1] }
+    if ($yaml -match '(?m)^status:\s*["'']?(\w+)["'']?\s*$') { $result['status'] = $matches[1] }
 
     $result['has_null_answer']      = [regex]::IsMatch($yaml, "(?m)^\s*user_answer:\s*(null|`"`"|''|)?\s*$")
     $result['has_any_answer']       = [regex]::IsMatch($yaml, '(?m)^\s*user_answer:\s*\S')
