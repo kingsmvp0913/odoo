@@ -198,9 +198,11 @@ function ConvertFrom-Yaml {
     }
     if ($yaml -match '(?m)^status:\s*(\S+)') { $result['status'] = $matches[1] }
 
-    $result['has_null_answer'] = [regex]::IsMatch($yaml, "(?m)^\s*user_answer:\s*(null|`"`"|''|)?\s*$")
-    $result['has_any_answer']  = [regex]::IsMatch($yaml, '(?m)^\s*user_answer:\s*\S')
-    $result['is_mode_b']       = ($result['execution_mode'] -eq 'MODE_B')
+    $result['has_null_answer']      = [regex]::IsMatch($yaml, "(?m)^\s*user_answer:\s*(null|`"`"|''|)?\s*$")
+    $result['has_any_answer']       = [regex]::IsMatch($yaml, '(?m)^\s*user_answer:\s*\S')
+    $result['is_mode_b']            = ($result['execution_mode'] -eq 'MODE_B')
+    $result['is_complete']          = [regex]::IsMatch($yaml, '(?m)^\s*is_complete:\s*true\s*$')
+    $result['has_qa_failure_hint']  = [regex]::IsMatch($yaml, '_qa_failure_hint:')
 
     return $result
 }

@@ -337,6 +337,15 @@ if (-not (Acquire-Lock $lock3b 300)) {
 
             try {
                 $currentYaml = Get-Content $yamlPath -Raw -Encoding UTF8
+                $parsed      = ConvertFrom-Yaml $currentYaml
+
+                # SHORTCUT：MODE_B 已完整且無 QA failure → 直接寫 .final_done，跳過 Agent
+                if ($parsed['is_mode_b'] -and $parsed['is_complete'] -and -not $parsed['has_qa_failure_hint']) {
+                    Atomic-WriteFile (Join-Path (Get-SystemDir $taskDir.FullName) ".final_done") "" | Out-Null
+                    Write-Host "[SHORTCUT] $taskName MODE_B is_complete=true → .final_done 直寫，跳過 Agent" -ForegroundColor Green
+                    continue
+                }
+
                 $currentTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
                 $prompt = $agentTemplate `
                     -replace '__CASE_ID__', $taskName `
@@ -344,8 +353,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
 
                 # STEP 3b 不搬移任務目錄（仍留在 analysis/）；coding.ps1 STEP 4 才會搬到 coding/
                 # WIKI-CACHE 注入：此時 module 已由初始分析填入 analysis.yaml
-                $parsedWiki = ConvertFrom-Yaml $currentYaml
-                $wikiCache  = Get-WikiCache -moduleName $parsedWiki['module'] -odooVersion $parsedWiki['odoo_version'] -projectName $parsedWiki['project_name']
+                $wikiCache = Get-WikiCache -moduleName $parsed['module'] -odooVersion $parsed['odoo_version'] -projectName $parsed['project_name']
 
                 $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
