@@ -378,8 +378,10 @@ function Get-ProjectDir {
 # WIKI 快取注入（供 PS1 在寫入 pending_prompt 前 prepend）
 # ============================================================
 function Get-WikiCache {
-    param([string]$moduleName, [string]$odooVersion, [string]$projectName = $null)
-    if (-not $moduleName) { return "" }
+    param([string]$moduleName = $null, [string]$odooVersion, [string]$projectName = $null, [string[]]$keywords = $null)
+    $hasModule   = -not [string]::IsNullOrWhiteSpace($moduleName)
+    $hasKeywords = $keywords -and $keywords.Count -gt 0
+    if (-not $hasModule -and -not $hasKeywords) { return "" }
 
     $addonsRoot = Get-OnlineAddonsRoot -odooVersion $odooVersion -projectName $projectName -moduleName $moduleName
 
@@ -387,10 +389,17 @@ function Get-WikiCache {
     if (-not (Test-Path $wikiPath)) { return "" }
 
     try {
-        $lines   = Get-Content $wikiPath -Encoding UTF8
-        $matched = @($lines | Where-Object { $_ -match [regex]::Escape($moduleName) })
-        if ($matched.Count -eq 0) { return "" }
-        $block = ($matched | Select-Object -First 60) -join "`n"
+        $lines = Get-Content $wikiPath -Encoding UTF8
+        if ($hasModule) {
+            $matched = @($lines | Where-Object { $_ -match [regex]::Escape($moduleName) })
+            if ($matched.Count -eq 0) { return "" }
+            $block = ($matched | Select-Object -First 60) -join "`n"
+        } else {
+            $pattern = ($keywords | ForEach-Object { [regex]::Escape($_) }) -join '|'
+            $matched = @($lines | Where-Object { $_ -match $pattern })
+            if ($matched.Count -eq 0) { return "" }
+            $block = ($matched | Select-Object -First 120) -join "`n"
+        }
         return "[WIKI-CACHE]`n$block`n[/WIKI-CACHE]`n`n"
     } catch { return "" }
 }

@@ -136,7 +136,16 @@ if (-not (Acquire-Lock $lock2 300)) {
                     -replace '__CASE_ID__', $taskName `
                     -replace '__CURRENT_TIME__', $currentTime
 
-                $fullPrompt = $prompt +
+                # 從需求文字萃取關鍵字供 wiki 過濾（去 HTML tag 後依標點切詞）
+                $rawText  = $req -replace '<[^>]+>', ' '
+                $keywords = @(
+                    ($rawText -split '[、,，。；：\s\r\n]+') |
+                    Where-Object { $_.Length -ge 2 -and $_ -notmatch '^\d+$' } |
+                    Select-Object -Unique -First 10
+                )
+                $wikiCache = Get-WikiCache -odooVersion $odooVersion -projectName $taskProject -keywords $keywords
+
+                $fullPrompt = $prompt + $wikiCache +
                     "`n`n【SYSTEM CONFIRMED】odoo_version = `"$odooVersion`" — 固定事實，不得質疑。" +
                     "`n`n【TASK DIRECTORY】`n$destTaskDir" +
                     "`n`n【USER BUSINESS REQUIREMENT】`n<user_requirement>`n$req`n</user_requirement>" +
