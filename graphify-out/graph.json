@@ -1,0 +1,1247 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "hyperedges": [
+      {
+        "id": "exchange_rate_fetch_pipeline",
+        "label": "Exchange Rate Fetch Pipeline (Bank Spot + Historical + Customs)",
+        "nodes": [
+          "odoo19_e_service_get_spot_exchange_rate_bank",
+          "odoo19_e_service_get_historical_exchange_rate_bank",
+          "odoo19_e_service_get_exchange_rate_customs"
+        ],
+        "relation": "implement",
+        "confidence": "INFERRED",
+        "confidence_score": 0.85,
+        "source_file": "19/odoo19_e_service/models/service_exchange_rate.py"
+      },
+      {
+        "id": "contract_expiry_notification_flow",
+        "label": "Contract Expiry Notification Flow",
+        "nodes": [
+          "odoo19_e_service_contract_notify_check",
+          "odoo19_e_service_compute_contract_notify",
+          "odoo19_e_service_TeamsNotifyMessage"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "19/odoo19_e_service/models/service_taxonomy.py"
+      },
+      {
+        "id": "holiday_import_flow",
+        "label": "Holiday Import Wizard Flow",
+        "nodes": [
+          "odoo19_e_service_ServiceHolidayWizard",
+          "odoo19_e_service_generate",
+          "odoo19_e_service_get_days_from_api"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "__init__.py",
+      "source_location": "L1",
+      "id": "init_py",
+      "community": 13,
+      "norm_label": "__init__.py"
+    },
+    {
+      "label": "__manifest__.py",
+      "file_type": "code",
+      "source_file": "__manifest__.py",
+      "source_location": "L1",
+      "id": "manifest_py",
+      "community": 16,
+      "norm_label": "__manifest__.py"
+    },
+    {
+      "label": "res_config_setting.py",
+      "file_type": "code",
+      "source_file": "models/res_config_setting.py",
+      "source_location": "L1",
+      "id": "models_res_config_setting_py",
+      "community": 10,
+      "norm_label": "res_config_setting.py"
+    },
+    {
+      "label": "ResConfigSettings",
+      "file_type": "code",
+      "source_file": "models/res_config_setting.py",
+      "source_location": "L8",
+      "id": "models_res_config_setting_resconfigsettings",
+      "community": 10,
+      "norm_label": "resconfigsettings"
+    },
+    {
+      "label": "service_announcement.py",
+      "file_type": "code",
+      "source_file": "models/service_announcement.py",
+      "source_location": "L1",
+      "id": "models_service_announcement_py",
+      "community": 11,
+      "norm_label": "service_announcement.py"
+    },
+    {
+      "label": "ServiceAnnouncement",
+      "file_type": "code",
+      "source_file": "models/service_announcement.py",
+      "source_location": "L4",
+      "id": "models_service_announcement_serviceannouncement",
+      "community": 11,
+      "norm_label": "serviceannouncement"
+    },
+    {
+      "label": "service_exchange_rate.py",
+      "file_type": "code",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L1",
+      "id": "models_service_exchange_rate_py",
+      "community": 4,
+      "norm_label": "service_exchange_rate.py"
+    },
+    {
+      "label": "ServiceExchangeRate",
+      "file_type": "code",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L10",
+      "id": "models_service_exchange_rate_serviceexchangerate",
+      "community": 4,
+      "norm_label": "serviceexchangerate"
+    },
+    {
+      "label": ".get_spot_exchange_rate_bank()",
+      "file_type": "code",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L35",
+      "id": "models_service_exchange_rate_serviceexchangerate_get_spot_exchange_rate_bank",
+      "community": 4,
+      "norm_label": ".get_spot_exchange_rate_bank()"
+    },
+    {
+      "label": ".get_historical_exchange_rate_bank()",
+      "file_type": "code",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L76",
+      "id": "models_service_exchange_rate_serviceexchangerate_get_historical_exchange_rate_bank",
+      "community": 4,
+      "norm_label": ".get_historical_exchange_rate_bank()"
+    },
+    {
+      "label": ".get_exchange_rate_customs()",
+      "file_type": "code",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L163",
+      "id": "models_service_exchange_rate_serviceexchangerate_get_exchange_rate_customs",
+      "community": 4,
+      "norm_label": ".get_exchange_rate_customs()"
+    },
+    {
+      "label": "service_holiday.py",
+      "file_type": "code",
+      "source_file": "models/service_holiday.py",
+      "source_location": "L1",
+      "id": "models_service_holiday_py",
+      "community": 9,
+      "norm_label": "service_holiday.py"
+    },
+    {
+      "label": "ServiceHoliday",
+      "file_type": "code",
+      "source_file": "models/service_holiday.py",
+      "source_location": "L4",
+      "id": "models_service_holiday_serviceholiday",
+      "community": 9,
+      "norm_label": "serviceholiday"
+    },
+    {
+      "label": "onchange_year()",
+      "file_type": "code",
+      "source_file": "models/service_holiday.py",
+      "source_location": "L13",
+      "id": "models_service_holiday_onchange_year",
+      "community": 9,
+      "norm_label": "onchange_year()"
+    },
+    {
+      "label": "service_question.py",
+      "file_type": "code",
+      "source_file": "models/service_question.py",
+      "source_location": "L1",
+      "id": "models_service_question_py",
+      "community": 0,
+      "norm_label": "service_question.py"
+    },
+    {
+      "label": "ServiceQuestion",
+      "file_type": "code",
+      "source_file": "models/service_question.py",
+      "source_location": "L12",
+      "id": "models_service_question_servicequestion",
+      "community": 0,
+      "norm_label": "servicequestion"
+    },
+    {
+      "label": "get_default_category()",
+      "file_type": "code",
+      "source_file": "models/service_question.py",
+      "source_location": "L21",
+      "id": "models_service_question_get_default_category",
+      "community": 0,
+      "norm_label": "get_default_category()"
+    },
+    {
+      "label": "._default_respondent()",
+      "file_type": "code",
+      "source_file": "models/service_question.py",
+      "source_location": "L25",
+      "id": "models_service_question_servicequestion_default_respondent",
+      "community": 0,
+      "norm_label": "._default_respondent()"
+    },
+    {
+      "label": "._search_used()",
+      "file_type": "code",
+      "source_file": "models/service_question.py",
+      "source_location": "L34",
+      "id": "models_service_question_servicequestion_search_used",
+      "community": 0,
+      "norm_label": "._search_used()"
+    },
+    {
+      "label": "_compute_service_expire_info()",
+      "file_type": "code",
+      "source_file": "models/service_question.py",
+      "source_location": "L112",
+      "id": "models_service_question_compute_service_expire_info",
+      "community": 0,
+      "norm_label": "_compute_service_expire_info()"
+    },
+    {
+      "label": "create()",
+      "file_type": "code",
+      "source_file": "models/service_question.py",
+      "source_location": "L154",
+      "id": "models_service_question_create",
+      "community": 0,
+      "norm_label": "create()"
+    },
+    {
+      "label": "service_question_category.py",
+      "file_type": "code",
+      "source_file": "models/service_question_category.py",
+      "source_location": "L1",
+      "id": "models_service_question_category_py",
+      "community": 12,
+      "norm_label": "service_question_category.py"
+    },
+    {
+      "label": "ServiceQuestionCategory",
+      "file_type": "code",
+      "source_file": "models/service_question_category.py",
+      "source_location": "L4",
+      "id": "models_service_question_category_servicequestioncategory",
+      "community": 12,
+      "norm_label": "servicequestioncategory"
+    },
+    {
+      "label": "service_taxonomy.py",
+      "file_type": "code",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L1",
+      "id": "models_service_taxonomy_py",
+      "community": 1,
+      "norm_label": "service_taxonomy.py"
+    },
+    {
+      "label": "ServiceTaxonomy",
+      "file_type": "code",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L8",
+      "id": "models_service_taxonomy_servicetaxonomy",
+      "community": 1,
+      "norm_label": "servicetaxonomy"
+    },
+    {
+      "label": ".action_service_question_feedback_button()",
+      "file_type": "code",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L44",
+      "id": "models_service_taxonomy_servicetaxonomy_action_service_question_feedback_button",
+      "community": 1,
+      "norm_label": ".action_service_question_feedback_button()"
+    },
+    {
+      "label": ".contract_notify_check()",
+      "file_type": "code",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L56",
+      "id": "models_service_taxonomy_servicetaxonomy_contract_notify_check",
+      "community": 1,
+      "norm_label": ".contract_notify_check()"
+    },
+    {
+      "label": "ServiceTaxonomyLine",
+      "file_type": "code",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L94",
+      "id": "models_service_taxonomy_servicetaxonomyline",
+      "community": 1,
+      "norm_label": "servicetaxonomyline"
+    },
+    {
+      "label": "ServiceTaxonomyPoints",
+      "file_type": "code",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L104",
+      "id": "models_service_taxonomy_servicetaxonomypoints",
+      "community": 1,
+      "norm_label": "servicetaxonomypoints"
+    },
+    {
+      "label": "service_teams_notify.py",
+      "file_type": "code",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L1",
+      "id": "models_service_teams_notify_py",
+      "community": 5,
+      "norm_label": "service_teams_notify.py"
+    },
+    {
+      "label": "ServiceTeamsNotify",
+      "file_type": "code",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L9",
+      "id": "models_service_teams_notify_serviceteamsnotify",
+      "community": 5,
+      "norm_label": "serviceteamsnotify"
+    },
+    {
+      "label": ".compute_contract_notify()",
+      "file_type": "code",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L14",
+      "id": "models_service_teams_notify_serviceteamsnotify_compute_contract_notify",
+      "community": 5,
+      "norm_label": ".compute_contract_notify()"
+    },
+    {
+      "label": "._TeamsNotifyMessage()",
+      "file_type": "code",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L71",
+      "id": "models_service_teams_notify_serviceteamsnotify_teamsnotifymessage",
+      "community": 5,
+      "norm_label": "._teamsnotifymessage()"
+    },
+    {
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "models/__init__.py",
+      "source_location": "L1",
+      "id": "models_init_py",
+      "community": 14,
+      "norm_label": "__init__.py"
+    },
+    {
+      "label": "service_holiday_wizard.py",
+      "file_type": "code",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L1",
+      "id": "wizard_service_holiday_wizard_py",
+      "community": 8,
+      "norm_label": "service_holiday_wizard.py"
+    },
+    {
+      "label": "ServiceHolidayWizard",
+      "file_type": "code",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L8",
+      "id": "wizard_service_holiday_wizard_serviceholidaywizard",
+      "community": 8,
+      "norm_label": "serviceholidaywizard"
+    },
+    {
+      "label": ".generate()",
+      "file_type": "code",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L14",
+      "id": "wizard_service_holiday_wizard_serviceholidaywizard_generate",
+      "community": 8,
+      "norm_label": ".generate()"
+    },
+    {
+      "label": ".get_days_from_api()",
+      "file_type": "code",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L50",
+      "id": "wizard_service_holiday_wizard_serviceholidaywizard_get_days_from_api",
+      "community": 8,
+      "norm_label": ".get_days_from_api()"
+    },
+    {
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "wizard/__init__.py",
+      "source_location": "L1",
+      "id": "wizard_init_py",
+      "community": 15,
+      "norm_label": "__init__.py"
+    },
+    {
+      "label": "odoo19_e_service Module",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/__manifest__.py",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_module",
+      "community": 17,
+      "norm_label": "odoo19_e_service module"
+    },
+    {
+      "label": "ResConfigSettings (e_service)",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/res_config_setting.py",
+      "source_location": "ResConfigSettings",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ResConfigSettings",
+      "community": 3,
+      "norm_label": "resconfigsettings (e_service)"
+    },
+    {
+      "label": "ServiceAnnouncement",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_announcement.py",
+      "source_location": "ServiceAnnouncement",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceAnnouncement",
+      "community": 2,
+      "norm_label": "serviceannouncement"
+    },
+    {
+      "label": "ServiceExchangeRate",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": "ServiceExchangeRate",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceExchangeRate",
+      "community": 6,
+      "norm_label": "serviceexchangerate"
+    },
+    {
+      "label": "ServiceHoliday",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_holiday.py",
+      "source_location": "ServiceHoliday",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceHoliday",
+      "community": 7,
+      "norm_label": "serviceholiday"
+    },
+    {
+      "label": "ServiceQuestion",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_question.py",
+      "source_location": "ServiceQuestion",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceQuestion",
+      "community": 2,
+      "norm_label": "servicequestion"
+    },
+    {
+      "label": "ServiceQuestionCategory",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_question_category.py",
+      "source_location": "ServiceQuestionCategory",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceQuestionCategory",
+      "community": 2,
+      "norm_label": "servicequestioncategory"
+    },
+    {
+      "label": "ServiceTaxonomy",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": "ServiceTaxonomy",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceTaxonomy",
+      "community": 2,
+      "norm_label": "servicetaxonomy"
+    },
+    {
+      "label": "ServiceTaxonomyLine",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": "ServiceTaxonomyLine",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceTaxonomyLine",
+      "community": 2,
+      "norm_label": "servicetaxonomyline"
+    },
+    {
+      "label": "ServiceTaxonomyPoints",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": "ServiceTaxonomyPoints",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceTaxonomyPoints",
+      "community": 2,
+      "norm_label": "servicetaxonomypoints"
+    },
+    {
+      "label": "ServiceTeamsNotify",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_teams_notify.py",
+      "source_location": "ServiceTeamsNotify",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceTeamsNotify",
+      "community": 18,
+      "norm_label": "serviceteamsnotify"
+    },
+    {
+      "label": "ServiceHolidayWizard",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py",
+      "source_location": "ServiceHolidayWizard",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_ServiceHolidayWizard",
+      "community": 7,
+      "norm_label": "serviceholidaywizard"
+    },
+    {
+      "label": "get_spot_exchange_rate_bank",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": "ServiceExchangeRate.get_spot_exchange_rate_bank",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_get_spot_exchange_rate_bank",
+      "community": 6,
+      "norm_label": "get_spot_exchange_rate_bank"
+    },
+    {
+      "label": "get_historical_exchange_rate_bank",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": "ServiceExchangeRate.get_historical_exchange_rate_bank",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_get_historical_exchange_rate_bank",
+      "community": 6,
+      "norm_label": "get_historical_exchange_rate_bank"
+    },
+    {
+      "label": "get_exchange_rate_customs",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": "ServiceExchangeRate.get_exchange_rate_customs",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_get_exchange_rate_customs",
+      "community": 6,
+      "norm_label": "get_exchange_rate_customs"
+    },
+    {
+      "label": "contract_notify_check",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": "ServiceTaxonomy.contract_notify_check",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_contract_notify_check",
+      "community": 3,
+      "norm_label": "contract_notify_check"
+    },
+    {
+      "label": "compute_contract_notify",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_teams_notify.py",
+      "source_location": "ServiceTeamsNotify.compute_contract_notify",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_compute_contract_notify",
+      "community": 3,
+      "norm_label": "compute_contract_notify"
+    },
+    {
+      "label": "_TeamsNotifyMessage",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/models/service_teams_notify.py",
+      "source_location": "ServiceTeamsNotify._TeamsNotifyMessage",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_TeamsNotifyMessage",
+      "community": 3,
+      "norm_label": "_teamsnotifymessage"
+    },
+    {
+      "label": "ServiceHolidayWizard.generate",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py",
+      "source_location": "ServiceHolidayWizard.generate",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_generate",
+      "community": 7,
+      "norm_label": "serviceholidaywizard.generate"
+    },
+    {
+      "label": "ServiceHolidayWizard.get_days_from_api",
+      "file_type": "code",
+      "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py",
+      "source_location": "ServiceHolidayWizard.get_days_from_api",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "odoo19_e_service_get_days_from_api",
+      "community": 7,
+      "norm_label": "serviceholidaywizard.get_days_from_api"
+    },
+    {
+      "label": "Teams Webhook Configuration Pattern",
+      "file_type": "rationale",
+      "source_file": "19/odoo19_e_service/models/res_config_setting.py",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Teams webhook URL, enable flag and default mail are stored as ir.config_parameter system parameters, allowing administrators to configure Microsoft Teams integration without code changes.",
+      "id": "odoo19_e_service_teams_webhook_config",
+      "community": 3,
+      "norm_label": "teams webhook configuration pattern"
+    },
+    {
+      "label": "Contract Expiry Notification Pattern",
+      "file_type": "rationale",
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "contract_notify_check reads day thresholds (contract_notify_1/2/3) from ir.config_parameter, computes contracts expiring within those days, and delegates Teams notification to ServiceTeamsNotify. This decouples scheduling from delivery.",
+      "id": "odoo19_e_service_contract_expiry_notify_pattern",
+      "community": 3,
+      "norm_label": "contract expiry notification pattern"
+    }
+  ],
+  "links": [
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "__init__.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "init_py",
+      "target": "init_py",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/res_config_setting.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "models_res_config_setting_py",
+      "target": "models_res_config_setting_resconfigsettings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_announcement.py",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "models_service_announcement_py",
+      "target": "models_service_announcement_serviceannouncement",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "models_service_exchange_rate_py",
+      "target": "models_service_exchange_rate_serviceexchangerate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "models_service_exchange_rate_serviceexchangerate",
+      "target": "models_service_exchange_rate_serviceexchangerate_get_spot_exchange_rate_bank",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L76",
+      "weight": 1.0,
+      "source": "models_service_exchange_rate_serviceexchangerate",
+      "target": "models_service_exchange_rate_serviceexchangerate_get_historical_exchange_rate_bank",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_exchange_rate.py",
+      "source_location": "L163",
+      "weight": 1.0,
+      "source": "models_service_exchange_rate_serviceexchangerate",
+      "target": "models_service_exchange_rate_serviceexchangerate_get_exchange_rate_customs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_holiday.py",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "models_service_holiday_py",
+      "target": "models_service_holiday_serviceholiday",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_holiday.py",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "models_service_holiday_py",
+      "target": "models_service_holiday_onchange_year",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_question.py",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "models_service_question_py",
+      "target": "models_service_question_servicequestion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_question.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "models_service_question_py",
+      "target": "models_service_question_get_default_category",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_question.py",
+      "source_location": "L112",
+      "weight": 1.0,
+      "source": "models_service_question_py",
+      "target": "models_service_question_compute_service_expire_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_question.py",
+      "source_location": "L154",
+      "weight": 1.0,
+      "source": "models_service_question_py",
+      "target": "models_service_question_create",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_question.py",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "models_service_question_servicequestion",
+      "target": "models_service_question_servicequestion_default_respondent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_question.py",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "models_service_question_servicequestion",
+      "target": "models_service_question_servicequestion_search_used",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_question_category.py",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "models_service_question_category_py",
+      "target": "models_service_question_category_servicequestioncategory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "models_service_taxonomy_py",
+      "target": "models_service_taxonomy_servicetaxonomy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L94",
+      "weight": 1.0,
+      "source": "models_service_taxonomy_py",
+      "target": "models_service_taxonomy_servicetaxonomyline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "models_service_taxonomy_py",
+      "target": "models_service_taxonomy_servicetaxonomypoints",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "models_service_taxonomy_servicetaxonomy",
+      "target": "models_service_taxonomy_servicetaxonomy_action_service_question_feedback_button",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_taxonomy.py",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "models_service_taxonomy_servicetaxonomy",
+      "target": "models_service_taxonomy_servicetaxonomy_contract_notify_check",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "models_service_teams_notify_py",
+      "target": "models_service_teams_notify_serviceteamsnotify",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "models_service_teams_notify_serviceteamsnotify",
+      "target": "models_service_teams_notify_serviceteamsnotify_compute_contract_notify",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "models_service_teams_notify_serviceteamsnotify",
+      "target": "models_service_teams_notify_serviceteamsnotify_teamsnotifymessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "models/service_teams_notify.py",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "models_service_teams_notify_serviceteamsnotify_compute_contract_notify",
+      "target": "models_service_teams_notify_serviceteamsnotify_teamsnotifymessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "models/__init__.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "models_init_py",
+      "target": "models_init_py",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "wizard_service_holiday_wizard_py",
+      "target": "wizard_service_holiday_wizard_serviceholidaywizard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "wizard_service_holiday_wizard_serviceholidaywizard",
+      "target": "wizard_service_holiday_wizard_serviceholidaywizard_generate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "wizard_service_holiday_wizard_serviceholidaywizard",
+      "target": "wizard_service_holiday_wizard_serviceholidaywizard_get_days_from_api",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "wizard/service_holiday_wizard.py",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "wizard_service_holiday_wizard_serviceholidaywizard_generate",
+      "target": "wizard_service_holiday_wizard_serviceholidaywizard_get_days_from_api",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "wizard/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "wizard_init_py",
+      "target": "wizard_init_py",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "19/odoo19_e_service/models/res_config_setting.py",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "odoo19_e_service_ResConfigSettings",
+      "target": "odoo19_e_service_teams_webhook_config"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.55,
+      "source_file": "19/odoo19_e_service/models/service_announcement.py",
+      "source_location": null,
+      "weight": 0.55,
+      "source": "odoo19_e_service_ServiceAnnouncement",
+      "target": "odoo19_e_service_ServiceQuestion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": "method definition",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceExchangeRate",
+      "target": "odoo19_e_service_get_spot_exchange_rate_bank"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": "method definition",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceExchangeRate",
+      "target": "odoo19_e_service_get_historical_exchange_rate_bank"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": "method definition",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceExchangeRate",
+      "target": "odoo19_e_service_get_exchange_rate_customs"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py",
+      "source_location": "generate body - env['service.holiday'].create",
+      "weight": 1.0,
+      "source": "odoo19_e_service_generate",
+      "target": "odoo19_e_service_ServiceHoliday"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceHolidayWizard",
+      "target": "odoo19_e_service_ServiceHoliday"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_question.py",
+      "source_location": "category_id field",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceQuestion",
+      "target": "odoo19_e_service_ServiceQuestionCategory"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_question.py",
+      "source_location": "service_expire_info computed from service_taxonomy_id.date_end",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceQuestion",
+      "target": "odoo19_e_service_ServiceTaxonomy"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_question.py",
+      "source_location": "taxonomy_line_id field",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceQuestion",
+      "target": "odoo19_e_service_ServiceTaxonomyLine"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": "system_lines One2many field",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceTaxonomy",
+      "target": "odoo19_e_service_ServiceTaxonomyLine"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": "points_line_ids One2many field",
+      "weight": 1.0,
+      "source": "odoo19_e_service_ServiceTaxonomy",
+      "target": "odoo19_e_service_ServiceTaxonomyPoints"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": null,
+      "weight": 0.85,
+      "source": "odoo19_e_service_get_spot_exchange_rate_bank",
+      "target": "odoo19_e_service_get_historical_exchange_rate_bank"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py",
+      "source_location": null,
+      "weight": 0.75,
+      "source": "odoo19_e_service_get_spot_exchange_rate_bank",
+      "target": "odoo19_e_service_get_exchange_rate_customs"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": "contract_notify_check body",
+      "weight": 1.0,
+      "source": "odoo19_e_service_contract_notify_check",
+      "target": "odoo19_e_service_compute_contract_notify"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "odoo19_e_service_contract_notify_check",
+      "target": "odoo19_e_service_contract_expiry_notify_pattern"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_teams_notify.py",
+      "source_location": "compute_contract_notify body",
+      "weight": 1.0,
+      "source": "odoo19_e_service_compute_contract_notify",
+      "target": "odoo19_e_service_TeamsNotifyMessage"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_teams_notify.py",
+      "source_location": "compute_contract_notify - get_param e_service.is_teams",
+      "weight": 1.0,
+      "source": "odoo19_e_service_compute_contract_notify",
+      "target": "odoo19_e_service_teams_webhook_config"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_teams_notify.py",
+      "source_location": "_TeamsNotifyMessage - get_param e_service.teams_webhook",
+      "weight": 1.0,
+      "source": "odoo19_e_service_TeamsNotifyMessage",
+      "target": "odoo19_e_service_teams_webhook_config"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py",
+      "source_location": "generate body",
+      "weight": 1.0,
+      "source": "odoo19_e_service_generate",
+      "target": "odoo19_e_service_get_days_from_api"
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "exchange_rate_fetch_pipeline",
+      "label": "Exchange Rate Fetch Pipeline (Bank Spot + Historical + Customs)",
+      "nodes": [
+        "odoo19_e_service_get_spot_exchange_rate_bank",
+        "odoo19_e_service_get_historical_exchange_rate_bank",
+        "odoo19_e_service_get_exchange_rate_customs"
+      ],
+      "relation": "implement",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "19/odoo19_e_service/models/service_exchange_rate.py"
+    },
+    {
+      "id": "contract_expiry_notification_flow",
+      "label": "Contract Expiry Notification Flow",
+      "nodes": [
+        "odoo19_e_service_contract_notify_check",
+        "odoo19_e_service_compute_contract_notify",
+        "odoo19_e_service_TeamsNotifyMessage"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/models/service_taxonomy.py"
+    },
+    {
+      "id": "holiday_import_flow",
+      "label": "Holiday Import Wizard Flow",
+      "nodes": [
+        "odoo19_e_service_ServiceHolidayWizard",
+        "odoo19_e_service_generate",
+        "odoo19_e_service_get_days_from_api"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py"
+    }
+  ],
+  "built_at_commit": "7e27c6569eefcc11045305d7595e056edd6cc176"
+}

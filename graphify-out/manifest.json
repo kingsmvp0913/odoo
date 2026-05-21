@@ -1,0 +1,72 @@
+{
+  "C:\\online_addons\\19\\odoo19_e_service\\__init__.py": {
+    "mtime": 1779245703.5304313,
+    "ast_hash": "7f15d0b4a450759404433998658dce48",
+    "semantic_hash": "7f15d0b4a450759404433998658dce48"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\__manifest__.py": {
+    "mtime": 1779245703.531434,
+    "ast_hash": "f6b04c1291e417428f549ce2ed0c70b5",
+    "semantic_hash": "f6b04c1291e417428f549ce2ed0c70b5"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\res_config_setting.py": {
+    "mtime": 1779245703.5334342,
+    "ast_hash": "de0342ada414d3c66c8a751b3ac83406",
+    "semantic_hash": "de0342ada414d3c66c8a751b3ac83406"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\service_announcement.py": {
+    "mtime": 1779245703.5344324,
+    "ast_hash": "ca62b8dba886816e55144420d33ecca7",
+    "semantic_hash": "ca62b8dba886816e55144420d33ecca7"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\service_exchange_rate.py": {
+    "mtime": 1779245703.5344324,
+    "ast_hash": "8b15ac607e4e31d60baf661293a21c39",
+    "semantic_hash": "8b15ac607e4e31d60baf661293a21c39"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\service_holiday.py": {
+    "mtime": 1779245703.535432,
+    "ast_hash": "7eafb58f3a5ce78f3a1e648699c32f73",
+    "semantic_hash": "7eafb58f3a5ce78f3a1e648699c32f73"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\service_question.py": {
+    "mtime": 1779245703.535432,
+    "ast_hash": "d5feeb63fe5c50ba14a08b939de41e8f",
+    "semantic_hash": "d5feeb63fe5c50ba14a08b939de41e8f"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\service_question_category.py": {
+    "mtime": 1779245703.535432,
+    "ast_hash": "d274860c95ae8894cbce6af48f282253",
+    "semantic_hash": "d274860c95ae8894cbce6af48f282253"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\service_taxonomy.py": {
+    "mtime": 1779245703.53648,
+    "ast_hash": "10b55c5d8937b8b98bf9d5cb044926ce",
+    "semantic_hash": "10b55c5d8937b8b98bf9d5cb044926ce"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\service_teams_notify.py": {
+    "mtime": 1779245703.53648,
+    "ast_hash": "d7d6e32f62f20ee8d7134f556f600f81",
+    "semantic_hash": "d7d6e32f62f20ee8d7134f556f600f81"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\models\\__init__.py": {
+    "mtime": 1779245703.5334342,
+    "ast_hash": "456726380c4c7eca2faeeb54cb1da4f0",
+    "semantic_hash": "456726380c4c7eca2faeeb54cb1da4f0"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\wizard\\service_holiday_wizard.py": {
+    "mtime": 1779245703.5414844,
+    "ast_hash": "9daaccb1c0b7f96aea1a72b1a3c80075",
+    "semantic_hash": "9daaccb1c0b7f96aea1a72b1a3c80075"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\wizard\\__init__.py": {
+    "mtime": 1779245703.5414844,
+    "ast_hash": "cb7f50b0594825ebcbcbae7aa13e25b4",
+    "semantic_hash": "cb7f50b0594825ebcbcbae7aa13e25b4"
+  },
+  "C:\\online_addons\\19\\odoo19_e_service\\README.md": {
+    "mtime": 1779245703.5304313,
+    "ast_hash": "dfb5265bb4d4df18d373e8a7838b8504",
+    "semantic_hash": "dfb5265bb4d4df18d373e8a7838b8504"
+  }
+}
