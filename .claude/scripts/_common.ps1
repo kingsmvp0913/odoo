@@ -210,6 +210,9 @@ function ConvertFrom-Yaml {
     $result['is_mode_b']            = ($result['execution_mode'] -eq 'MODE_B')
     $result['is_complete']          = [regex]::IsMatch($yaml, '(?m)^\s*is_complete:\s*true\s*$')
     $result['has_qa_failure_hint']  = [regex]::IsMatch($yaml, '_qa_failure_hint:')
+    if ($yaml -match "(?m)^_qa_failure_hint:\s*'((?:[^']|'')*)'\s*$") {
+        $result['_qa_failure_hint'] = $matches[1] -replace "''", "'"
+    }
 
     return $result
 }
