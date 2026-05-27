@@ -159,7 +159,7 @@ foreach ($taskDir in $codingTasks2) {
             # }
         } else {
             # 從 issues: 區塊取得第一個 description（支援單行與 block scalar |/>）
-            $reason = "QA 檢查失敗"
+            $reason = $null
             $afterIssues = if ($qaReport -match '(?s)issues:(.*?)$') { $matches[1] } else { "" }
             if ($afterIssues -match '(?m)^\s*description:\s*"?([^"\r\n]+?)"?\s*$') {
                 # 單行格式：description: "text"
@@ -168,6 +168,12 @@ foreach ($taskDir in $codingTasks2) {
                 # block scalar 格式：description: |\n  text\n  more text
                 $reason = ($matches[1] -split '[\r\n]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join ' '
                 if ($reason.Length -gt 120) { $reason = $reason.Substring(0, 117) + '...' }
+            }
+            # BUG-6：description 解析失敗時注入整個 issues 區塊，確保 agent 下輪有具體失敗資訊
+            if (-not $reason) {
+                $issuesRaw = $afterIssues.Trim()
+                $reason    = if ($issuesRaw.Length -gt 400) { $issuesRaw.Substring(0, 397) + '...' } else { $issuesRaw }
+                if (-not $reason) { $reason = "qa_report issues 區塊為空，請查看 log/qa_report.yaml" }
             }
 
             Release-Lock $taskLock

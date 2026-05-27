@@ -295,8 +295,15 @@ if ($pendingCount -gt 0) {
             "confirm"  { "analysis" }
             "analysis" { "final" }
             "coding"   {
-                $flag = Get-ChildItem $sysDir -Filter ".pending_*" -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($flag -and $flag.Name -eq ".pending_qa") { "qa" } else { "coding" }
+                # 優先用 done marker 交叉驗證（防 crash 後 .pending_* 遺失導致 spawn 錯 agent）
+                $implementDone = Join-Path $sysDir ".implement_done"
+                $qaDoneFile    = Join-Path $sysDir ".qa_done"
+                if ((Test-Path $implementDone) -and -not (Test-Path $qaDoneFile)) {
+                    "qa"
+                } else {
+                    $flag = Get-ChildItem $sysDir -Filter ".pending_*" -ErrorAction SilentlyContinue | Select-Object -First 1
+                    if ($flag -and $flag.Name -eq ".pending_qa") { "qa" } else { "coding" }
+                }
             }
             default    { "unknown" }
         }

@@ -345,6 +345,19 @@ if (-not (Acquire-Lock $lock3b 300)) {
                         $backContent = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: MODE_B`n退回原因: Agent 信心度 < 0.9，新增澄清問題，等待使用者補充答覆。`n`n請填寫 analysis.yaml 中 clarification_channel 的新 user_answer 後重新觸發。"
                         Atomic-WriteFile (Join-Path $logDir 'back_reason.txt') $backContent | Out-Null
                         Write-Host "[LOW-CONF] $taskName MODE_B 信心不足 → confirm/（已寫 log/back_reason.txt）" -ForegroundColor Yellow
+                        # BUG-8：low-conf 單任務重入計數，防止需求描述根本模糊時無限退回
+                        $confirmSysDir = Get-SystemDir (Join-Path $script:CONFIRM_DIR $taskName)
+                        $lowconfFile   = Join-Path $confirmSysDir '_lowconf_count'
+                        $lcc = 0
+                        if (Test-Path $lowconfFile) { try { $lcc = [int](Get-Content $lowconfFile -Raw -EA SilentlyContinue) } catch {} }
+                        $lcc++
+                        Atomic-WriteFile $lowconfFile ([string]$lcc) | Out-Null
+                        $maxLowConf = if ($env:PIPELINE_MAX_LOWCONF) { [int]$env:PIPELINE_MAX_LOWCONF } else { 3 }
+                        if ($lcc -gt $maxLowConf) {
+                            $bMsg = "blocker_type: spec`ntask_id: $taskName`ntimestamp: $(Get-Date -Format 'o')`nlowconf_count: $lcc`nlimit: $maxLowConf`nreason: |`n  任務已低信心度退回 $lcc 次（上限 $maxLowConf），需求描述可能存在根本模糊。請確認需求後手動刪除 system/_lowconf_count 再觸發。"
+                            Atomic-WriteFile (Join-Path $confirmSysDir 'blocker.spec.txt') $bMsg | Out-Null
+                            Write-Host "[BLOCKER] $taskName low-conf 次數 $lcc 超過上限 $maxLowConf → blocker.spec.txt" -ForegroundColor Red
+                        }
                     } catch {
                         Write-Host "[ERROR] $taskName low-confidence 退回失敗: $_" -ForegroundColor Red
                         if ($script:LockHandles.ContainsKey($taskLock)) { Release-Lock $taskLock }
@@ -379,13 +392,6 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 $currentYaml = Get-Content $yamlPath -Raw -Encoding UTF8
                 $parsed      = ConvertFrom-Yaml $currentYaml
 
-                # SHORTCUT：MODE_B 已完整且無 QA failure → 直接寫 .final_done，跳過 Agent
-                if ($parsed['is_mode_b'] -and $parsed['is_complete'] -and -not $parsed['has_qa_failure_hint']) {
-                    Atomic-WriteFile (Join-Path (Get-SystemDir $taskDir.FullName) ".final_done") "" | Out-Null
-                    Write-Host "[SHORTCUT] $taskName MODE_B is_complete=true → .final_done 直寫，跳過 Agent" -ForegroundColor Green
-                    continue
-                }
-
                 $currentTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
                 $prompt = $agentTemplate `
                     -replace '__CASE_ID__', $taskName `
@@ -399,6 +405,8 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 # 正常路徑只需 clarification_channel + 已確認事實，省 technical_specification 傳輸
                 $yamlForAgent = if ($parsed['has_qa_failure_hint']) {
                     # QA 失敗退回：保留整份，agent 需要舊 spec 做修正
+                    # BUG-7 可觀測性：記錄大 prompt 警告
+                    Write-Host "[TOKEN-WARN] $taskName QA 退回 final，注入整份 yaml ~$([int]($currentYaml.Length/4)) tokens" -ForegroundColor DarkYellow
                     "<analysis_yaml>`n$currentYaml`n</analysis_yaml>"
                 } else {
                     # 正常路徑：只傳問題區塊 + 確認事實
