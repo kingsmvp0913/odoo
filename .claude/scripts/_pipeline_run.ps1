@@ -124,6 +124,71 @@ Write-Host "=== Pipeline 開工 $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -
 Write-Host "[LOOP] loop_count=$loopCount / $maxLoops，run_started_at=$startedAt" -ForegroundColor DarkCyan
 
 # ============================================================
+# Git Pull（第一輪才執行：只 pull 待處理任務用到的 repo）
+# ============================================================
+if ($loopCount -eq 0) {
+    Write-Host "`n[GIT-PULL] 掃描待處理任務的 repo..." -ForegroundColor Cyan
+
+    # 收集所有 stage 下任務需要的 repo 路徑
+    $repoTasks = @{}  # repo_path -> [taskDir, ...]
+    $stageDirs = @($script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR)
+    foreach ($stageDir in $stageDirs) {
+        if (-not (Test-Path $stageDir)) { continue }
+        Get-ChildItem $stageDir -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^task_(odoo_|service_)?\d+$' } |
+            ForEach-Object {
+                $taskDir  = $_.FullName
+                $yamlPath = Join-Path $taskDir "analysis.yaml"
+                if (-not (Test-Path $yamlPath)) { return }
+                $yc = Get-Content $yamlPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+                if (-not $yc) { return }
+                $parsed = ConvertFrom-Yaml $yc
+                $ov = $parsed['odoo_version']
+                if (-not $ov) { return }
+                $pn = $parsed['project_name']
+                $repoPath = Get-OnlineAddonsRoot -odooVersion $ov -projectName $pn
+                if (-not (Test-Path (Join-Path $repoPath ".git"))) { return }
+                if (-not $repoTasks.ContainsKey($repoPath)) { $repoTasks[$repoPath] = @() }
+                $repoTasks[$repoPath] = @($repoTasks[$repoPath]) + $taskDir
+            }
+    }
+
+    if ($repoTasks.Count -eq 0) {
+        Write-Host "  [SKIP] 目前無可判斷 repo 的待處理任務" -ForegroundColor DarkGray
+    } else {
+        $pullFailedRepos = @()
+        foreach ($repoPath in $repoTasks.Keys) {
+            $repoName = Split-Path $repoPath -Leaf
+            Write-Host "  git pull: $repoPath" -ForegroundColor DarkCyan
+            $output = git -C $repoPath pull 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  [ERROR] git pull 失敗 ($repoName):`n  $($output -join "`n  ")" -ForegroundColor Red
+                $pullFailedRepos += $repoPath
+                foreach ($tDir in @($repoTasks[$repoPath])) {
+                    $tName  = Split-Path $tDir -Leaf
+                    $sysDir = Get-SystemDir $tDir
+                    if (-not (Test-Path $sysDir)) { New-Item -ItemType Directory -Force $sysDir | Out-Null }
+                    $errText = ($output -join "`n  ") -replace "'", "''"
+                    $bc = "blocker_type: git`ntask_id: $tName`ntimestamp: $(Get-Date -Format 'o')`nrepo: '$repoPath'`nerror: |`n  $errText`naction_required: |`n  git pull $repoName 失敗，請手動更新後刪除此 blocker，重新執行「開工」"
+                    Atomic-WriteFile (Join-Path $sysDir "blocker.git.txt") $bc | Out-Null
+                    Write-Host "  [BLOCKER] $tName 已標記 blocker.git.txt" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "  OK $repoName" -ForegroundColor Green
+            }
+        }
+
+        if ($pullFailedRepos.Count -gt 0) {
+            Write-Host "`n[GIT-PULL] 警告：以下 repo pull 失敗，相關任務已標記 blocker，其餘任務繼續執行：" -ForegroundColor Yellow
+            $pullFailedRepos | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+            Write-Host ""
+        } else {
+            Write-Host "[GIT-PULL] 全部同步完成`n" -ForegroundColor Green
+        }
+    }
+}
+
+# ============================================================
 # Blocker Resume（人工修完後 touch system/.blocker_resolved 重啟）
 # ============================================================
 Write-Host "`n[RESUME] 掃描 .blocker_resolved 標記..." -ForegroundColor Cyan
