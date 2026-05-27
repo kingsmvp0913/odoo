@@ -7,4 +7,7 @@ try {
 if ($prompt -match '開工') {
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
     pwsh -NoProfile -File "$scriptDir\_pipeline_run.ps1"
+} elseif ($prompt -match '同步') {
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    pwsh -NoProfile -File "$scriptDir\_sync.ps1"
 }
