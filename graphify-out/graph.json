@@ -46,508 +46,517 @@
   },
   "nodes": [
     {
+      "label": "_pipeline_run.ps1",
+      "file_type": "code",
+      "source_file": "_pipeline_run.ps1",
+      "source_location": "L1",
+      "id": "pipeline_run_ps1",
+      "community": 22,
+      "norm_label": "_pipeline_run.ps1"
+    },
+    {
       "label": "README.md",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L1",
-      "id": "readme_md",
       "community": 20,
-      "norm_label": "readme.md"
+      "norm_label": "readme.md",
+      "id": "readme_md"
     },
     {
       "label": "Kingsmvps Pipeline (V8.2)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L1",
-      "id": "claude_readme_kingsmvps_pipeline_v8_2",
       "community": 20,
-      "norm_label": "kingsmvps pipeline (v8.2)"
+      "norm_label": "kingsmvps pipeline (v8.2)",
+      "id": "claude_readme_kingsmvps_pipeline_v8_2"
     },
     {
       "label": "\u5b89\u88dd",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L7",
-      "id": "claude_readme_\u5b89\u88dd",
       "community": 20,
-      "norm_label": "\u5b89\u88dd"
+      "norm_label": "\u5b89\u88dd",
+      "id": "claude_readme_\u5b89\u88dd"
     },
     {
       "label": "\u524d\u7f6e\u9700\u6c42",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L9",
-      "id": "claude_readme_\u524d\u7f6e\u9700\u6c42",
       "community": 20,
-      "norm_label": "\u524d\u7f6e\u9700\u6c42"
+      "norm_label": "\u524d\u7f6e\u9700\u6c42",
+      "id": "claude_readme_\u524d\u7f6e\u9700\u6c42"
     },
     {
       "label": "\u8a2d\u5b9a\u6b65\u9a5f",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L15",
-      "id": "claude_readme_\u8a2d\u5b9a\u6b65\u9a5f",
       "community": 20,
-      "norm_label": "\u8a2d\u5b9a\u6b65\u9a5f"
+      "norm_label": "\u8a2d\u5b9a\u6b65\u9a5f",
+      "id": "claude_readme_\u8a2d\u5b9a\u6b65\u9a5f"
     },
     {
       "label": "\u600e\u9ebc\u7528",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L26",
-      "id": "claude_readme_\u600e\u9ebc\u7528",
       "community": 20,
-      "norm_label": "\u600e\u9ebc\u7528"
+      "norm_label": "\u600e\u9ebc\u7528",
+      "id": "claude_readme_\u600e\u9ebc\u7528"
     },
     {
       "label": "\u4efb\u52d9\u6d41\u5411",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L37",
-      "id": "claude_readme_\u4efb\u52d9\u6d41\u5411",
       "community": 20,
-      "norm_label": "\u4efb\u52d9\u6d41\u5411"
+      "norm_label": "\u4efb\u52d9\u6d41\u5411",
+      "id": "claude_readme_\u4efb\u52d9\u6d41\u5411"
     },
     {
       "label": "code:block1 (Odoo \u4efb\u52d9)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L39",
-      "id": "claude_readme_codeblock_1",
       "community": 20,
-      "norm_label": "code:block1 (odoo \u4efb\u52d9)"
+      "norm_label": "code:block1 (odoo \u4efb\u52d9)",
+      "id": "claude_readme_codeblock_1"
     },
     {
       "label": "\u591a\u5de5\u8aaa\u660e",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L62",
-      "id": "claude_readme_\u591a\u5de5\u8aaa\u660e",
       "community": 20,
-      "norm_label": "\u591a\u5de5\u8aaa\u660e"
+      "norm_label": "\u591a\u5de5\u8aaa\u660e",
+      "id": "claude_readme_\u591a\u5de5\u8aaa\u660e"
     },
     {
       "label": "QA \u6aa2\u67e5\u9805\u76ee",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L71",
-      "id": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee",
       "community": 20,
-      "norm_label": "qa \u6aa2\u67e5\u9805\u76ee"
+      "norm_label": "qa \u6aa2\u67e5\u9805\u76ee",
+      "id": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee"
     },
     {
       "label": "Blocker \u985e\u578b",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L81",
-      "id": "claude_readme_blocker_\u985e\u578b",
       "community": 20,
-      "norm_label": "blocker \u985e\u578b"
+      "norm_label": "blocker \u985e\u578b",
+      "id": "claude_readme_blocker_\u985e\u578b"
     },
     {
       "label": "\u9047\u5230\u554f\u984c",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L94",
-      "id": "claude_readme_\u9047\u5230\u554f\u984c",
       "community": 20,
-      "norm_label": "\u9047\u5230\u554f\u984c"
+      "norm_label": "\u9047\u5230\u554f\u984c",
+      "id": "claude_readme_\u9047\u5230\u554f\u984c"
     },
     {
       "label": "\u76ee\u9304\u7d50\u69cb",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L108",
-      "id": "claude_readme_\u76ee\u9304\u7d50\u69cb",
       "community": 20,
-      "norm_label": "\u76ee\u9304\u7d50\u69cb"
+      "norm_label": "\u76ee\u9304\u7d50\u69cb",
+      "id": "claude_readme_\u76ee\u9304\u7d50\u69cb"
     },
     {
       "label": "code:block2 (.claude/)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L110",
-      "id": "claude_readme_codeblock_2",
       "community": 20,
-      "norm_label": "code:block2 (.claude/)"
+      "norm_label": "code:block2 (.claude/)",
+      "id": "claude_readme_codeblock_2"
     },
     {
       "label": "Stage \u6a19\u8a18\u4e00\u89bd\uff08Unified Marker Table\uff09",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L138",
-      "id": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table",
       "community": 20,
-      "norm_label": "stage \u6a19\u8a18\u4e00\u89bd(unified marker table)"
+      "norm_label": "stage \u6a19\u8a18\u4e00\u89bd(unified marker table)",
+      "id": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table"
     },
     {
       "label": "project_version_map.json",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L1",
-      "id": "project_version_map_json",
       "community": 21,
-      "norm_label": "project_version_map.json"
+      "norm_label": "project_version_map.json",
+      "id": "project_version_map_json"
     },
     {
       "label": "project_version_map",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L2",
-      "id": "claude_project_version_map_project_version_map",
       "community": 21,
-      "norm_label": "project_version_map"
+      "norm_label": "project_version_map",
+      "id": "claude_project_version_map_project_version_map"
     },
     {
       "label": "2508014 \u51cc\u8d8a\u751f\u91ab-\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L3",
-      "id": "claude_project_version_map_project_version_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
       "community": 21,
-      "norm_label": "2508014 \u51cc\u8d8a\u751f\u91ab-\u5546\u52d9\u7ba1\u7406\u5e73\u53f0"
+      "norm_label": "2508014 \u51cc\u8d8a\u751f\u91ab-\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
+      "id": "claude_project_version_map_project_version_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0"
     },
     {
       "label": "A11-Odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L4",
-      "id": "claude_project_version_map_project_version_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
       "community": 21,
-      "norm_label": "a11-odoo\u7522\u54c1\u529f\u80fd\u7814\u767c"
+      "norm_label": "a11-odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
+      "id": "claude_project_version_map_project_version_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c"
     },
     {
       "label": "eService2.0",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L5",
-      "id": "claude_project_version_map_project_version_map_eservice2_0",
       "community": 21,
-      "norm_label": "eservice2.0"
+      "norm_label": "eservice2.0",
+      "id": "claude_project_version_map_project_version_map_eservice2_0"
     },
     {
       "label": "\u9d3b\u4e45",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L6",
-      "id": "claude_project_version_map_project_version_map_\u9d3b\u4e45",
       "community": 21,
-      "norm_label": "\u9d3b\u4e45"
+      "norm_label": "\u9d3b\u4e45",
+      "id": "claude_project_version_map_project_version_map_\u9d3b\u4e45"
     },
     {
       "label": "eservice",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L7",
-      "id": "claude_project_version_map_project_version_map_eservice",
       "community": 21,
-      "norm_label": "eservice"
+      "norm_label": "eservice",
+      "id": "claude_project_version_map_project_version_map_eservice"
     },
     {
       "label": "project_dir_map",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L9",
-      "id": "claude_project_version_map_project_dir_map",
       "community": 21,
-      "norm_label": "project_dir_map"
+      "norm_label": "project_dir_map",
+      "id": "claude_project_version_map_project_dir_map"
     },
     {
       "label": "2508014 \u51cc\u8d8a\u751f\u91ab-\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L10",
-      "id": "claude_project_version_map_project_dir_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
       "community": 21,
-      "norm_label": "2508014 \u51cc\u8d8a\u751f\u91ab-\u5546\u52d9\u7ba1\u7406\u5e73\u53f0"
+      "norm_label": "2508014 \u51cc\u8d8a\u751f\u91ab-\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
+      "id": "claude_project_version_map_project_dir_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0"
     },
     {
       "label": "A11-Odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L11",
-      "id": "claude_project_version_map_project_dir_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
       "community": 21,
-      "norm_label": "a11-odoo\u7522\u54c1\u529f\u80fd\u7814\u767c"
+      "norm_label": "a11-odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
+      "id": "claude_project_version_map_project_dir_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c"
     },
     {
       "label": "eService2.0",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L12",
-      "id": "claude_project_version_map_project_dir_map_eservice2_0",
       "community": 21,
-      "norm_label": "eservice2.0"
+      "norm_label": "eservice2.0",
+      "id": "claude_project_version_map_project_dir_map_eservice2_0"
     },
     {
       "label": "\u9d3b\u4e45",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L13",
-      "id": "claude_project_version_map_project_dir_map_\u9d3b\u4e45",
       "community": 21,
-      "norm_label": "\u9d3b\u4e45"
+      "norm_label": "\u9d3b\u4e45",
+      "id": "claude_project_version_map_project_dir_map_\u9d3b\u4e45"
     },
     {
       "label": "eservice",
       "file_type": "code",
       "source_file": "project_version_map.json",
       "source_location": "L14",
-      "id": "claude_project_version_map_project_dir_map_eservice",
       "community": 21,
-      "norm_label": "eservice"
+      "norm_label": "eservice",
+      "id": "claude_project_version_map_project_dir_map_eservice"
     },
     {
       "label": "_common.ps1",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L1",
-      "id": "scripts_common_ps1",
       "community": 19,
-      "norm_label": "_common.ps1"
+      "norm_label": "_common.ps1",
+      "id": "scripts_common_ps1"
     },
     {
       "label": "Acquire-Lock()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L47",
-      "id": "scripts_common_acquire_lock",
       "community": 19,
-      "norm_label": "acquire-lock()"
+      "norm_label": "acquire-lock()",
+      "id": "scripts_common_acquire_lock"
     },
     {
       "label": "Release-Lock()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L68",
-      "id": "scripts_common_release_lock",
       "community": 19,
-      "norm_label": "release-lock()"
+      "norm_label": "release-lock()",
+      "id": "scripts_common_release_lock"
     },
     {
       "label": "Initialize-PipelineDirs()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L80",
-      "id": "scripts_common_initialize_pipelinedirs",
       "community": 19,
-      "norm_label": "initialize-pipelinedirs()"
+      "norm_label": "initialize-pipelinedirs()",
+      "id": "scripts_common_initialize_pipelinedirs"
     },
     {
       "label": "Get-OnlineAddonsRoot()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L89",
-      "id": "scripts_common_get_onlineaddonsroot",
       "community": 19,
-      "norm_label": "get-onlineaddonsroot()"
+      "norm_label": "get-onlineaddonsroot()",
+      "id": "scripts_common_get_onlineaddonsroot"
     },
     {
       "label": "Get-ModulePath()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L125",
-      "id": "scripts_common_get_modulepath",
       "community": 19,
-      "norm_label": "get-modulepath()"
+      "norm_label": "get-modulepath()",
+      "id": "scripts_common_get_modulepath"
     },
     {
       "label": "Format-YamlScalar()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L133",
-      "id": "scripts_common_format_yamlscalar",
       "community": 19,
-      "norm_label": "format-yamlscalar()"
+      "norm_label": "format-yamlscalar()",
+      "id": "scripts_common_format_yamlscalar"
     },
     {
       "label": "Write-YamlObject()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L145",
-      "id": "scripts_common_write_yamlobject",
       "community": 19,
-      "norm_label": "write-yamlobject()"
+      "norm_label": "write-yamlobject()",
+      "id": "scripts_common_write_yamlobject"
     },
     {
       "label": "ConvertTo-Yaml()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L178",
-      "id": "scripts_common_convertto_yaml",
       "community": 19,
-      "norm_label": "convertto-yaml()"
+      "norm_label": "convertto-yaml()",
+      "id": "scripts_common_convertto_yaml"
     },
     {
       "label": "ConvertFrom-Yaml()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L190",
-      "id": "scripts_common_convertfrom_yaml",
       "community": 19,
-      "norm_label": "convertfrom-yaml()"
+      "norm_label": "convertfrom-yaml()",
+      "id": "scripts_common_convertfrom_yaml"
     },
     {
       "label": "Atomic-WriteFile()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L220",
-      "id": "scripts_common_atomic_writefile",
       "community": 19,
-      "norm_label": "atomic-writefile()"
+      "norm_label": "atomic-writefile()",
+      "id": "scripts_common_atomic_writefile"
     },
     {
       "label": "Get-SystemDir()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L238",
-      "id": "scripts_common_get_systemdir",
       "community": 19,
-      "norm_label": "get-systemdir()"
+      "norm_label": "get-systemdir()",
+      "id": "scripts_common_get_systemdir"
     },
     {
       "label": "Get-LogDir()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L239",
-      "id": "scripts_common_get_logdir",
       "community": 19,
-      "norm_label": "get-logdir()"
+      "norm_label": "get-logdir()",
+      "id": "scripts_common_get_logdir"
     },
     {
       "label": "Write-PendingPrompt()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L244",
-      "id": "scripts_common_write_pendingprompt",
       "community": 19,
-      "norm_label": "write-pendingprompt()"
+      "norm_label": "write-pendingprompt()",
+      "id": "scripts_common_write_pendingprompt"
     },
     {
       "label": "Test-PendingStale()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L254",
-      "id": "scripts_common_test_pendingstale",
       "community": 19,
-      "norm_label": "test-pendingstale()"
+      "norm_label": "test-pendingstale()",
+      "id": "scripts_common_test_pendingstale"
     },
     {
       "label": "Clear-StalePending()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L262",
-      "id": "scripts_common_clear_stalepending",
       "community": 19,
-      "norm_label": "clear-stalepending()"
+      "norm_label": "clear-stalepending()",
+      "id": "scripts_common_clear_stalepending"
     },
     {
       "label": "Test-HasBlocker()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L271",
-      "id": "scripts_common_test_hasblocker",
       "community": 19,
-      "norm_label": "test-hasblocker()"
+      "norm_label": "test-hasblocker()",
+      "id": "scripts_common_test_hasblocker"
     },
     {
       "label": "Resolve-CrashState()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L279",
-      "id": "scripts_common_resolve_crashstate",
       "community": 19,
-      "norm_label": "resolve-crashstate()"
+      "norm_label": "resolve-crashstate()",
+      "id": "scripts_common_resolve_crashstate"
     },
     {
       "label": "Test-YamlComplete()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L300",
-      "id": "scripts_common_test_yamlcomplete",
       "community": 19,
-      "norm_label": "test-yamlcomplete()"
+      "norm_label": "test-yamlcomplete()",
+      "id": "scripts_common_test_yamlcomplete"
     },
     {
       "label": "Open-ClaudeTerminal()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L313",
-      "id": "scripts_common_open_claudeterminal",
       "community": 19,
-      "norm_label": "open-claudeterminal()"
+      "norm_label": "open-claudeterminal()",
+      "id": "scripts_common_open_claudeterminal"
     },
     {
       "label": "Load-ProjectVersionMap()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L349",
-      "id": "scripts_common_load_projectversionmap",
       "community": 19,
-      "norm_label": "load-projectversionmap()"
+      "norm_label": "load-projectversionmap()",
+      "id": "scripts_common_load_projectversionmap"
     },
     {
       "label": "Get-ProjectVersion()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L368",
-      "id": "scripts_common_get_projectversion",
       "community": 19,
-      "norm_label": "get-projectversion()"
+      "norm_label": "get-projectversion()",
+      "id": "scripts_common_get_projectversion"
     },
     {
       "label": "Get-ProjectDir()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L375",
-      "id": "scripts_common_get_projectdir",
       "community": 19,
-      "norm_label": "get-projectdir()"
+      "norm_label": "get-projectdir()",
+      "id": "scripts_common_get_projectdir"
     },
     {
       "label": "Get-WikiCache()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L387",
-      "id": "scripts_common_get_wikicache",
       "community": 19,
-      "norm_label": "get-wikicache()"
+      "norm_label": "get-wikicache()",
+      "id": "scripts_common_get_wikicache"
     },
     {
       "label": "Get-McpBudgetBlock()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L417",
-      "id": "scripts_common_get_mcpbudgetblock",
       "community": 19,
-      "norm_label": "get-mcpbudgetblock()"
+      "norm_label": "get-mcpbudgetblock()",
+      "id": "scripts_common_get_mcpbudgetblock"
     },
     {
       "label": "Get-ExistingModules()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L426",
-      "id": "scripts_common_get_existingmodules",
       "community": 19,
-      "norm_label": "get-existingmodules()"
+      "norm_label": "get-existingmodules()",
+      "id": "scripts_common_get_existingmodules"
     },
     {
       "label": "Send-OdooTaskMessage()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L441",
-      "id": "scripts_common_send_odootaskmessage",
       "community": 19,
-      "norm_label": "send-odootaskmessage()"
+      "norm_label": "send-odootaskmessage()",
+      "id": "scripts_common_send_odootaskmessage"
     },
     {
       "label": "BackToConfirm()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L468",
-      "id": "scripts_common_backtoconfirm",
       "community": 19,
-      "norm_label": "backtoconfirm()"
+      "norm_label": "backtoconfirm()",
+      "id": "scripts_common_backtoconfirm"
     },
     {
       "label": "_pipeline_trigger.ps1",
@@ -1223,9 +1232,9 @@
       "source_file": "README.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "readme_md",
-      "target": "claude_readme_kingsmvps_pipeline_v8_2",
-      "confidence_score": 1.0
+      "target": "claude_readme_kingsmvps_pipeline_v8_2"
     },
     {
       "relation": "contains",
@@ -1233,9 +1242,9 @@
       "source_file": "README.md",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_\u5b89\u88dd",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u5b89\u88dd"
     },
     {
       "relation": "contains",
@@ -1243,9 +1252,9 @@
       "source_file": "README.md",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_\u600e\u9ebc\u7528",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u600e\u9ebc\u7528"
     },
     {
       "relation": "contains",
@@ -1253,9 +1262,9 @@
       "source_file": "README.md",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_\u4efb\u52d9\u6d41\u5411",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u4efb\u52d9\u6d41\u5411"
     },
     {
       "relation": "contains",
@@ -1263,9 +1272,9 @@
       "source_file": "README.md",
       "source_location": "L62",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_\u591a\u5de5\u8aaa\u660e",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u591a\u5de5\u8aaa\u660e"
     },
     {
       "relation": "contains",
@@ -1273,9 +1282,9 @@
       "source_file": "README.md",
       "source_location": "L71",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee",
-      "confidence_score": 1.0
+      "target": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee"
     },
     {
       "relation": "contains",
@@ -1283,9 +1292,9 @@
       "source_file": "README.md",
       "source_location": "L81",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_blocker_\u985e\u578b",
-      "confidence_score": 1.0
+      "target": "claude_readme_blocker_\u985e\u578b"
     },
     {
       "relation": "contains",
@@ -1293,9 +1302,9 @@
       "source_file": "README.md",
       "source_location": "L94",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_\u9047\u5230\u554f\u984c",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u9047\u5230\u554f\u984c"
     },
     {
       "relation": "contains",
@@ -1303,9 +1312,9 @@
       "source_file": "README.md",
       "source_location": "L108",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_\u76ee\u9304\u7d50\u69cb",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u76ee\u9304\u7d50\u69cb"
     },
     {
       "relation": "contains",
@@ -1313,9 +1322,9 @@
       "source_file": "README.md",
       "source_location": "L138",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_2",
-      "target": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table",
-      "confidence_score": 1.0
+      "target": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table"
     },
     {
       "relation": "contains",
@@ -1323,9 +1332,9 @@
       "source_file": "README.md",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_\u5b89\u88dd",
-      "target": "claude_readme_\u524d\u7f6e\u9700\u6c42",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u524d\u7f6e\u9700\u6c42"
     },
     {
       "relation": "contains",
@@ -1333,9 +1342,9 @@
       "source_file": "README.md",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_\u5b89\u88dd",
-      "target": "claude_readme_\u8a2d\u5b9a\u6b65\u9a5f",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u8a2d\u5b9a\u6b65\u9a5f"
     },
     {
       "relation": "contains",
@@ -1343,9 +1352,9 @@
       "source_file": "README.md",
       "source_location": "L39",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_\u4efb\u52d9\u6d41\u5411",
-      "target": "claude_readme_codeblock_1",
-      "confidence_score": 1.0
+      "target": "claude_readme_codeblock_1"
     },
     {
       "relation": "contains",
@@ -1353,9 +1362,9 @@
       "source_file": "README.md",
       "source_location": "L110",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_\u76ee\u9304\u7d50\u69cb",
-      "target": "claude_readme_codeblock_2",
-      "confidence_score": 1.0
+      "target": "claude_readme_codeblock_2"
     },
     {
       "relation": "contains",
@@ -1363,9 +1372,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "project_version_map_json",
-      "target": "claude_project_version_map_project_version_map",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_version_map"
     },
     {
       "relation": "contains",
@@ -1373,9 +1382,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "project_version_map_json",
-      "target": "claude_project_version_map_project_dir_map",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_dir_map"
     },
     {
       "relation": "contains",
@@ -1383,9 +1392,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_version_map",
-      "target": "claude_project_version_map_project_version_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_version_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0"
     },
     {
       "relation": "contains",
@@ -1393,9 +1402,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_version_map",
-      "target": "claude_project_version_map_project_version_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_version_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c"
     },
     {
       "relation": "contains",
@@ -1403,9 +1412,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_version_map",
-      "target": "claude_project_version_map_project_version_map_eservice2_0",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_version_map_eservice2_0"
     },
     {
       "relation": "contains",
@@ -1413,9 +1422,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_version_map",
-      "target": "claude_project_version_map_project_version_map_\u9d3b\u4e45",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_version_map_\u9d3b\u4e45"
     },
     {
       "relation": "contains",
@@ -1423,9 +1432,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_version_map",
-      "target": "claude_project_version_map_project_version_map_eservice",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_version_map_eservice"
     },
     {
       "relation": "contains",
@@ -1433,9 +1442,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_dir_map",
-      "target": "claude_project_version_map_project_dir_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_dir_map_2508014_\u51cc\u8d8a\u751f\u91ab_\u5546\u52d9\u7ba1\u7406\u5e73\u53f0"
     },
     {
       "relation": "contains",
@@ -1443,9 +1452,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_dir_map",
-      "target": "claude_project_version_map_project_dir_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_dir_map_a11_odoo\u7522\u54c1\u529f\u80fd\u7814\u767c"
     },
     {
       "relation": "contains",
@@ -1453,9 +1462,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_dir_map",
-      "target": "claude_project_version_map_project_dir_map_eservice2_0",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_dir_map_eservice2_0"
     },
     {
       "relation": "contains",
@@ -1463,9 +1472,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_dir_map",
-      "target": "claude_project_version_map_project_dir_map_\u9d3b\u4e45",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_dir_map_\u9d3b\u4e45"
     },
     {
       "relation": "contains",
@@ -1473,9 +1482,9 @@
       "source_file": "project_version_map.json",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_project_version_map_project_dir_map",
-      "target": "claude_project_version_map_project_dir_map_eservice",
-      "confidence_score": 1.0
+      "target": "claude_project_version_map_project_dir_map_eservice"
     },
     {
       "relation": "contains",
@@ -1483,9 +1492,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L47",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_acquire_lock",
-      "confidence_score": 1.0
+      "target": "scripts_common_acquire_lock"
     },
     {
       "relation": "contains",
@@ -1493,9 +1502,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L68",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_release_lock",
-      "confidence_score": 1.0
+      "target": "scripts_common_release_lock"
     },
     {
       "relation": "contains",
@@ -1503,9 +1512,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L80",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_initialize_pipelinedirs",
-      "confidence_score": 1.0
+      "target": "scripts_common_initialize_pipelinedirs"
     },
     {
       "relation": "contains",
@@ -1513,9 +1522,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L89",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_onlineaddonsroot",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_onlineaddonsroot"
     },
     {
       "relation": "contains",
@@ -1523,9 +1532,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L125",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_modulepath",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_modulepath"
     },
     {
       "relation": "contains",
@@ -1533,9 +1542,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L133",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_format_yamlscalar",
-      "confidence_score": 1.0
+      "target": "scripts_common_format_yamlscalar"
     },
     {
       "relation": "contains",
@@ -1543,9 +1552,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L145",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_write_yamlobject",
-      "confidence_score": 1.0
+      "target": "scripts_common_write_yamlobject"
     },
     {
       "relation": "contains",
@@ -1553,9 +1562,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L178",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_convertto_yaml",
-      "confidence_score": 1.0
+      "target": "scripts_common_convertto_yaml"
     },
     {
       "relation": "contains",
@@ -1563,9 +1572,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L190",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_convertfrom_yaml",
-      "confidence_score": 1.0
+      "target": "scripts_common_convertfrom_yaml"
     },
     {
       "relation": "contains",
@@ -1573,9 +1582,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L220",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_atomic_writefile",
-      "confidence_score": 1.0
+      "target": "scripts_common_atomic_writefile"
     },
     {
       "relation": "contains",
@@ -1583,9 +1592,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L238",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_systemdir",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_systemdir"
     },
     {
       "relation": "contains",
@@ -1593,9 +1602,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L239",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_logdir",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_logdir"
     },
     {
       "relation": "contains",
@@ -1603,9 +1612,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L244",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_write_pendingprompt",
-      "confidence_score": 1.0
+      "target": "scripts_common_write_pendingprompt"
     },
     {
       "relation": "contains",
@@ -1613,9 +1622,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L254",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_test_pendingstale",
-      "confidence_score": 1.0
+      "target": "scripts_common_test_pendingstale"
     },
     {
       "relation": "contains",
@@ -1623,9 +1632,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L262",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_clear_stalepending",
-      "confidence_score": 1.0
+      "target": "scripts_common_clear_stalepending"
     },
     {
       "relation": "contains",
@@ -1633,9 +1642,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L271",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_test_hasblocker",
-      "confidence_score": 1.0
+      "target": "scripts_common_test_hasblocker"
     },
     {
       "relation": "contains",
@@ -1643,9 +1652,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L279",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_resolve_crashstate",
-      "confidence_score": 1.0
+      "target": "scripts_common_resolve_crashstate"
     },
     {
       "relation": "contains",
@@ -1653,9 +1662,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L300",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_test_yamlcomplete",
-      "confidence_score": 1.0
+      "target": "scripts_common_test_yamlcomplete"
     },
     {
       "relation": "contains",
@@ -1663,9 +1672,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L313",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_open_claudeterminal",
-      "confidence_score": 1.0
+      "target": "scripts_common_open_claudeterminal"
     },
     {
       "relation": "contains",
@@ -1673,9 +1682,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L349",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_load_projectversionmap",
-      "confidence_score": 1.0
+      "target": "scripts_common_load_projectversionmap"
     },
     {
       "relation": "contains",
@@ -1683,9 +1692,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L368",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_projectversion",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_projectversion"
     },
     {
       "relation": "contains",
@@ -1693,9 +1702,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L375",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_projectdir",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_projectdir"
     },
     {
       "relation": "contains",
@@ -1703,9 +1712,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L387",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_wikicache",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_wikicache"
     },
     {
       "relation": "contains",
@@ -1713,9 +1722,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L417",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_mcpbudgetblock",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_mcpbudgetblock"
     },
     {
       "relation": "contains",
@@ -1723,9 +1732,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L426",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_get_existingmodules",
-      "confidence_score": 1.0
+      "target": "scripts_common_get_existingmodules"
     },
     {
       "relation": "contains",
@@ -1733,9 +1742,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L441",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_send_odootaskmessage",
-      "confidence_score": 1.0
+      "target": "scripts_common_send_odootaskmessage"
     },
     {
       "relation": "contains",
@@ -1743,9 +1752,9 @@
       "source_file": "scripts/_common.ps1",
       "source_location": "L468",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_common_ps1",
-      "target": "scripts_common_backtoconfirm",
-      "confidence_score": 1.0
+      "target": "scripts_common_backtoconfirm"
     },
     {
       "relation": "contains",
@@ -2774,5 +2783,5 @@
       "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py"
     }
   ],
-  "built_at_commit": "098ec483232c301b8ca0c5ddf739065761bbe77e"
+  "built_at_commit": "80ab55a1ac87967cde8e7d387ed0b80a5304481d"
 }
