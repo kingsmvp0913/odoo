@@ -160,7 +160,7 @@ foreach ($taskDir in $codingTasks2) {
         } else {
             # 從 issues: 區塊取得第一個 description（支援單行與 block scalar |/>）
             $reason = $null
-            $afterIssues = if ($qaReport -match '(?s)issues:(.*?)$') { $matches[1] } else { "" }
+            $afterIssues = if ($qaReport -match '(?s)issues:\s*(.*)') { $matches[1] } else { "" }
             if ($afterIssues -match '(?m)^\s*description:\s*"?([^"\r\n]+?)"?\s*$') {
                 # 單行格式：description: "text"
                 $reason = $matches[1].Trim().Trim('"').Trim("'")
