@@ -15,12 +15,9 @@
 ### 設定步驟
 
 1. **設定環境變數**（在 PowerShell profile 或 Claude terminal 執行）
+   * [System.Environment]::SetEnvironmentVariable("ODOO_PASSWORD", "你的密碼", "User")
+   * [System.Environment]::SetEnvironmentVariable("ODOO_SERVICE_PASSWORD", "你的密碼", "User")
 
-   ```powershell
-   $env:ODOO_PASSWORD = "your_password"     # 必要
-   $env:ODOO_USER_ID  = "79"                # 可選，預設 79
-   $env:ONLINE_ADDONS_DIR = "C:\online_addons"  # 可選，預設 C:\online_addons
-   ```
 2. **確認 `project_version_map.json` 已填寫**（`.claude/project_version_map.json`，專案與 Odoo 版本對照）
 
 

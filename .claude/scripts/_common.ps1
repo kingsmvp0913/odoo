@@ -30,7 +30,7 @@ $script:ODOO_USER_ID  = if ($env:ODOO_USER_ID) { [int]$env:ODOO_USER_ID } else {
 $script:ODOO_SERVICE_URL      = "https://service.ideaxpress.biz"
 $script:ODOO_SERVICE_DB       = "service"
 $script:ODOO_SERVICE_USERNAME = "steven.lin@ideaxpress.biz"
-$script:ODOO_SERVICE_USER_ID  = if ($env:ODOO_SERVICE_USER_ID) { [int]$env:ODOO_SERVICE_USER_ID } else { 1 }
+$script:ODOO_SERVICE_USER_ID  = if ($env:ODOO_SERVICE_USER_ID) { [int]$env:ODOO_SERVICE_USER_ID } else { 139 }
 
 # ============================================================
 # 編碼設定
