@@ -282,12 +282,36 @@ if ($pendingCount -gt 0) {
     Write-Host "`n=== Pipeline 機械工作完成 ===" -ForegroundColor Cyan
     Write-Host "待 Claude 處理: $pendingCount 個任務" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "[CLAUDE-ACTION-REQUIRED] 請依 .pending_<stage> flag 推斷各任務 stage，spawn 對應 Agent 處理：" -ForegroundColor Magenta
-    foreach ($f in $pendingFiles) {
-        Write-Host "  - $($f.FullName)" -ForegroundColor White
-    }
+    Write-Host "[CLAUDE-ACTION-REQUIRED]" -ForegroundColor Magenta
+    Write-Host "直接 spawn 下列 Agent，stage 與 agent 已確認，勿再探索檔案：" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "每個 system/pending_prompt.txt 由對應 Agent 自行完成原子完成協議（寫 done marker → mv system/pending_prompt.txt log/done_prompt.txt → 刪 system/.pending_* flag）。" -ForegroundColor Yellow
+    foreach ($f in $pendingFiles) {
+        $taskDir  = Split-Path (Split-Path $f.FullName -Parent) -Parent
+        $taskId   = Split-Path $taskDir -Leaf
+        $sysDir   = Join-Path $taskDir "system"
+        $stageDir = Split-Path (Split-Path $taskDir -Parent) -Leaf
+
+        $stage = switch ($stageDir) {
+            "confirm"  { "analysis" }
+            "analysis" { "final" }
+            "coding"   {
+                $flag = Get-ChildItem $sysDir -Filter ".pending_*" -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($flag -and $flag.Name -eq ".pending_qa") { "qa" } else { "coding" }
+            }
+            default    { "unknown" }
+        }
+        $agent = switch ($stage) {
+            "analysis" { "requirements-analyst" }
+            "final"    { "requirements-analyst" }
+            "coding"   { "senior-software-engineer" }
+            "qa"       { "qa-analyst" }
+            default    { "unknown" }
+        }
+        Write-Host "  task_id=$taskId  stage=$stage  agent=$agent" -ForegroundColor White
+        Write-Host "  prompt=$($f.FullName)" -ForegroundColor DarkGray
+        Write-Host ""
+    }
+    Write-Host "每個 Agent 自行完成原子協議（done marker → mv pending_prompt.txt → 刪 .pending_* flag）。" -ForegroundColor Yellow
     Write-Host "全部完成後執行 pwsh -NoProfile -File `"$(Join-Path $PSScriptRoot '_pipeline_run.ps1')`" 推進 Pipeline。" -ForegroundColor Yellow
 } else {
     Remove-Item $script:PIPELINE_WAITING -Force -ErrorAction SilentlyContinue
