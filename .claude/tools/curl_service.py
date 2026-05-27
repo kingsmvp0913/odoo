@@ -72,13 +72,16 @@ def main():
                     ["processing_staff", "in", [USER_ID]],
                     ["state", "in", ["draft", "open"]]
                 ],
-                "fields": ["id", "name_seq", "subject", "system", "state", "question_description"],
+                "fields": ["id", "name_seq", "subject", "system", "state", "question_description", "classification"],
                 "limit": 30
             }
         }
     }
 
     task_resp = session.post(call_url, json=task_payload).json()
+    if "error" in task_resp:
+        print(f"[ERROR] 任務查詢失敗: {task_resp['error']}")
+        sys.exit(1)
     tasks = task_resp.get("result", [])
 
     if not tasks:
@@ -90,6 +93,8 @@ def main():
 
     for task in tasks:
         task_id = task.get("id")
+        if task_id is None:
+            continue
         name_seq = task.get("name_seq", "")
         subject = task.get("subject", "未命名任務")
         task_title = f"{name_seq}: {subject}" if name_seq else subject
@@ -110,6 +115,7 @@ def main():
         system_name = task["system"][1] if task.get("system") else "未知系統"
         state_raw = task.get("state", "")
         stage_name = STATE_LABELS.get(state_raw, state_raw)
+        classification_name = task["classification"][1] if task.get("classification") else "未分類"
         question_description = task.get("question_description") or ""
 
         # 獲取訊息歷史
@@ -130,7 +136,11 @@ def main():
         }
 
         msg_resp = session.post(call_url, json=message_payload).json()
-        messages_data = msg_resp.get("result", [])
+        if "error" in msg_resp:
+            print(f"[WARN] 訊息歷史查詢失敗: {msg_resp['error']}")
+            messages_data = []
+        else:
+            messages_data = msg_resp.get("result", [])
 
         message_lines = []
         for msg in messages_data:
@@ -149,6 +159,8 @@ def main():
 {system_name}
 ---stage---
 {stage_name}
+---classification---
+{classification_name}
 ---description---
 {question_description}
 ---message---
