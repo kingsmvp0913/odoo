@@ -26,6 +26,12 @@ $script:ODOO_DB       = "odoo"
 $script:ODOO_USERNAME = "steven.lin@ideaxpress.biz"
 $script:ODOO_USER_ID  = if ($env:ODOO_USER_ID) { [int]$env:ODOO_USER_ID } else { 79 }
 
+# 來源 2（service）— URL/DB/USERNAME 寫死，密碼從 env var 讀
+$script:ODOO_SERVICE_URL      = "https://service.ideaxpress.biz"
+$script:ODOO_SERVICE_DB       = "service"
+$script:ODOO_SERVICE_USERNAME = "steven.lin@ideaxpress.biz"
+$script:ODOO_SERVICE_USER_ID  = if ($env:ODOO_SERVICE_USER_ID) { [int]$env:ODOO_SERVICE_USER_ID } else { 1 }
+
 # ============================================================
 # 編碼設定
 # ============================================================
@@ -433,13 +439,26 @@ function Get-ExistingModules {
 # Odoo 訊息發送
 # ============================================================
 function Send-OdooTaskMessage {
-    param([int]$taskId, [string]$message)
+    param([string]$taskDirName, [string]$message)
+
+    # service 來源尚未啟用通知，直接略過
+    if ($taskDirName -match '_service_') { return }
+
     if (-not $env:ODOO_PASSWORD) { return }
     $disableFlag = Join-Path $script:PLAN_DIR "_ODOO_DISABLED"
     if (Test-Path $disableFlag) { Write-Host "[SKIP] Odoo 通知已停用" -ForegroundColor DarkGray; return }
     $py = Join-Path $script:CLAUDE_DIR "tools\send_message.py"
     if (-not (Test-Path $py)) { return }
-    $r = python $py $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $taskId $message 2>&1
+
+    # 支援 task_123、task_odoo_123 兩種格式
+    if ($taskDirName -match '^task_(?:odoo_)?(\d+)$') {
+        $tid = [int]$matches[1]
+    } else {
+        Write-Host "[WARN] Send-OdooTaskMessage: 無法解析 task ID from '$taskDirName'" -ForegroundColor Yellow
+        return
+    }
+
+    $r = python $py $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $tid $message 2>&1
     if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 訊息失敗: $r" -ForegroundColor Yellow }
 }
 
