@@ -215,6 +215,20 @@ function ConvertFrom-Yaml {
 }
 
 # ============================================================
+# YAML 區塊萃取（抓頂層 key 到下一個頂層 key 為止）
+# 用於將 technical_specification / clarification_channel 等區塊
+# 直接注入 pending_prompt，讓 agent 不需 Read 整份 analysis.yaml
+# ============================================================
+function Get-YamlSection {
+    param([string]$yaml, [string]$key)
+    # 頂層 key 頂格，縮排內容直到下一個頂格 key 或 EOF
+    if ($yaml -match "(?ms)^(${key}:.*?)(?=\r?\n\S|\z)") {
+        return $matches[1].TrimEnd()
+    }
+    return $null  # fallback: 呼叫方改回讀檔指示
+}
+
+# ============================================================
 # 原子性寫檔
 # ============================================================
 function Atomic-WriteFile {

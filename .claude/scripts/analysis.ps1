@@ -395,9 +395,23 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 # WIKI-CACHE 注入：此時 module 已由初始分析填入 analysis.yaml
                 $wikiCache = Get-WikiCache -moduleName $parsed['module'] -odooVersion $parsed['odoo_version'] -projectName $parsed['project_name']
 
+                # [建議4] 依 _qa_failure_hint 分支：QA 退回需整份 yaml（修正基礎），
+                # 正常路徑只需 clarification_channel + 已確認事實，省 technical_specification 傳輸
+                $yamlForAgent = if ($parsed['has_qa_failure_hint']) {
+                    # QA 失敗退回：保留整份，agent 需要舊 spec 做修正
+                    "<analysis_yaml>`n$currentYaml`n</analysis_yaml>"
+                } else {
+                    # 正常路徑：只傳問題區塊 + 確認事實
+                    $clarSection = Get-YamlSection -yaml $currentYaml -key 'clarification_channel'
+                    $inferSection = Get-YamlSection -yaml $currentYaml -key 'inferred_target'
+                    $clarPart   = if ($clarSection) { $clarSection } else { $currentYaml }
+                    $inferPart  = if ($inferSection) { "`n`n$inferSection" } else { "" }
+                    "<analysis_yaml>`n$clarPart$inferPart`n</analysis_yaml>"
+                }
+
                 $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
-                    "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
+                    "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n$yamlForAgent" +
                     "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_final。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "final" -prompt $fullPrompt
