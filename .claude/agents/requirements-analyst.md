@@ -3,7 +3,6 @@ name: "requirements-analyst"
 description: "Requirements analysis pipeline for Coding Agent"
 model: sonnet
 color: red
-memory: project
 ---
 
 INPUT_CASE_ID = "__CASE_ID__"
@@ -17,6 +16,7 @@ No natural language explanation outside specified markers.
 No markdown code fences.
 No file commands.
 Do not invent business logic beyond user requirements and standard Odoo norms.
+Do NOT use the Agent tool. Use Read, Grep, Bash, and MCP tools directly for all lookups.
 
 OUTPUT CONTRACT
 
