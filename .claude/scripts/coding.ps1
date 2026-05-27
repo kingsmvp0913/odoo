@@ -152,15 +152,14 @@ foreach ($taskDir in $analysisTasks) {
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "coding" -prompt $fullPrompt
 
         Release-Lock $taskLock
-        $dest = Join-Path $script:CODING_DIR $taskName
-        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-        try {
-            Move-Item $taskDir.FullName $script:CODING_DIR -Force
+        $rollback = @(
+            (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt'),
+            (Join-Path (Get-SystemDir $taskDir.FullName) '.pending_coding')
+        )
+        if (Safe-MoveWithRollback $taskDir.FullName $script:CODING_DIR $rollback) {
             Write-Host "[OK] $taskName → coding/ (等待 Claude 實作)" -ForegroundColor Green
-        } catch {
-            Write-Host "[ERROR] $taskName Move 失敗，清除 pending: $_" -ForegroundColor Red
-            Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt') -Force -ErrorAction SilentlyContinue
-            Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) '.pending_coding') -Force -ErrorAction SilentlyContinue
+        } else {
+            Write-Host "[ERROR] $taskName 無法移至 coding/，pending 已清除" -ForegroundColor Red
         }
     } catch {
         Write-Host "[ERROR] ${taskName}: $_" -ForegroundColor Red

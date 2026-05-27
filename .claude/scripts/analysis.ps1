@@ -346,6 +346,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
                         if (Test-Path $lowconfFile) { try { $lcc = [int](Get-Content $lowconfFile -Raw -EA SilentlyContinue) } catch {} }
                         $lcc++
                         Atomic-WriteFile $lowconfFile ([string]$lcc) | Out-Null
+                        Increment-TotalReentry $confirmSysDir $taskName | Out-Null
                         $maxLowConf = if ($env:PIPELINE_MAX_LOWCONF) { [int]$env:PIPELINE_MAX_LOWCONF } else { 3 }
                         if ($lcc -gt $maxLowConf) {
                             $bMsg = "blocker_type: spec`ntask_id: $taskName`ntimestamp: $(Get-Date -Format 'o')`nlowconf_count: $lcc`nlimit: $maxLowConf`nreason: |`n  任務已低信心度退回 $lcc 次（上限 $maxLowConf），需求描述可能存在根本模糊。請確認需求後手動刪除 system/_lowconf_count 再觸發。"
@@ -401,13 +402,19 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 # WIKI-CACHE 注入：此時 module 已由初始分析填入 analysis.yaml
                 $wikiCache = Get-WikiCache -moduleName $parsed['module'] -odooVersion $parsed['odoo_version'] -projectName $parsed['project_name']
 
-                # [建議4] 依 _qa_failure_hint 分支：QA 退回需整份 yaml（修正基礎），
-                # 正常路徑只需 clarification_channel + 已確認事實，省 technical_specification 傳輸
                 $yamlForAgent = if ($parsed['has_qa_failure_hint']) {
-                    # QA 失敗退回：保留整份，agent 需要舊 spec 做修正
-                    # BUG-7 可觀測性：記錄大 prompt 警告
-                    Write-Host "[TOKEN-WARN] $taskName QA 退回 final，注入整份 yaml ~$([int]($currentYaml.Length/4)) tokens" -ForegroundColor DarkYellow
-                    "<analysis_yaml>`n$currentYaml`n</analysis_yaml>"
+                    # QA 失敗退回：精準注入 inferred_target + _qa_failure_hint + technical_specification
+                    # 省去 clarification_channel 歷史問答（~500-800 tokens）
+                    $techSpec     = Get-YamlSection -yaml $currentYaml -key 'technical_specification'
+                    $inferSection = Get-YamlSection -yaml $currentYaml -key 'inferred_target'
+                    $hintVal      = $parsed['_qa_failure_hint']
+                    $hintEsc      = "$hintVal" -replace "'", "''"
+                    $inferPart    = if ($inferSection) { "$inferSection`n`n" }           else { "" }
+                    $hintPart     = if ($hintVal)      { "_qa_failure_hint: '$hintEsc'`n`n" } else { "" }
+                    $specPart     = if ($techSpec)     { $techSpec }                     else { $currentYaml }
+                    $injected     = "$inferPart$hintPart$specPart"
+                    Write-Host "[TOKEN-WARN] $taskName QA 退回 final，精準注入 ~$([int]($injected.Length/3.5)) tokens（vs 整份 ~$([int]($currentYaml.Length/4)) tokens）" -ForegroundColor DarkYellow
+                    "<analysis_yaml>`n$injected`n</analysis_yaml>"
                 } else {
                     # 正常路徑：只傳問題區塊 + 確認事實
                     $clarSection = Get-YamlSection -yaml $currentYaml -key 'clarification_channel'
