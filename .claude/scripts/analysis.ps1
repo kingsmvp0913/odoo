@@ -23,24 +23,53 @@ $odooDisableFlag = Join-Path $script:PLAN_DIR "_ODOO_DISABLED"
 if (Test-Path $odooDisableFlag) {
     Write-Host "[SKIP] Odoo 同步已停用（刪除 _ODOO_DISABLED 可重新啟用）" -ForegroundColor DarkGray
 } else {
-    $allDirs      = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
-    $processedIds = @()
+    $allDirs = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
+
+    # 建立來源 1（odoo）skip list：同時識別 task_N（舊）和 task_odoo_N（新）
+    $odooSkipIds = @()
     foreach ($dir in $allDirs) {
         if (Test-Path $dir) {
             Get-ChildItem $dir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-                if ($_.Name -match '^task_(\d+)$') { $processedIds += $matches[1] }
+                if ($_.Name -match '^task_(?:odoo_)?(\d+)$') { $odooSkipIds += $matches[1] }
             }
         }
     }
-    $skipIds = ($processedIds | Select-Object -Unique) -join ","
+    $odooSkipStr = ($odooSkipIds | Select-Object -Unique) -join ","
 
-    $pyScript = Join-Path $script:CLAUDE_DIR "tools\curl.py"
+    # 建立來源 2（service）skip list
+    $serviceSkipIds = @()
+    foreach ($dir in $allDirs) {
+        if (Test-Path $dir) {
+            Get-ChildItem $dir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+                if ($_.Name -match '^task_service_(\d+)$') { $serviceSkipIds += $matches[1] }
+            }
+        }
+    }
+    $serviceSkipStr = ($serviceSkipIds | Select-Object -Unique) -join ","
+
+    $pyScript1 = Join-Path $script:CLAUDE_DIR "tools\curl.py"
+    $pyScript2 = Join-Path $script:CLAUDE_DIR "tools\curl_service.py"
+
+    # 來源 1：odoo（ideaxpress，project.task）
     try {
-        $out = python $pyScript $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $script:ODOO_USER_ID $script:START_DIR $skipIds 2>&1
+        $out = python $pyScript1 $script:ODOO_URL $script:ODOO_DB $script:ODOO_USERNAME $env:ODOO_PASSWORD $script:ODOO_USER_ID $script:START_DIR "task_odoo_" $odooSkipStr 2>&1
         $out | ForEach-Object { Write-Host $_ }
-        if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 同步失敗，exit: $LASTEXITCODE" -ForegroundColor Yellow }
+        if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 來源 1 同步失敗，exit: $LASTEXITCODE" -ForegroundColor Yellow }
     } catch {
-        Write-Host "[WARN] Odoo 同步例外: $_" -ForegroundColor Yellow
+        Write-Host "[WARN] Odoo 來源 1 同步例外: $_" -ForegroundColor Yellow
+    }
+
+    # 來源 2：service（service.question.feedback，若未設定密碼則略過）
+    if ($env:ODOO_SERVICE_PASSWORD) {
+        try {
+            $out = python $pyScript2 $script:ODOO_SERVICE_URL $script:ODOO_SERVICE_DB $script:ODOO_SERVICE_USERNAME $env:ODOO_SERVICE_PASSWORD $script:ODOO_SERVICE_USER_ID $script:START_DIR "task_service_" $serviceSkipStr 2>&1
+            $out | ForEach-Object { Write-Host $_ }
+            if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 來源 2 同步失敗，exit: $LASTEXITCODE" -ForegroundColor Yellow }
+        } catch {
+            Write-Host "[WARN] Odoo 來源 2 同步例外: $_" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "[SKIP] ODOO_SERVICE_PASSWORD 未設定，略過來源 2 同步" -ForegroundColor DarkGray
     }
 }
 
