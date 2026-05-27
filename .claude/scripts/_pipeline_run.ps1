@@ -28,7 +28,7 @@ if (Test-Path $counterFile) {
 $taskReentries = @{}
 Get-ChildItem $script:PLAN_DIR -Recurse -Filter "_reentry_count" -ErrorAction SilentlyContinue | ForEach-Object {
     $tid = Split-Path (Split-Path $_.FullName -Parent) -Leaf
-    if ($tid -match '^task_\d+$') {
+    if ($tid -match '^task_(odoo_|service_)?\d+$') {
         try { $taskReentries[$tid] = [int](Get-Content $_.FullName -Raw -EA SilentlyContinue) } catch {}
     }
 }
@@ -248,7 +248,7 @@ $stageRoots = @($script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR)
 foreach ($root in $stageRoots) {
     if (-not (Test-Path $root)) { continue }
     $stageName = Split-Path $root -Leaf
-    Get-ChildItem $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^task_\d+$' } | ForEach-Object {
+    Get-ChildItem $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^task_(odoo_|service_)?\d+$' } | ForEach-Object {
         $hasBlocker = [bool](Get-ChildItem (Join-Path $_.FullName "system") -Filter "blocker.*.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
         $hasPending = Test-Path (Join-Path $_.FullName "system" "pending_prompt.txt")
         $st = if ($hasBlocker) { "blocker" } elseif ($hasPending) { "pending_ai" } else { "idle" }
