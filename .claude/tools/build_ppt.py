@@ -67,7 +67,7 @@ def generate_ppt(start_date, end_date, project_stats, total_all_hours, start_pat
     
     # 準備左邊表格數據 (按工時高低排序)
     left_data = []
-    for proj, data in sorted(project_stats.items(), key=lambda x: x["hours"], reverse=True):
+    for proj, data in sorted(project_stats.items(), key=lambda x: x[1]["hours"], reverse=True):
         proj_hours = data["hours"]
         task_count = len(data["tasks"])
         percentage = (proj_hours / total_all_hours * 100) if total_all_hours > 0 else 0.0
@@ -138,7 +138,7 @@ def generate_ppt(start_date, end_date, project_stats, total_all_hours, start_pat
 
 def main():
     if len(sys.argv) < 8:
-        print("[ERROR] 參數不足。用法: python curl_timesheet.py <URL> <DB> <USER> <PWD> <USER_ID> <START_DIR> <PREFIX> [SKIP_IDS]")
+        print("[ERROR] 參數不足。用法: python build_ppt.py <URL> <DB> <USER> <PWD> <USER_ID> <START_DIR> <PREFIX> [SKIP_IDS]")
         sys.exit(1)
 
     ODOO_URL = sys.argv[1]
