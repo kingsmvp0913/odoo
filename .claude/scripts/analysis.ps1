@@ -339,7 +339,21 @@ if (-not (Acquire-Lock $lock3b 300)) {
                             Move-Item $dest $bakPath -Force -ErrorAction SilentlyContinue
                         }
                         Move-Item $taskDir.FullName $script:CONFIRM_DIR -Force
-                        # 寫入退回原因（可觀測性）
+                        # BUG-8/BUG-10：計數緊接 Move-Item 之後（先計數再寫日誌，確保例外不漏計）
+                        $confirmSysDir = Get-SystemDir (Join-Path $script:CONFIRM_DIR $taskName)
+                        $lowconfFile   = Join-Path $confirmSysDir '_lowconf_count'
+                        $lcc = 0
+                        if (Test-Path $lowconfFile) { try { $lcc = [int](Get-Content $lowconfFile -Raw -EA SilentlyContinue) } catch {} }
+                        $lcc++
+                        Atomic-WriteFile $lowconfFile ([string]$lcc) | Out-Null
+                        Increment-TotalReentry $confirmSysDir $taskName | Out-Null
+                        $maxLowConf = if ($env:PIPELINE_MAX_LOWCONF) { [int]$env:PIPELINE_MAX_LOWCONF } else { 3 }
+                        if ($lcc -gt $maxLowConf) {
+                            $bMsg = "blocker_type: spec`ntask_id: $taskName`ntimestamp: $(Get-Date -Format 'o')`nlowconf_count: $lcc`nlimit: $maxLowConf`nreason: |`n  任務已低信心度退回 $lcc 次（上限 $maxLowConf），需求描述可能存在根本模糊。請確認需求後手動刪除 system/_lowconf_count 再觸發。"
+                            Atomic-WriteFile (Join-Path $confirmSysDir 'blocker.spec.txt') $bMsg | Out-Null
+                            Write-Host "[BLOCKER] $taskName low-conf 次數 $lcc 超過上限 $maxLowConf → blocker.spec.txt" -ForegroundColor Red
+                        }
+                        # 寫入退回原因（可觀測性日誌，不影響狀態機）
                         $logDir = Get-LogDir (Join-Path $script:CONFIRM_DIR $taskName)
                         if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force $logDir | Out-Null }
                         $backContent = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: MODE_B`n退回原因: Agent 信心度 < 0.9，新增澄清問題，等待使用者補充答覆。`n`n請填寫 analysis.yaml 中 clarification_channel 的新 user_answer 後重新觸發。"
@@ -379,13 +393,6 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 $currentYaml = Get-Content $yamlPath -Raw -Encoding UTF8
                 $parsed      = ConvertFrom-Yaml $currentYaml
 
-                # SHORTCUT：MODE_B 已完整且無 QA failure → 直接寫 .final_done，跳過 Agent
-                if ($parsed['is_mode_b'] -and $parsed['is_complete'] -and -not $parsed['has_qa_failure_hint']) {
-                    Atomic-WriteFile (Join-Path (Get-SystemDir $taskDir.FullName) ".final_done") "" | Out-Null
-                    Write-Host "[SHORTCUT] $taskName MODE_B is_complete=true → .final_done 直寫，跳過 Agent" -ForegroundColor Green
-                    continue
-                }
-
                 $currentTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
                 $prompt = $agentTemplate `
                     -replace '__CASE_ID__', $taskName `
@@ -395,9 +402,31 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 # WIKI-CACHE 注入：此時 module 已由初始分析填入 analysis.yaml
                 $wikiCache = Get-WikiCache -moduleName $parsed['module'] -odooVersion $parsed['odoo_version'] -projectName $parsed['project_name']
 
+                $yamlForAgent = if ($parsed['has_qa_failure_hint']) {
+                    # QA 失敗退回：精準注入 inferred_target + _qa_failure_hint + technical_specification
+                    # 省去 clarification_channel 歷史問答（~500-800 tokens）
+                    $techSpec     = Get-YamlSection -yaml $currentYaml -key 'technical_specification'
+                    $inferSection = Get-YamlSection -yaml $currentYaml -key 'inferred_target'
+                    $hintVal      = $parsed['_qa_failure_hint']
+                    $hintEsc      = "$hintVal" -replace "'", "''"
+                    $inferPart    = if ($inferSection) { "$inferSection`n`n" }           else { "" }
+                    $hintPart     = if ($hintVal)      { "_qa_failure_hint: '$hintEsc'`n`n" } else { "" }
+                    $specPart     = if ($techSpec)     { $techSpec }                     else { $currentYaml }
+                    $injected     = "$inferPart$hintPart$specPart"
+                    Write-Host "[TOKEN-WARN] $taskName QA 退回 final，精準注入 ~$([int]($injected.Length/3.5)) tokens（vs 整份 ~$([int]($currentYaml.Length/4)) tokens）" -ForegroundColor DarkYellow
+                    "<analysis_yaml>`n$injected`n</analysis_yaml>"
+                } else {
+                    # 正常路徑：只傳問題區塊 + 確認事實
+                    $clarSection = Get-YamlSection -yaml $currentYaml -key 'clarification_channel'
+                    $inferSection = Get-YamlSection -yaml $currentYaml -key 'inferred_target'
+                    $clarPart   = if ($clarSection) { $clarSection } else { $currentYaml }
+                    $inferPart  = if ($inferSection) { "`n`n$inferSection" } else { "" }
+                    "<analysis_yaml>`n$clarPart$inferPart`n</analysis_yaml>"
+                }
+
                 $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
-                    "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n<analysis_yaml>`n$currentYaml`n</analysis_yaml>" +
+                    "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n$yamlForAgent" +
                     "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_final。"
 
                 Write-PendingPrompt -taskDir $taskDir.FullName -stage "final" -prompt $fullPrompt

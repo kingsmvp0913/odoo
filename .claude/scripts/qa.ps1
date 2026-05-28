@@ -76,10 +76,31 @@ foreach ($taskDir in $codingTasks) {
         $modulePath = Get-ModulePath -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
         Write-Host "[INFO] $taskName 準備 QA: $modulePath" -ForegroundColor DarkCyan
 
+        # [建議3] 萃取 technical_specification 區塊直接注入，省 agent Read 整份 yaml
+        $techSpec  = Get-YamlSection -yaml $yamlContent -key 'technical_specification'
+        $specBlock = if ($techSpec) {
+            "【SPECIFICATION】`n$techSpec"
+        } else {
+            "【SPECIFICATION】`n讀取 $analysisYamlPath（fallback）。"
+        }
+
+        # [建議2] 模組現有檔名清單，省 agent 探測性 find
+        $moduleExists      = Test-Path $modulePath
+        $moduleStatusBlock = if ($moduleExists) {
+            $existingFiles = Get-ChildItem $modulePath -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -notmatch '\.pyc$' -and $_.FullName -notmatch '__pycache__' } |
+                ForEach-Object { ($_.FullName.Substring($modulePath.Length) -replace '^[/\\]+', '').Replace('\', '/') }
+            $fileList = if ($existingFiles) { ($existingFiles -join "`n") } else { "(空目錄)" }
+            "【MODULE FILES】`n$fileList"
+        } else {
+            "【MODULE FILES】（模組目錄不存在）"
+        }
+
         $fullPrompt = (Get-McpBudgetBlock) + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
-            "`n`n【SPECIFICATION】`n讀取 $analysisYamlPath" +
+            "`n`n$specBlock" +
             "`n`n【IMPLEMENTATION PATH】`n$modulePath" +
+            "`n`n$moduleStatusBlock" +
             "`n`n完成後依序：(a) 寫入 log/qa_report.yaml 和 system/.qa_done 到【TASK DIRECTORY】(b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_qa flag。"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "qa" -prompt $fullPrompt
@@ -138,8 +159,8 @@ foreach ($taskDir in $codingTasks2) {
             # }
         } else {
             # 從 issues: 區塊取得第一個 description（支援單行與 block scalar |/>）
-            $reason = "QA 檢查失敗"
-            $afterIssues = if ($qaReport -match '(?s)issues:(.*?)$') { $matches[1] } else { "" }
+            $reason = $null
+            $afterIssues = if ($qaReport -match '(?s)issues:\s*(.*)') { $matches[1] } else { "" }
             if ($afterIssues -match '(?m)^\s*description:\s*"?([^"\r\n]+?)"?\s*$') {
                 # 單行格式：description: "text"
                 $reason = $matches[1].Trim().Trim('"').Trim("'")
@@ -147,6 +168,12 @@ foreach ($taskDir in $codingTasks2) {
                 # block scalar 格式：description: |\n  text\n  more text
                 $reason = ($matches[1] -split '[\r\n]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join ' '
                 if ($reason.Length -gt 120) { $reason = $reason.Substring(0, 117) + '...' }
+            }
+            # BUG-6：description 解析失敗時注入整個 issues 區塊，確保 agent 下輪有具體失敗資訊
+            if (-not $reason) {
+                $issuesRaw = $afterIssues.Trim()
+                $reason    = if ($issuesRaw.Length -gt 400) { $issuesRaw.Substring(0, 397) + '...' } else { $issuesRaw }
+                if (-not $reason) { $reason = "qa_report issues 區塊為空，請查看 log/qa_report.yaml" }
             }
 
             Release-Lock $taskLock

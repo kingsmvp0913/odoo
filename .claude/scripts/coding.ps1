@@ -122,24 +122,44 @@ foreach ($taskDir in $analysisTasks) {
         # WIKI-CACHE 注入：在 Agent prompt 中 prepend 模組相關 wiki 內容
         $wikiCache = Get-WikiCache -moduleName $moduleName -odooVersion $odooVersion -projectName $projectName
 
+        # [建議1] 萃取 technical_specification 區塊直接注入，省 agent Read 整份 yaml
+        $techSpec    = Get-YamlSection -yaml $yamlContent -key 'technical_specification'
+        $specBlock   = if ($techSpec) {
+            "【SPECIFICATION】`n$techSpec"
+        } else {
+            "【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。"
+        }
+
+        # [建議2] 模組存在狀態 + 現有檔名清單，省 agent 探測性 ls/find
+        $moduleExists      = Test-Path $modulePath
+        $moduleStatusBlock = if ($moduleExists) {
+            $existingFiles = Get-ChildItem $modulePath -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -notmatch '\.pyc$' -and $_.FullName -notmatch '__pycache__' } |
+                ForEach-Object { ($_.FullName.Substring($modulePath.Length) -replace '^[/\\]+', '').Replace('\', '/') }
+            $fileList = if ($existingFiles) { ($existingFiles -join "`n") } else { "(空目錄)" }
+            "【MODULE STATUS】exists=true`n【EXISTING FILES】`n$fileList"
+        } else {
+            "【MODULE STATUS】exists=false（新模組，從零建立）"
+        }
+
         $fullPrompt = (Get-McpBudgetBlock) + $wikiCache + $agentTemplate +
             "`n`n【TASK DIRECTORY】`n$destTaskDir" +
-            "`n`n【SPECIFICATION】`n讀取 $($destTaskDir)\analysis.yaml 取得完整規格。" +
+            "`n`n$specBlock" +
             "`n`n【OUTPUT PATH】`n$modulePath" +
-            "`n`n【RULES】`n1. 若模組目錄已存在，先讀取現有程式碼再修改`n2. 依規格寫入所有實作檔案`n3. 完成後依序：(a) 寫入 system/.implement_done 到【TASK DIRECTORY】(b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_coding flag"
+            "`n`n$moduleStatusBlock" +
+            "`n`n【RULES】`n1. 依【MODULE STATUS】決定修改現有模組或建新模組；若 exists=true，先讀取【EXISTING FILES】列出的檔案再修改`n2. 依規格寫入所有實作檔案`n3. 完成後依序：(a) 寫入 system/.implement_done 到【TASK DIRECTORY】(b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_coding flag"
 
         Write-PendingPrompt -taskDir $taskDir.FullName -stage "coding" -prompt $fullPrompt
 
         Release-Lock $taskLock
-        $dest = Join-Path $script:CODING_DIR $taskName
-        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-        try {
-            Move-Item $taskDir.FullName $script:CODING_DIR -Force
+        $rollback = @(
+            (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt'),
+            (Join-Path (Get-SystemDir $taskDir.FullName) '.pending_coding')
+        )
+        if (Safe-MoveWithRollback $taskDir.FullName $script:CODING_DIR $rollback) {
             Write-Host "[OK] $taskName → coding/ (等待 Claude 實作)" -ForegroundColor Green
-        } catch {
-            Write-Host "[ERROR] $taskName Move 失敗，清除 pending: $_" -ForegroundColor Red
-            Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) 'pending_prompt.txt') -Force -ErrorAction SilentlyContinue
-            Remove-Item (Join-Path (Get-SystemDir $taskDir.FullName) '.pending_coding') -Force -ErrorAction SilentlyContinue
+        } else {
+            Write-Host "[ERROR] $taskName 無法移至 coding/，pending 已清除" -ForegroundColor Red
         }
     } catch {
         Write-Host "[ERROR] ${taskName}: $_" -ForegroundColor Red

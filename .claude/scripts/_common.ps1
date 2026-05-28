@@ -210,8 +210,25 @@ function ConvertFrom-Yaml {
     $result['is_mode_b']            = ($result['execution_mode'] -eq 'MODE_B')
     $result['is_complete']          = [regex]::IsMatch($yaml, '(?m)^\s*is_complete:\s*true\s*$')
     $result['has_qa_failure_hint']  = [regex]::IsMatch($yaml, '_qa_failure_hint:')
+    if ($yaml -match "(?m)^_qa_failure_hint:\s*'((?:[^']|'')*)'\s*$") {
+        $result['_qa_failure_hint'] = $matches[1] -replace "''", "'"
+    }
 
     return $result
+}
+
+# ============================================================
+# YAML 區塊萃取（抓頂層 key 到下一個頂層 key 為止）
+# 用於將 technical_specification / clarification_channel 等區塊
+# 直接注入 pending_prompt，讓 agent 不需 Read 整份 analysis.yaml
+# ============================================================
+function Get-YamlSection {
+    param([string]$yaml, [string]$key)
+    # 頂層 key 頂格，縮排內容直到下一個頂格 key 或 EOF
+    if ($yaml -match "(?ms)^(${key}:.*?)(?=\r?\n\S|\z)") {
+        return $matches[1].TrimEnd()
+    }
+    return $null  # fallback: 呼叫方改回讀檔指示
 }
 
 # ============================================================
@@ -513,6 +530,7 @@ function BackToConfirm {
         $count = 0
         if (Test-Path $reentryFile) { try { $count = [int](Get-Content $reentryFile -Raw -EA SilentlyContinue) } catch {} }
         Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
+        Increment-TotalReentry $destSysDir $taskName | Out-Null
 
         # P1-01: QA 失敗退回時注入 _qa_failure_hint，防止 MODE_B SHORTCUT 跳過修正直接複製舊規格
         if ($stage -eq "QA" -and (Test-Path $yamlPath)) {
@@ -557,10 +575,50 @@ function BackToConfirm {
         $count = 0
         if (Test-Path $reentryFile) { try { $count = [int](Get-Content $reentryFile -Raw -EA SilentlyContinue) } catch {} }
         Atomic-WriteFile $reentryFile ([string]($count + 1)) | Out-Null
+        Increment-TotalReentry $confirmSysDir $taskName | Out-Null
 
         $content = "退回時間: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n退回階段: $stage`n退回原因: $reason`n`n請修正後重新填寫 analysis.yaml 中的 user_answer。"
         Atomic-WriteFile (Join-Path $confirmLogDir 'back_reason.txt') $content | Out-Null
 
         Write-Host "[BACK] $taskName 從 $stage 退回 confirm/  原因: $reason" -ForegroundColor Yellow
+    }
+}
+
+# ============================================================
+# 全域退回計數器（QA 失敗 + 低信心度退回合計）
+# ============================================================
+function Increment-TotalReentry {
+    param([string]$sysDir, [string]$taskName)
+    $totalFile  = Join-Path $sysDir '_total_reentry_count'
+    $totalCount = 0
+    if (Test-Path $totalFile) { try { $totalCount = [int](Get-Content $totalFile -Raw -EA SilentlyContinue) } catch {} }
+    $totalCount++
+    Atomic-WriteFile $totalFile ([string]$totalCount) | Out-Null
+    $maxTotal = if ($env:PIPELINE_MAX_TOTAL_REENTRY) { [int]$env:PIPELINE_MAX_TOTAL_REENTRY } else { 6 }
+    if ($totalCount -gt $maxTotal) {
+        $bMsg = "blocker_type: loop`ntask_id: $taskName`ntimestamp: $(Get-Date -Format 'o')`ntotal_reentry_count: $totalCount`nlimit: $maxTotal`nreason: |`n  任務總退回次數（QA失敗＋低信心度合計）$totalCount 次超過上限 $maxTotal，需人工確認需求後手動刪除 system/_total_reentry_count 再觸發。"
+        Atomic-WriteFile (Join-Path $sysDir 'blocker.loop.txt') $bMsg | Out-Null
+        Write-Host "[BLOCKER] $taskName 總退回 $totalCount 次超過上限 $maxTotal → blocker.loop.txt" -ForegroundColor Red
+        return $true
+    }
+    return $false
+}
+
+# ============================================================
+# 安全移動（失敗時自動清除已寫入的 rollback 檔案）
+# ============================================================
+function Safe-MoveWithRollback {
+    param([string]$src, [string]$destDir, [string[]]$rollbackFiles = @())
+    $destPath = Join-Path $destDir (Split-Path $src -Leaf)
+    if (Test-Path $destPath) { Remove-Item $destPath -Recurse -Force -ErrorAction SilentlyContinue }
+    try {
+        Move-Item $src $destDir -Force -ErrorAction Stop
+        return $true
+    } catch {
+        Write-Host "[ROLLBACK] Move 失敗，清除殘留: $_" -ForegroundColor Red
+        foreach ($f in $rollbackFiles) {
+            Remove-Item $f -Force -ErrorAction SilentlyContinue
+        }
+        return $false
     }
 }
