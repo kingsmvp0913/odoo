@@ -72,7 +72,7 @@ def main():
                     ["processing_staff", "in", [USER_ID]],
                     ["state", "in", ["draft", "open"]]
                 ],
-                "fields": ["id", "name_seq", "subject", "system", "state", "question_description", "classification"],
+                "fields": ["id", "name_seq", "subject", "system", "state", "question_description", "classification", "respondent"],
                 "limit": 30
             }
         }
@@ -113,6 +113,7 @@ def main():
 
         # 處理欄位
         system_name = task["system"][1] if task.get("system") else "未知系統"
+        respondent_name = task["respondent"][1] if task.get("respondent") else "未知帳號"
         state_raw = task.get("state", "")
         stage_name = STATE_LABELS.get(state_raw, state_raw)
         classification_name = task["classification"][1] if task.get("classification") else "未分類"
@@ -156,7 +157,7 @@ def main():
 ---title---
 {task_title}
 ---project---
-{system_name}
+{respondent_name}
 ---stage---
 {stage_name}
 ---classification---

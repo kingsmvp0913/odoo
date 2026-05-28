@@ -1,3 +1,4 @@
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
 $json = [Console]::In.ReadToEnd()
 try {
     $prompt = ($json | ConvertFrom-Json).prompt

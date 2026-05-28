@@ -1,16 +1,16 @@
-# Graph Report - odoo  (2026-05-27)
+# Graph Report - odoo  (2026-05-28)
 
 ## Corpus Check
-- 52454 files · ~37,713,494 words
+- 52454 files · ~37,714,430 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 122 nodes · 151 edges · 26 communities (16 shown, 10 thin omitted)
+- 125 nodes · 156 edges · 30 communities (19 shown, 11 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `efbf58a9`
+- Built from commit: `bf6efd10`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -33,15 +33,19 @@
 - [[_COMMUNITY_Community 19|Community 19]]
 - [[_COMMUNITY_Community 20|Community 20]]
 - [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 24|Community 24]]
+- [[_COMMUNITY_Community 27|Community 27]]
+- [[_COMMUNITY_Community 28|Community 28]]
+- [[_COMMUNITY_Community 29|Community 29]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Kingsmvps Pipeline (V8.2)` - 10 edges
 2. `Get-SystemDir()` - 8 edges
-3. `project_version_map` - 6 edges
-4. `project_dir_map` - 6 edges
-5. `BackToConfirm()` - 6 edges
-6. `Get-OnlineAddonsRoot()` - 5 edges
-7. `Atomic-WriteFile()` - 5 edges
+3. `BackToConfirm()` - 7 edges
+4. `Atomic-WriteFile()` - 6 edges
+5. `project_version_map` - 6 edges
+6. `project_dir_map` - 6 edges
+7. `Get-OnlineAddonsRoot()` - 5 edges
 8. `Format-YamlScalar()` - 4 edges
 9. `Write-YamlObject()` - 4 edges
 10. `ConvertTo-Yaml()` - 4 edges
@@ -63,7 +67,7 @@
 - **Contract Expiry Notification Flow** — odoo19_e_service_contract_notify_check, odoo19_e_service_compute_contract_notify, odoo19_e_service_TeamsNotifyMessage [EXTRACTED 1.00]
 - **Holiday Import Wizard Flow** — odoo19_e_service_ServiceHolidayWizard, odoo19_e_service_generate, odoo19_e_service_get_days_from_api [EXTRACTED 1.00]
 
-## Communities (26 total, 10 thin omitted)
+## Communities (30 total, 11 thin omitted)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.33
@@ -86,8 +90,8 @@ Cohesion: 0.50
 Nodes (4): ServiceHoliday, ServiceHolidayWizard, ServiceHolidayWizard.generate, ServiceHolidayWizard.get_days_from_api
 
 ### Community 19 - "Community 19"
-Cohesion: 0.18
-Nodes (27): Acquire-Lock(), Atomic-WriteFile(), BackToConfirm(), Clear-StalePending(), ConvertFrom-Yaml(), ConvertTo-Yaml(), Format-YamlScalar(), Get-ExistingModules() (+19 more)
+Cohesion: 0.27
+Nodes (8): Acquire-Lock(), Get-McpBudgetBlock(), Get-ModulePath(), Get-OnlineAddonsRoot(), Get-ProjectDir(), Get-ProjectVersion(), Get-WikiCache(), Load-ProjectVersionMap()
 
 ### Community 20 - "Community 20"
 Cohesion: 0.13
@@ -97,10 +101,22 @@ Nodes (14): Blocker 類型, code:block1 (Odoo 任務), code:block2 (.claude/), K
 Cohesion: 0.15
 Nodes (12): project_dir_map, 2508014 凌越生醫-商務管理平台, A11-Odoo產品功能研發, eservice, eService2.0, 鴻久, project_version_map, 2508014 凌越生醫-商務管理平台 (+4 more)
 
+### Community 24 - "Community 24"
+Cohesion: 0.31
+Nodes (8): ConvertFrom-Yaml(), ConvertTo-Yaml(), Format-YamlScalar(), Get-ExistingModules(), Initialize-PipelineDirs(), Send-OdooTaskMessage(), Test-YamlComplete(), Write-YamlObject()
+
+### Community 27 - "Community 27"
+Cohesion: 0.50
+Nodes (5): Atomic-WriteFile(), BackToConfirm(), Increment-TotalReentry(), Open-ClaudeTerminal(), Release-Lock()
+
+### Community 28 - "Community 28"
+Cohesion: 0.40
+Nodes (5): Clear-StalePending(), Get-SystemDir(), Test-HasBlocker(), Test-PendingStale(), Write-PendingPrompt()
+
 ## Knowledge Gaps
 - **34 isolated node(s):** `前置需求`, `設定步驟`, `怎麼用`, `code:block1 (Odoo 任務)`, `多工說明` (+29 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
