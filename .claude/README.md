@@ -27,7 +27,7 @@
 
 | MCP | 用途 |
 |-----|------|
-| **serena** | 程式碼智能導航：跨檔案符號搜尋、find references/implementations、call chain 追蹤，取代手動 grep 探索 |
+| **serena-online** | 程式碼智能導航：跨檔案符號搜尋、find references/implementations、call chain 追蹤，範圍限定 `online_addons/`（降低 token 消耗；原生 Odoo API 改由 Context7 負責） |
 
 > **知識檢索優先順序**（見 CLAUDE.md §2）：Graphify wiki → Serena → Context7
 

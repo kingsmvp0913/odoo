@@ -17,7 +17,7 @@
   },
   "spinnerTipsEnabled": false,
   "enabledMcpjsonServers": [
-    "serena"
+    "serena-online"
   ],
   "enabledPlugins": {
     "caveman@caveman": false,
