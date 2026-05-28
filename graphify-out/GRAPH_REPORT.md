@@ -1,16 +1,16 @@
 # Graph Report - odoo  (2026-05-27)
 
 ## Corpus Check
-- 52453 files · ~37,713,377 words
+- 52454 files · ~37,713,494 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 121 nodes · 151 edges · 25 communities (15 shown, 10 thin omitted)
+- 122 nodes · 151 edges · 26 communities (16 shown, 10 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `80ab55a1`
+- Built from commit: `efbf58a9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -63,7 +63,7 @@
 - **Contract Expiry Notification Flow** — odoo19_e_service_contract_notify_check, odoo19_e_service_compute_contract_notify, odoo19_e_service_TeamsNotifyMessage [EXTRACTED 1.00]
 - **Holiday Import Wizard Flow** — odoo19_e_service_ServiceHolidayWizard, odoo19_e_service_generate, odoo19_e_service_get_days_from_api [EXTRACTED 1.00]
 
-## Communities (25 total, 10 thin omitted)
+## Communities (26 total, 10 thin omitted)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.33
