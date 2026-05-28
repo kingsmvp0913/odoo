@@ -11,12 +11,15 @@ CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 _CONFIG_PATH = Path(__file__).parent / "config.json"
 
 
-def load_config(section="odoo"):
-    """從 config.json 讀取指定區塊設定，密碼從對應 env var 取得。"""
+def load_config(section="odoo", optional=False):
+    """從 config.json 讀取指定區塊設定，密碼從對應 env var 取得。
+    optional=True 時若密碼未設定回傳 None 而非結束程式。"""
     with open(_CONFIG_PATH, encoding="utf-8") as f:
         cfg = json.load(f)[section]
     password = os.environ.get(cfg["password_env"], "")
     if not password:
+        if optional:
+            return None
         print(f"[ERROR] 環境變數 {cfg['password_env']} 未設定")
         sys.exit(1)
     return {
