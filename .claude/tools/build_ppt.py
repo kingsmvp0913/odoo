@@ -69,15 +69,17 @@ def fetch_pending_tasks(odoo_cfg, service_cfg):
                         ["processing_staff", "in", [service_cfg["user_id"]]],
                         ["state", "in", ["draft", "open"]],
                     ],
-                    "fields": ["system"],
+                    "fields": ["project_id", "system"],
                     "limit": 200,
                 },
             },
         }).json()
         if "result" in resp2:
             for task in resp2["result"]:
-                system_name = task["system"][1] if task.get("system") else "未知系統"
-                stats[system_name] += 1
+                project_name = task["project_id"][1] if task.get("project_id") else (
+                    task["system"][1] if task.get("system") else "未知專案"
+                )
+                stats[project_name] += 1
         else:
             print(f"[WARN] service.question.feedback 查詢失敗: {resp2.get('error')}")
 
