@@ -4,7 +4,6 @@ Odoo 工時表同步與 PPT 自動生成腳本
 自動動態計算「執行當天前兩週的週一至週五」，建立目錄並生成左右雙表格 PPT。
 """
 
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
@@ -99,7 +98,7 @@ def generate_ppt(start_date, end_date, project_stats, total_all_hours, output_pa
 
 
 def main():
-    output_dir = sys.argv[1] if len(sys.argv) > 1 else "."
+    output_path = Path(__file__).parent
 
     cfg = load_config("odoo")
     session = create_odoo_session(cfg["url"], cfg["db"], cfg["username"], cfg["password"])
@@ -137,9 +136,6 @@ def main():
     if not timesheets:
         print(f"[INFO] 區間 {start_date} ~ {end_date} 內沒有任何工時紀錄。")
         return
-
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
 
     project_stats = defaultdict(lambda: {"hours": 0.0, "tasks": set()})
     total_all_hours = 0.0
