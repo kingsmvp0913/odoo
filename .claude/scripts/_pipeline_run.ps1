@@ -198,9 +198,9 @@ Get-ChildItem $script:PLAN_DIR -Recurse -Filter ".blocker_resolved" -ErrorAction
     $taskDir  = Split-Path $sysDir -Parent
     $taskName = Split-Path $taskDir -Leaf
 
-    # P1-03: 排除 final/ 目錄（歸檔任務不應被 resume 掃描）
-    if ($taskDir -like "*$($script:FINAL_DIR)*") {
-        Write-Host "[SKIP] $taskName 在 final/，忽略 .blocker_resolved" -ForegroundColor DarkGray
+    # P1-03: 排除 final/ 與 stop/ 目錄（歸檔/停止任務不應被 resume 掃描）
+    if ($taskDir -like "*$($script:FINAL_DIR)*" -or $taskDir -like "*$($script:STOP_DIR)*") {
+        Write-Host "[SKIP] $taskName 在 final/ 或 stop/，忽略 .blocker_resolved" -ForegroundColor DarkGray
         return
     }
 

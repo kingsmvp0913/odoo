@@ -11,7 +11,7 @@ if (Test-Path $odooDisableFlag) {
     exit 0
 }
 
-$allDirs = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
+$allDirs = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR, $script:STOP_DIR)
 
 # 來源 1（odoo）skip list：task_N 和 task_odoo_N
 $odooSkipIds = @()

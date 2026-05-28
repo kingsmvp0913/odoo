@@ -14,6 +14,7 @@ $script:CONFIRM_DIR  = Join-Path $script:PLAN_DIR "confirm"
 $script:ANALYSIS_DIR = Join-Path $script:PLAN_DIR "analysis"
 $script:CODING_DIR   = Join-Path $script:PLAN_DIR "coding"
 $script:FINAL_DIR    = Join-Path $script:PLAN_DIR "final"
+$script:STOP_DIR     = Join-Path $script:PLAN_DIR "stop"
 
 $script:PIPELINE_WAITING     = Join-Path $script:PLAN_DIR "_PIPELINE_WAITING"
 $script:PROJECT_VERSION_MAP_PATH = Join-Path $script:CLAUDE_DIR "project_version_map.json"
@@ -78,7 +79,7 @@ function Release-Lock {
 # 目錄初始化
 # ============================================================
 function Initialize-PipelineDirs {
-    @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR) | ForEach-Object {
+    @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR, $script:STOP_DIR) | ForEach-Object {
         if (-not (Test-Path $_)) { New-Item -ItemType Directory -Force $_ | Out-Null }
     }
 }
