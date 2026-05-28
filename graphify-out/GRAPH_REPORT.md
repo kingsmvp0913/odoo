@@ -1,16 +1,16 @@
 # Graph Report - odoo  (2026-05-28)
 
 ## Corpus Check
-- 52454 files · ~37,714,430 words
+- 52454 files · ~37,718,919 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 125 nodes · 156 edges · 30 communities (19 shown, 11 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.83)
+- 152 nodes · 181 edges · 30 communities (19 shown, 11 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `bf6efd10`
+- Built from commit: `8e82091d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -36,19 +36,18 @@
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 27|Community 27]]
 - [[_COMMUNITY_Community 28|Community 28]]
-- [[_COMMUNITY_Community 29|Community 29]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Kingsmvps Pipeline (V8.2)` - 10 edges
-2. `Get-SystemDir()` - 8 edges
-3. `BackToConfirm()` - 7 edges
-4. `Atomic-WriteFile()` - 6 edges
-5. `project_version_map` - 6 edges
-6. `project_dir_map` - 6 edges
-7. `Get-OnlineAddonsRoot()` - 5 edges
-8. `Format-YamlScalar()` - 4 edges
-9. `Write-YamlObject()` - 4 edges
-10. `ConvertTo-Yaml()` - 4 edges
+2. `enabledPlugins` - 8 edges
+3. `Get-SystemDir()` - 8 edges
+4. `project_version_map` - 7 edges
+5. `project_dir_map` - 7 edges
+6. `BackToConfirm()` - 7 edges
+7. `Atomic-WriteFile()` - 6 edges
+8. `Get-OnlineAddonsRoot()` - 5 edges
+9. `Format-YamlScalar()` - 4 edges
+10. `Write-YamlObject()` - 4 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `ServiceAnnouncement` --semantically_similar_to--> `ServiceQuestion`  [INFERRED] [semantically similar]
@@ -90,38 +89,38 @@ Cohesion: 0.50
 Nodes (4): ServiceHoliday, ServiceHolidayWizard, ServiceHolidayWizard.generate, ServiceHolidayWizard.get_days_from_api
 
 ### Community 19 - "Community 19"
-Cohesion: 0.27
-Nodes (8): Acquire-Lock(), Get-McpBudgetBlock(), Get-ModulePath(), Get-OnlineAddonsRoot(), Get-ProjectDir(), Get-ProjectVersion(), Get-WikiCache(), Load-ProjectVersionMap()
+Cohesion: 0.16
+Nodes (28): Acquire-Lock(), Atomic-WriteFile(), BackToConfirm(), Clear-StalePending(), ConvertFrom-Yaml(), ConvertTo-Yaml(), Format-YamlScalar(), Get-ExistingModules() (+20 more)
 
 ### Community 20 - "Community 20"
 Cohesion: 0.13
 Nodes (14): Blocker 類型, code:block1 (Odoo 任務), code:block2 (.claude/), Kingsmvps Pipeline (V8.2), QA 檢查項目, Stage 標記一覽（Unified Marker Table）, 任務流向, 前置需求 (+6 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.15
-Nodes (12): project_dir_map, 2508014 凌越生醫-商務管理平台, A11-Odoo產品功能研發, eservice, eService2.0, 鴻久, project_version_map, 2508014 凌越生醫-商務管理平台 (+4 more)
+Cohesion: 0.13
+Nodes (14): project_dir_map, 2508014 凌越生醫-商務管理平台, A11-Odoo產品功能研發, eservice, eService2.0, 鴻久, 鴻久用戶, project_version_map (+6 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.31
-Nodes (8): ConvertFrom-Yaml(), ConvertTo-Yaml(), Format-YamlScalar(), Get-ExistingModules(), Initialize-PipelineDirs(), Send-OdooTaskMessage(), Test-YamlComplete(), Write-YamlObject()
+Cohesion: 0.15
+Nodes (12): autoUpdatesChannel, enabledMcpjsonServers, hooks, Stop, UserPromptSubmit, language, permissions, allow (+4 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.50
-Nodes (5): Atomic-WriteFile(), BackToConfirm(), Increment-TotalReentry(), Open-ClaudeTerminal(), Release-Lock()
-
-### Community 28 - "Community 28"
-Cohesion: 0.40
-Nodes (5): Clear-StalePending(), Get-SystemDir(), Test-HasBlocker(), Test-PendingStale(), Write-PendingPrompt()
+Cohesion: 0.25
+Nodes (8): enabledPlugins, caveman@caveman, code-review@claude-plugins-official, context7@claude-plugins-official, hookify@claude-plugins-official, pr-review-toolkit@claude-plugins-official, security-guidance@claude-plugins-official, superpowers@claude-plugins-official
 
 ## Knowledge Gaps
-- **34 isolated node(s):** `前置需求`, `設定步驟`, `怎麼用`, `code:block1 (Odoo 任務)`, `多工說明` (+29 more)
+- **53 isolated node(s):** `2508014 凌越生醫-商務管理平台`, `A11-Odoo產品功能研發`, `eService2.0`, `鴻久`, `鴻久用戶` (+48 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **What connects `前置需求`, `設定步驟`, `怎麼用` to the rest of the system?**
-  _35 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `enabledPlugins` connect `Community 27` to `Community 24`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **What connects `2508014 凌越生醫-商務管理平台`, `A11-Odoo產品功能研發`, `eService2.0` to the rest of the system?**
+  _54 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 20` be split into smaller, more focused modules?**
+  _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._
+- **Should `Community 21` be split into smaller, more focused modules?**
   _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._

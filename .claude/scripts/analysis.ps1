@@ -23,7 +23,7 @@ $odooDisableFlag = Join-Path $script:PLAN_DIR "_ODOO_DISABLED"
 if (Test-Path $odooDisableFlag) {
     Write-Host "[SKIP] Odoo 同步已停用（刪除 _ODOO_DISABLED 可重新啟用）" -ForegroundColor DarkGray
 } else {
-    $allDirs = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
+    $allDirs = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR, $script:STOP_DIR)
 
     # 建立來源 1（odoo）skip list：同時識別 task_N（舊）和 task_odoo_N（新）
     $odooSkipIds = @()

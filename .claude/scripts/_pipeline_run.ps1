@@ -269,8 +269,9 @@ if ($LASTEXITCODE -ne 0) {
 
 Remove-Item env:PIPELINE_HOOK_MODE -ErrorAction SilentlyContinue
 
-# 統計待 Claude 處理的任務
-$pendingFiles = Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue
+# 統計待 Claude 處理的任務（排除 final/ 與 stop/，與 Resume 掃描一致）
+$pendingFiles = Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -notlike "*$($script:STOP_DIR)*" -and $_.FullName -notlike "*$($script:FINAL_DIR)*" }
 $pendingCount = if ($pendingFiles) { @($pendingFiles).Count } else { 0 }
 
 if ($pendingCount -gt 0) {

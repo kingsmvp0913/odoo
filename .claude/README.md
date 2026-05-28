@@ -1,6 +1,29 @@
-# Kingsmvps Pipeline (V8.2)
+# Kingsmvps Pipeline (V8.3)
 
 輸入「**開工**」，Claude 自動完成需求分析 → 實作 → QA
+輸入「**同步**」，只拉取最新 Odoo 任務到 `start/`，不觸發 pipeline。
+
+---
+
+## Plugins 與 MCP
+
+### Plugins（啟用中）
+
+| Plugin | 用途 |
+|--------|------|
+| **superpowers** | 核心 skill 框架：brainstorming、TDD、systematic debugging、parallel agents 等工作流程技能 |
+| **context7** | 即時抓取第三方套件文件（Odoo API、框架 method signature），避免訓練資料過時 |
+| **hookify** | 分析對話記錄，建立 hook 規則防止 Claude 重複犯相同錯誤 |
+| **code-review** | PR/分支程式碼審查 skill |
+| **security-guidance** | 安全性審查與建議 |
+
+### MCP Servers（啟用中）
+
+| MCP | 用途 |
+|-----|------|
+| **serena** | 程式碼智能導航：跨檔案符號搜尋、find references/implementations、call chain 追蹤，取代手動 grep 探索 |
+
+> **知識檢索優先順序**（見 CLAUDE.md §2）：Graphify wiki → Serena → Context7
 
 ---
 
@@ -20,41 +43,64 @@
 
 2. **確認 `project_version_map.json` 已填寫**（`.claude/project_version_map.json`，專案與 Odoo 版本對照）
 
+### 進階環境變數（選填）
+
+| 環境變數 | 預設值 | 說明 |
+|---------|--------|------|
+| `PIPELINE_MAX_LOOPS` | 20 | Pipeline 循環次數上限，超過寫 `blocker.loop.txt` |
+| `PIPELINE_MAX_REENTRIES` | 2 | 單一任務 QA 失敗退回次數上限 |
+| `PIPELINE_MAX_LOWCONF` | 3 | 單一任務低信心度退回次數上限，超過升級 `blocker.spec.txt` |
 
 ---
 
 ## 怎麼用
 
 1. 在 Odoo 建立任務
-2. 在 Claude 輸入「**開工**」
+2. 在 Claude 輸入「**開工**」（或「**同步**」只拉取新任務不開工）
 3. 需要填寫確認問題或是低信心度的時候，Claude 會暫停等你在 `analysis.yaml` 填完後再繼續。
 4. 等待完成（任務出現在 `final/` 即代表通過 QA）
 
-> **低信心度**：即使所有問題都已答覆，若生成規格的信心度低於 0.9，Claude 會補提新問題並退回 `confirm/` 等待補充，不會強行進入實作階段。
+> **低信心度**：即使所有問題都已答覆，若生成規格的信心度低於 0.9，Claude 會補提新問題並退回 `confirm/` 等待補充，不會強行進入實作階段。退回超過 3 次（`PIPELINE_MAX_LOWCONF`）會自動升級為 `blocker.spec.txt`，需人工介入確認需求。
+
+---
+
+## 任務來源
+
+Pipeline 同時從兩個 Odoo 來源拉取任務：
+
+| 來源 | 系統 | task_id 格式 | 所需環境變數 |
+|------|------|-------------|------------|
+| 來源 1 | ideaxpress.biz（project.task） | `task_odoo_N` | `ODOO_PASSWORD` |
+| 來源 2 | service.ideaxpress.biz（service.question.feedback） | `task_service_N` | `ODOO_SERVICE_PASSWORD` |
+
+未設定對應密碼時，該來源靜默略過。
 
 ---
 
 ## 任務流向
 
 ```
-Odoo 任務
-   │ 自動同步 (tools/curl.py)
-   ↓ 
+Odoo 任務（雙來源）
+   │ 自動同步 (curl.py / curl_service.py)
+   │ pipeline 第一輪同時對待處理任務的 repo 執行 git pull
+   ↓
 start/       新任務
    │ 分析agent初步分析，產生問題確認檔
-   ↓ 
+   ↓
 confirm/     待確認
    │ 填寫問題，答案全部填寫且為有效答案後往下一步
-   ↓ 
+   ↓
 analysis/    分析agent使用ultra think產出完整技術規格SD
    │  │
    │  ├─ confidence >= 0.9 → 往下一步開始實作
-   │  └─ confidence < 0.9  → 退回confirm 補充問題
-   ↓ 
+   │  └─ confidence < 0.9  → 退回confirm 補充問題（超過3次→blocker.spec）
+   ↓
 coding/      由工程師agent實作中，完成後 Claude 自動執行 品管agent
    │ QA 通過，不通過的話回到confirm 確認
-   ↓ 
+   ↓
 final/       ✓ 完成（已歸檔）
+
+stop/        ⏸ 暫停開發（手動移入，不參與 pipeline 掃描，手動移出才恢復）
 ```
 
 ---
@@ -65,6 +111,7 @@ final/       ✓ 完成（已歸檔）
 
 - **需求分析 / confirm**：最多 5 個並行
 - **實作 / QA**：同模組序列，不同模組並行（避免檔案衝突）
+- **stop/ 任務**：被 pipeline 完全略過，不計入任何統計
 
 ---
 
@@ -85,7 +132,8 @@ final/       ✓ 完成（已歸檔）
 | `blocker.spec.txt` | 規格不清，需澄清 | 讀檔後填寫決策，刪除 blocker 檔，重新觸發 |
 | `blocker.tech.txt` | 技術上不可行 | 調整需求或接受替代方案，刪除 blocker 檔 |
 | `blocker.agent.txt` | Agent 執行錯誤 | 查看錯誤內容，修正後手動重跑 |
-| `blocker.loop.txt` | 循環超過安全上限 | 查看原因，手動清理後重新執行 |
+| `blocker.loop.txt` | 循環超過安全上限 | 查看原因，刪除 `_LOOP_COUNTER.json` 重置後重新執行 |
+| `blocker.git.txt` | git pull 失敗 | 手動 `git pull` 對應 repo，解決衝突後刪除 blocker 檔 |
 
 Blocker 模板在 `.claude/templates/` 目錄。
 
@@ -102,6 +150,9 @@ Blocker 模板在 `.claude/templates/` 目錄。
 | Pipeline 沒有自動觸發 | 確認 `_PIPELINE_WAITING` flag 是否存在且未超過 30 分鐘 |
 | 任務卡住診斷 | `find .claude/kingsmvpsplan -name "blocker.*.txt"` 一行查所有 blocker |
 | Odoo 任務沒收到完成通知 | 設定環境變數 `ODOO_PASSWORD`；未設定時通知靜默跳過 |
+| git pull 失敗（blocker.git.txt） | 手動進入 repo 目錄執行 `git pull`，解決衝突後刪除 blocker 檔再輸入「開工」 |
+| 想暫停某任務開發 | 將任務目錄手動移入 `stop/`；想恢復時手動移回對應 stage 目錄 |
+| 想停用 Odoo 同步（緊急） | 在 `kingsmvpsplan/` 建立空檔 `_ODOO_DISABLED`；刪除後恢復同步 |
 
 ---
 
@@ -110,31 +161,38 @@ Blocker 模板在 `.claude/templates/` 目錄。
 ```
 .claude/
 ├── scripts/
-│   ├── _common.ps1         共用函數庫
-│   ├── _pipeline_run.ps1   「開工」hook 入口
-│   ├── analysis.ps1        STEP 1-3
-│   ├── coding.ps1          STEP 4
-│   └── qa.ps1              STEP 5-6
+│   ├── _common.ps1             共用函數庫
+│   ├── _pipeline_run.ps1       「開工」完整 pipeline 入口
+│   ├── _pipeline_trigger.ps1   UserPromptSubmit hook（解析「開工」/「同步」關鍵字）
+│   ├── _sync.ps1               「同步」獨立同步入口（不觸發 pipeline）
+│   ├── analysis.ps1            STEP 1-3
+│   ├── coding.ps1              STEP 4
+│   └── qa.ps1                  STEP 5-6
 ├── tools/
-│   ├── curl.py             Odoo 任務同步
-│   └── send_message.py     Odoo 訊息發送
+│   ├── curl.py                 Odoo 來源1 任務同步（task_odoo_N）
+│   ├── curl_service.py         Odoo 來源2 任務同步（task_service_N）
+│   └── send_message.py         Odoo 訊息發送
 ├── agents/
 │   ├── requirements-analyst.md
 │   ├── senior-software-engineer.md
 │   └── qa-analyst.md
-├── templates/              Blocker 模板
+├── templates/                  Blocker 模板
 ├── kingsmvpsplan/
-│   ├── start/              新任務暫存（curl.py 同步後）
-│   ├── confirm/            初始分析完成，等待 user_answer
-│   ├── analysis/           答案完整，等待 MODE_B 規格生成
-│   ├── coding/             實作與 QA 進行中
-│   └── final/              QA 通過歸檔（唯讀）
+│   ├── start/                  新任務暫存（curl.py 同步後）
+│   ├── confirm/                初始分析完成，等待 user_answer
+│   ├── analysis/               答案完整，等待 MODE_B 規格生成
+│   ├── coding/                 實作與 QA 進行中
+│   ├── final/                  QA 通過歸檔（唯讀）
+│   ├── stop/                   暫停開發任務（手動移入/移出）
+│   └── log/
+│       └── pipeline_run_summary.yaml   每次 pipeline run 結束後的執行摘要
 ├── CLAUDE.md               Claude AI 指令
 ├── pipeline.md             Pipeline 完整規格
 ├── README.md               本文件
 ├── project_version_map.json  專案版本對照表
 └── settings.json           Claude hooks 與權限設定
 ```
+
 ## Stage 標記一覽（Unified Marker Table）
 
 | Stage | .pending_* flag | Done marker | 物理目錄 |
