@@ -17,6 +17,12 @@
 | **code-review** | PR/分支程式碼審查 skill |
 | **security-guidance** | 安全性審查與建議 |
 
+### 自訂 Skills
+
+| Skill | 用途 |
+|-------|------|
+| **graphify** | 將程式碼/文件轉換成知識圖譜（HTML + JSON），並輸出 `graphify-out/wiki/index.md` 供 pipeline 的 wiki cache 注入使用；觸發指令：`/graphify` |
+
 ### MCP Servers（啟用中）
 
 | MCP | 用途 |
