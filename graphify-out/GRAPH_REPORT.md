@@ -1,16 +1,16 @@
 # Graph Report - odoo  (2026-05-29)
 
 ## Corpus Check
-- 52457 files · ~37,727,890 words
+- 52459 files · ~37,726,580 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 177 nodes · 222 edges · 31 communities (20 shown, 11 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.82)
+- 196 nodes · 237 edges · 35 communities (22 shown, 13 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0e221f41`
+- Built from commit: `7a718398`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -36,18 +36,21 @@
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 27|Community 27]]
 - [[_COMMUNITY_Community 28|Community 28]]
+- [[_COMMUNITY_Community 31|Community 31]]
+- [[_COMMUNITY_Community 32|Community 32]]
+- [[_COMMUNITY_Community 33|Community 33]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Kingsmvps Pipeline (V8.3)` - 12 edges
-2. `Kingsmvps Pipeline (V8.2)` - 10 edges
-3. `Get-SystemDir()` - 8 edges
-4. `enabledPlugins` - 8 edges
-5. `BackToConfirm()` - 7 edges
-6. `save_task_images()` - 7 edges
-7. `project_version_map` - 7 edges
-8. `project_dir_map` - 7 edges
-9. `Atomic-WriteFile()` - 6 edges
-10. `安裝` - 5 edges
+2. `CLAUDE.md (V8.3)` - 11 edges
+3. `Kingsmvps Pipeline (V8.2)` - 10 edges
+4. `Get-SystemDir()` - 8 edges
+5. `enabledPlugins` - 8 edges
+6. `BackToConfirm()` - 7 edges
+7. `save_task_images()` - 7 edges
+8. `project_version_map` - 7 edges
+9. `project_dir_map` - 7 edges
+10. `Atomic-WriteFile()` - 6 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `ServiceAnnouncement` --semantically_similar_to--> `ServiceQuestion`  [INFERRED] [semantically similar]
@@ -66,7 +69,7 @@
 - **Contract Expiry Notification Flow** — odoo19_e_service_contract_notify_check, odoo19_e_service_compute_contract_notify, odoo19_e_service_TeamsNotifyMessage [EXTRACTED 1.00]
 - **Holiday Import Wizard Flow** — odoo19_e_service_ServiceHolidayWizard, odoo19_e_service_generate, odoo19_e_service_get_days_from_api [EXTRACTED 1.00]
 
-## Communities (31 total, 11 thin omitted)
+## Communities (35 total, 13 thin omitted)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.33
@@ -108,16 +111,20 @@ Nodes (20): autoUpdatesChannel, enabledMcpjsonServers, enabledPlugins, caveman@c
 Cohesion: 0.19
 Nodes (12): clean_message_body(), main(), remove_images_only(), clean_message_body(), main(), _download_url(), extract_img_srcs(), 下載單一圖片 src（URL 或 data URI），回傳 (bytes, ext) 或 (None, None) (+4 more)
 
+### Community 31 - "Community 31"
+Cohesion: 0.14
+Nodes (13): 0. Hard Rules, 1. Paths, 2. Knowledge Retrieval (Decision Tree), 3. Task Spec, 4. Edit Protocol, 5. Odoo Constraints, 6. Output Style, 7. Pipeline (+5 more)
+
 ## Knowledge Gaps
-- **52 isolated node(s):** `Plugins（啟用中）`, `自訂 Skills`, `MCP Servers（啟用中）`, `前置需求`, `設定步驟` (+47 more)
+- **65 isolated node(s):** `0. Hard Rules`, `1. Paths`, `2. Knowledge Retrieval (Decision Tree)`, `code:block1 (<task_dir>/)`, `code:yaml (case_id: "")` (+60 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **What connects `Plugins（啟用中）`, `自訂 Skills`, `MCP Servers（啟用中）` to the rest of the system?**
-  _56 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `0. Hard Rules`, `1. Paths`, `2. Knowledge Retrieval (Decision Tree)` to the rest of the system?**
+  _69 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 19` be split into smaller, more focused modules?**
   _Cohesion score 0.1497326203208556 - nodes in this community are weakly interconnected._
 - **Should `Community 20` be split into smaller, more focused modules?**
@@ -126,3 +133,5 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._
 - **Should `Community 24` be split into smaller, more focused modules?**
   _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._
+- **Should `Community 31` be split into smaller, more focused modules?**
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._

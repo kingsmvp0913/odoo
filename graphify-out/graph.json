@@ -46,634 +46,805 @@
   },
   "nodes": [
     {
+      "label": "CLAUDE.md",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L1",
+      "id": "claude_md",
+      "community": 31,
+      "norm_label": "claude.md"
+    },
+    {
+      "label": "CLAUDE.md (V8.3)",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L1",
+      "id": "claude_claude_claude_md_v8_3",
+      "community": 31,
+      "norm_label": "claude.md (v8.3)"
+    },
+    {
+      "label": "0. Hard Rules",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L3",
+      "id": "claude_claude_0_hard_rules",
+      "community": 31,
+      "norm_label": "0. hard rules"
+    },
+    {
+      "label": "1. Paths",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L14",
+      "id": "claude_claude_1_paths",
+      "community": 31,
+      "norm_label": "1. paths"
+    },
+    {
+      "label": "2. Knowledge Retrieval (Decision Tree)",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L22",
+      "id": "claude_claude_2_knowledge_retrieval_decision_tree",
+      "community": 31,
+      "norm_label": "2. knowledge retrieval (decision tree)"
+    },
+    {
+      "label": "3. Task Spec",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L36",
+      "id": "claude_claude_3_task_spec",
+      "community": 31,
+      "norm_label": "3. task spec"
+    },
+    {
+      "label": "code:block1 (<task_dir>/)",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L53",
+      "id": "claude_claude_codeblock_1",
+      "community": 31,
+      "norm_label": "code:block1 (<task_dir>/)"
+    },
+    {
+      "label": "code:yaml (case_id: \"\")",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L78",
+      "id": "claude_claude_codeblock_2",
+      "community": 31,
+      "norm_label": "code:yaml (case_id: \"\")"
+    },
+    {
+      "label": "4. Edit Protocol",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L86",
+      "id": "claude_claude_4_edit_protocol",
+      "community": 31,
+      "norm_label": "4. edit protocol"
+    },
+    {
+      "label": "5. Odoo Constraints",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L105",
+      "id": "claude_claude_5_odoo_constraints",
+      "community": 31,
+      "norm_label": "5. odoo constraints"
+    },
+    {
+      "label": "6. Output Style",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L110",
+      "id": "claude_claude_6_output_style",
+      "community": 31,
+      "norm_label": "6. output style"
+    },
+    {
+      "label": "7. Pipeline",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L113",
+      "id": "claude_claude_7_pipeline",
+      "community": 31,
+      "norm_label": "7. pipeline"
+    },
+    {
+      "label": "8. Blocker Types",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L126",
+      "id": "claude_claude_8_blocker_types",
+      "community": 31,
+      "norm_label": "8. blocker types"
+    },
+    {
+      "label": "9. General Engineering Rules",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L138",
+      "id": "claude_claude_9_general_engineering_rules",
+      "community": 31,
+      "norm_label": "9. general engineering rules"
+    },
+    {
+      "label": "qa-analyst.md",
+      "file_type": "document",
+      "source_file": "agents/qa-analyst.md",
+      "source_location": "L1",
+      "id": "agents_qa_analyst_md",
+      "community": 32,
+      "norm_label": "qa-analyst.md"
+    },
+    {
+      "label": "code:block1 (---AGENT-RESULT---)",
+      "file_type": "document",
+      "source_file": "agents/qa-analyst.md",
+      "source_location": "L17",
+      "id": "agents_qa_analyst_codeblock_1",
+      "community": 32,
+      "norm_label": "code:block1 (---agent-result---)"
+    },
+    {
+      "label": "senior-software-engineer.md",
+      "file_type": "document",
+      "source_file": "agents/senior-software-engineer.md",
+      "source_location": "L1",
+      "id": "agents_senior_software_engineer_md",
+      "community": 33,
+      "norm_label": "senior-software-engineer.md"
+    },
+    {
+      "label": "code:block1 (---AGENT-RESULT---)",
+      "file_type": "document",
+      "source_file": "agents/senior-software-engineer.md",
+      "source_location": "L19",
+      "id": "agents_senior_software_engineer_codeblock_1",
+      "community": 33,
+      "norm_label": "code:block1 (---agent-result---)"
+    },
+    {
+      "label": "hookify.prevent-agent-prompt-injection.local.md",
+      "file_type": "document",
+      "source_file": "hookify.prevent-agent-prompt-injection.local.md",
+      "source_location": "L1",
+      "id": "hookify_prevent_agent_prompt_injection_local_md",
+      "community": 34,
+      "norm_label": "hookify.prevent-agent-prompt-injection.local.md"
+    },
+    {
       "label": "README.md",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L1",
-      "id": "readme_md",
       "community": 20,
-      "norm_label": "readme.md"
+      "norm_label": "readme.md",
+      "id": "readme_md"
     },
     {
       "label": "Kingsmvps Pipeline (V8.3)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L1",
-      "id": "claude_readme_kingsmvps_pipeline_v8_3",
       "community": 20,
-      "norm_label": "kingsmvps pipeline (v8.3)"
+      "norm_label": "kingsmvps pipeline (v8.3)",
+      "id": "claude_readme_kingsmvps_pipeline_v8_3"
     },
     {
       "label": "Plugins \u8207 MCP",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L8",
-      "id": "claude_readme_plugins_\u8207_mcp",
       "community": 20,
-      "norm_label": "plugins \u8207 mcp"
+      "norm_label": "plugins \u8207 mcp",
+      "id": "claude_readme_plugins_\u8207_mcp"
     },
     {
       "label": "Plugins\uff08\u555f\u7528\u4e2d\uff09",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L10",
-      "id": "claude_readme_plugins_\u555f\u7528\u4e2d",
       "community": 20,
-      "norm_label": "plugins(\u555f\u7528\u4e2d)"
+      "norm_label": "plugins(\u555f\u7528\u4e2d)",
+      "id": "claude_readme_plugins_\u555f\u7528\u4e2d"
     },
     {
       "label": "\u81ea\u8a02 Skills",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L20",
-      "id": "claude_readme_\u81ea\u8a02_skills",
       "community": 20,
-      "norm_label": "\u81ea\u8a02 skills"
+      "norm_label": "\u81ea\u8a02 skills",
+      "id": "claude_readme_\u81ea\u8a02_skills"
     },
     {
       "label": "MCP Servers\uff08\u555f\u7528\u4e2d\uff09",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L26",
-      "id": "claude_readme_mcp_servers_\u555f\u7528\u4e2d",
       "community": 20,
-      "norm_label": "mcp servers(\u555f\u7528\u4e2d)"
+      "norm_label": "mcp servers(\u555f\u7528\u4e2d)",
+      "id": "claude_readme_mcp_servers_\u555f\u7528\u4e2d"
     },
     {
       "label": "\u5b89\u88dd",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L36",
-      "id": "claude_readme_\u5b89\u88dd",
       "community": 20,
-      "norm_label": "\u5b89\u88dd"
+      "norm_label": "\u5b89\u88dd",
+      "id": "claude_readme_\u5b89\u88dd"
     },
     {
       "label": "\u524d\u7f6e\u9700\u6c42",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L38",
-      "id": "claude_readme_\u524d\u7f6e\u9700\u6c42",
       "community": 20,
-      "norm_label": "\u524d\u7f6e\u9700\u6c42"
+      "norm_label": "\u524d\u7f6e\u9700\u6c42",
+      "id": "claude_readme_\u524d\u7f6e\u9700\u6c42"
     },
     {
       "label": "\u8a2d\u5b9a\u6b65\u9a5f",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L44",
-      "id": "claude_readme_\u8a2d\u5b9a\u6b65\u9a5f",
       "community": 20,
-      "norm_label": "\u8a2d\u5b9a\u6b65\u9a5f"
+      "norm_label": "\u8a2d\u5b9a\u6b65\u9a5f",
+      "id": "claude_readme_\u8a2d\u5b9a\u6b65\u9a5f"
     },
     {
       "label": "\u9032\u968e\u74b0\u5883\u8b8a\u6578\uff08\u9078\u586b\uff09",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L52",
-      "id": "claude_readme_\u9032\u968e\u74b0\u5883\u8b8a\u6578_\u9078\u586b",
       "community": 20,
-      "norm_label": "\u9032\u968e\u74b0\u5883\u8b8a\u6578(\u9078\u586b)"
+      "norm_label": "\u9032\u968e\u74b0\u5883\u8b8a\u6578(\u9078\u586b)",
+      "id": "claude_readme_\u9032\u968e\u74b0\u5883\u8b8a\u6578_\u9078\u586b"
     },
     {
       "label": "\u600e\u9ebc\u7528",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L62",
-      "id": "claude_readme_\u600e\u9ebc\u7528",
       "community": 20,
-      "norm_label": "\u600e\u9ebc\u7528"
+      "norm_label": "\u600e\u9ebc\u7528",
+      "id": "claude_readme_\u600e\u9ebc\u7528"
     },
     {
       "label": "\u4efb\u52d9\u4f86\u6e90",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L73",
-      "id": "claude_readme_\u4efb\u52d9\u4f86\u6e90",
       "community": 20,
-      "norm_label": "\u4efb\u52d9\u4f86\u6e90"
+      "norm_label": "\u4efb\u52d9\u4f86\u6e90",
+      "id": "claude_readme_\u4efb\u52d9\u4f86\u6e90"
     },
     {
       "label": "\u4efb\u52d9\u6d41\u5411",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L86",
-      "id": "claude_readme_\u4efb\u52d9\u6d41\u5411",
       "community": 20,
-      "norm_label": "\u4efb\u52d9\u6d41\u5411"
+      "norm_label": "\u4efb\u52d9\u6d41\u5411",
+      "id": "claude_readme_\u4efb\u52d9\u6d41\u5411"
     },
     {
       "label": "code:block1 (Odoo \u4efb\u52d9\uff08\u96d9\u4f86\u6e90\uff09)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L88",
-      "id": "claude_readme_codeblock_1",
       "community": 20,
-      "norm_label": "code:block1 (odoo \u4efb\u52d9(\u96d9\u4f86\u6e90))"
+      "norm_label": "code:block1 (odoo \u4efb\u52d9(\u96d9\u4f86\u6e90))",
+      "id": "claude_readme_codeblock_1"
     },
     {
       "label": "\u591a\u5de5\u8aaa\u660e",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L114",
-      "id": "claude_readme_\u591a\u5de5\u8aaa\u660e",
       "community": 20,
-      "norm_label": "\u591a\u5de5\u8aaa\u660e"
+      "norm_label": "\u591a\u5de5\u8aaa\u660e",
+      "id": "claude_readme_\u591a\u5de5\u8aaa\u660e"
     },
     {
       "label": "QA \u6aa2\u67e5\u9805\u76ee",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L124",
-      "id": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee",
       "community": 20,
-      "norm_label": "qa \u6aa2\u67e5\u9805\u76ee"
+      "norm_label": "qa \u6aa2\u67e5\u9805\u76ee",
+      "id": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee"
     },
     {
       "label": "Blocker \u985e\u578b",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L134",
-      "id": "claude_readme_blocker_\u985e\u578b",
       "community": 20,
-      "norm_label": "blocker \u985e\u578b"
+      "norm_label": "blocker \u985e\u578b",
+      "id": "claude_readme_blocker_\u985e\u578b"
     },
     {
       "label": "\u9047\u5230\u554f\u984c",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L148",
-      "id": "claude_readme_\u9047\u5230\u554f\u984c",
       "community": 20,
-      "norm_label": "\u9047\u5230\u554f\u984c"
+      "norm_label": "\u9047\u5230\u554f\u984c",
+      "id": "claude_readme_\u9047\u5230\u554f\u984c"
     },
     {
       "label": "\u76ee\u9304\u7d50\u69cb",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L165",
-      "id": "claude_readme_\u76ee\u9304\u7d50\u69cb",
       "community": 20,
-      "norm_label": "\u76ee\u9304\u7d50\u69cb"
+      "norm_label": "\u76ee\u9304\u7d50\u69cb",
+      "id": "claude_readme_\u76ee\u9304\u7d50\u69cb"
     },
     {
       "label": "code:block2 (.claude/)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L167",
-      "id": "claude_readme_codeblock_2",
       "community": 20,
-      "norm_label": "code:block2 (.claude/)"
+      "norm_label": "code:block2 (.claude/)",
+      "id": "claude_readme_codeblock_2"
     },
     {
       "label": "Stage \u6a19\u8a18\u4e00\u89bd\uff08Unified Marker Table\uff09",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L202",
-      "id": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table",
       "community": 20,
-      "norm_label": "stage \u6a19\u8a18\u4e00\u89bd(unified marker table)"
+      "norm_label": "stage \u6a19\u8a18\u4e00\u89bd(unified marker table)",
+      "id": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table"
     },
     {
       "label": "_common.ps1",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L1",
-      "id": "scripts_common_ps1",
       "community": 19,
-      "norm_label": "_common.ps1"
+      "norm_label": "_common.ps1",
+      "id": "scripts_common_ps1"
     },
     {
       "label": "Acquire-Lock()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L48",
-      "id": "scripts_common_acquire_lock",
       "community": 19,
-      "norm_label": "acquire-lock()"
+      "norm_label": "acquire-lock()",
+      "id": "scripts_common_acquire_lock"
     },
     {
       "label": "Release-Lock()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L69",
-      "id": "scripts_common_release_lock",
       "community": 19,
-      "norm_label": "release-lock()"
+      "norm_label": "release-lock()",
+      "id": "scripts_common_release_lock"
     },
     {
       "label": "Initialize-PipelineDirs()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L81",
-      "id": "scripts_common_initialize_pipelinedirs",
       "community": 19,
-      "norm_label": "initialize-pipelinedirs()"
+      "norm_label": "initialize-pipelinedirs()",
+      "id": "scripts_common_initialize_pipelinedirs"
     },
     {
       "label": "Get-OnlineAddonsRoot()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L90",
-      "id": "scripts_common_get_onlineaddonsroot",
       "community": 19,
-      "norm_label": "get-onlineaddonsroot()"
+      "norm_label": "get-onlineaddonsroot()",
+      "id": "scripts_common_get_onlineaddonsroot"
     },
     {
       "label": "Get-ModulePath()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L126",
-      "id": "scripts_common_get_modulepath",
       "community": 19,
-      "norm_label": "get-modulepath()"
+      "norm_label": "get-modulepath()",
+      "id": "scripts_common_get_modulepath"
     },
     {
       "label": "Format-YamlScalar()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L134",
-      "id": "scripts_common_format_yamlscalar",
       "community": 19,
-      "norm_label": "format-yamlscalar()"
+      "norm_label": "format-yamlscalar()",
+      "id": "scripts_common_format_yamlscalar"
     },
     {
       "label": "Write-YamlObject()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L146",
-      "id": "scripts_common_write_yamlobject",
       "community": 19,
-      "norm_label": "write-yamlobject()"
+      "norm_label": "write-yamlobject()",
+      "id": "scripts_common_write_yamlobject"
     },
     {
       "label": "ConvertTo-Yaml()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L179",
-      "id": "scripts_common_convertto_yaml",
       "community": 19,
-      "norm_label": "convertto-yaml()"
+      "norm_label": "convertto-yaml()",
+      "id": "scripts_common_convertto_yaml"
     },
     {
       "label": "ConvertFrom-Yaml()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L191",
-      "id": "scripts_common_convertfrom_yaml",
       "community": 19,
-      "norm_label": "convertfrom-yaml()"
+      "norm_label": "convertfrom-yaml()",
+      "id": "scripts_common_convertfrom_yaml"
     },
     {
       "label": "Get-YamlSection()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L226",
-      "id": "scripts_common_get_yamlsection",
       "community": 19,
-      "norm_label": "get-yamlsection()"
+      "norm_label": "get-yamlsection()",
+      "id": "scripts_common_get_yamlsection"
     },
     {
       "label": "Atomic-WriteFile()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L238",
-      "id": "scripts_common_atomic_writefile",
       "community": 19,
-      "norm_label": "atomic-writefile()"
+      "norm_label": "atomic-writefile()",
+      "id": "scripts_common_atomic_writefile"
     },
     {
       "label": "Get-SystemDir()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L256",
-      "id": "scripts_common_get_systemdir",
       "community": 19,
-      "norm_label": "get-systemdir()"
+      "norm_label": "get-systemdir()",
+      "id": "scripts_common_get_systemdir"
     },
     {
       "label": "Get-LogDir()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L257",
-      "id": "scripts_common_get_logdir",
       "community": 19,
-      "norm_label": "get-logdir()"
+      "norm_label": "get-logdir()",
+      "id": "scripts_common_get_logdir"
     },
     {
       "label": "Write-PendingPrompt()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L262",
-      "id": "scripts_common_write_pendingprompt",
       "community": 19,
-      "norm_label": "write-pendingprompt()"
+      "norm_label": "write-pendingprompt()",
+      "id": "scripts_common_write_pendingprompt"
     },
     {
       "label": "Test-PendingStale()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L272",
-      "id": "scripts_common_test_pendingstale",
       "community": 19,
-      "norm_label": "test-pendingstale()"
+      "norm_label": "test-pendingstale()",
+      "id": "scripts_common_test_pendingstale"
     },
     {
       "label": "Clear-StalePending()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L280",
-      "id": "scripts_common_clear_stalepending",
       "community": 19,
-      "norm_label": "clear-stalepending()"
+      "norm_label": "clear-stalepending()",
+      "id": "scripts_common_clear_stalepending"
     },
     {
       "label": "Test-HasBlocker()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L289",
-      "id": "scripts_common_test_hasblocker",
       "community": 19,
-      "norm_label": "test-hasblocker()"
+      "norm_label": "test-hasblocker()",
+      "id": "scripts_common_test_hasblocker"
     },
     {
       "label": "Resolve-CrashState()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L297",
-      "id": "scripts_common_resolve_crashstate",
       "community": 19,
-      "norm_label": "resolve-crashstate()"
+      "norm_label": "resolve-crashstate()",
+      "id": "scripts_common_resolve_crashstate"
     },
     {
       "label": "Test-YamlComplete()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L318",
-      "id": "scripts_common_test_yamlcomplete",
       "community": 19,
-      "norm_label": "test-yamlcomplete()"
+      "norm_label": "test-yamlcomplete()",
+      "id": "scripts_common_test_yamlcomplete"
     },
     {
       "label": "Open-ClaudeTerminal()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L331",
-      "id": "scripts_common_open_claudeterminal",
       "community": 19,
-      "norm_label": "open-claudeterminal()"
+      "norm_label": "open-claudeterminal()",
+      "id": "scripts_common_open_claudeterminal"
     },
     {
       "label": "Load-ProjectVersionMap()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L367",
-      "id": "scripts_common_load_projectversionmap",
       "community": 19,
-      "norm_label": "load-projectversionmap()"
+      "norm_label": "load-projectversionmap()",
+      "id": "scripts_common_load_projectversionmap"
     },
     {
       "label": "Get-ProjectVersion()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L386",
-      "id": "scripts_common_get_projectversion",
       "community": 19,
-      "norm_label": "get-projectversion()"
+      "norm_label": "get-projectversion()",
+      "id": "scripts_common_get_projectversion"
     },
     {
       "label": "Get-ProjectDir()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L393",
-      "id": "scripts_common_get_projectdir",
       "community": 19,
-      "norm_label": "get-projectdir()"
+      "norm_label": "get-projectdir()",
+      "id": "scripts_common_get_projectdir"
     },
     {
       "label": "Get-WikiCache()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L405",
-      "id": "scripts_common_get_wikicache",
       "community": 19,
-      "norm_label": "get-wikicache()"
+      "norm_label": "get-wikicache()",
+      "id": "scripts_common_get_wikicache"
     },
     {
       "label": "Get-McpBudgetBlock()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L435",
-      "id": "scripts_common_get_mcpbudgetblock",
       "community": 19,
-      "norm_label": "get-mcpbudgetblock()"
+      "norm_label": "get-mcpbudgetblock()",
+      "id": "scripts_common_get_mcpbudgetblock"
     },
     {
       "label": "Get-ExistingModules()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L444",
-      "id": "scripts_common_get_existingmodules",
       "community": 19,
-      "norm_label": "get-existingmodules()"
+      "norm_label": "get-existingmodules()",
+      "id": "scripts_common_get_existingmodules"
     },
     {
       "label": "Send-OdooTaskMessage()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L459",
-      "id": "scripts_common_send_odootaskmessage",
       "community": 19,
-      "norm_label": "send-odootaskmessage()"
+      "norm_label": "send-odootaskmessage()",
+      "id": "scripts_common_send_odootaskmessage"
     },
     {
       "label": "BackToConfirm()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L486",
-      "id": "scripts_common_backtoconfirm",
       "community": 19,
-      "norm_label": "backtoconfirm()"
+      "norm_label": "backtoconfirm()",
+      "id": "scripts_common_backtoconfirm"
     },
     {
       "label": "Increment-TotalReentry()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L591",
-      "id": "scripts_common_increment_totalreentry",
       "community": 19,
-      "norm_label": "increment-totalreentry()"
+      "norm_label": "increment-totalreentry()",
+      "id": "scripts_common_increment_totalreentry"
     },
     {
       "label": "Get-LastMessageTs()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L611",
-      "id": "scripts_common_get_lastmessagets",
       "community": 19,
-      "norm_label": "get-lastmessagets()"
+      "norm_label": "get-lastmessagets()",
+      "id": "scripts_common_get_lastmessagets"
     },
     {
       "label": "Get-OdooSourceParams()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L623",
-      "id": "scripts_common_get_odoosourceparams",
       "community": 19,
-      "norm_label": "get-odoosourceparams()"
+      "norm_label": "get-odoosourceparams()",
+      "id": "scripts_common_get_odoosourceparams"
     },
     {
       "label": "Safe-MoveWithRollback()",
       "file_type": "code",
       "source_file": "scripts/_common.ps1",
       "source_location": "L646",
-      "id": "scripts_common_safe_movewithrollback",
       "community": 19,
-      "norm_label": "safe-movewithrollback()"
+      "norm_label": "safe-movewithrollback()",
+      "id": "scripts_common_safe_movewithrollback"
     },
     {
       "label": "analysis.ps1",
       "file_type": "code",
       "source_file": "scripts/analysis.ps1",
       "source_location": "L1",
-      "id": "scripts_analysis_ps1",
       "community": 30,
-      "norm_label": "analysis.ps1"
+      "norm_label": "analysis.ps1",
+      "id": "scripts_analysis_ps1"
     },
     {
       "label": "_image_utils.py",
       "file_type": "code",
       "source_file": "tools/_image_utils.py",
       "source_location": "L1",
-      "id": "tools_image_utils_py",
       "community": 28,
-      "norm_label": "_image_utils.py"
+      "norm_label": "_image_utils.py",
+      "id": "tools_image_utils_py"
     },
     {
       "label": "extract_img_srcs()",
       "file_type": "code",
       "source_file": "tools/_image_utils.py",
       "source_location": "L10",
-      "id": "tools_image_utils_extract_img_srcs",
       "community": 28,
-      "norm_label": "extract_img_srcs()"
+      "norm_label": "extract_img_srcs()",
+      "id": "tools_image_utils_extract_img_srcs"
     },
     {
       "label": "_download_url()",
       "file_type": "code",
       "source_file": "tools/_image_utils.py",
       "source_location": "L18",
-      "id": "tools_image_utils_download_url",
       "community": 28,
-      "norm_label": "_download_url()"
+      "norm_label": "_download_url()",
+      "id": "tools_image_utils_download_url"
     },
     {
       "label": "_safe_filename()",
       "file_type": "code",
       "source_file": "tools/_image_utils.py",
       "source_location": "L45",
-      "id": "tools_image_utils_safe_filename",
       "community": 28,
-      "norm_label": "_safe_filename()"
+      "norm_label": "_safe_filename()",
+      "id": "tools_image_utils_safe_filename"
     },
     {
       "label": "save_task_images()",
       "file_type": "code",
       "source_file": "tools/_image_utils.py",
       "source_location": "L56",
-      "id": "tools_image_utils_save_task_images",
       "community": 28,
-      "norm_label": "save_task_images()"
+      "norm_label": "save_task_images()",
+      "id": "tools_image_utils_save_task_images"
     },
     {
       "label": "\u4e0b\u8f09\u55ae\u4e00\u5716\u7247 src\uff08URL \u6216 data URI\uff09\uff0c\u56de\u50b3 (bytes, ext) \u6216 (None, None)",
       "file_type": "rationale",
       "source_file": "tools/_image_utils.py",
       "source_location": "L19",
-      "id": "tools_image_utils_rationale_19",
       "community": 28,
-      "norm_label": "\u4e0b\u8f09\u55ae\u4e00\u5716\u7247 src(url \u6216 data uri),\u56de\u50b3 (bytes, ext) \u6216 (none, none)"
+      "norm_label": "\u4e0b\u8f09\u55ae\u4e00\u5716\u7247 src(url \u6216 data uri),\u56de\u50b3 (bytes, ext) \u6216 (none, none)",
+      "id": "tools_image_utils_rationale_19"
     },
     {
       "label": "\u78ba\u4fdd images_dir/name \u4e0d\u91cd\u8907\uff0c\u56de\u50b3\u6700\u7d42 Path",
       "file_type": "rationale",
       "source_file": "tools/_image_utils.py",
       "source_location": "L46",
-      "id": "tools_image_utils_rationale_46",
       "community": 28,
-      "norm_label": "\u78ba\u4fdd images_dir/name \u4e0d\u91cd\u8907,\u56de\u50b3\u6700\u7d42 path"
+      "norm_label": "\u78ba\u4fdd images_dir/name \u4e0d\u91cd\u8907,\u56de\u50b3\u6700\u7d42 path",
+      "id": "tools_image_utils_rationale_46"
     },
     {
       "label": "\u4e0b\u8f09\u4e26\u5132\u5b58\u4efb\u52d9\u7684\u6240\u6709\u5716\u7247\u81f3 task_dir/images/\u3002     \u56de\u50b3\u5df2\u5b58\u6a94\u540d\u7a31\u6e05\u55ae\uff08\u76f8\u5c0d\u65bc task_dir\uff09\u3002",
       "file_type": "rationale",
       "source_file": "tools/_image_utils.py",
       "source_location": "L57",
-      "id": "tools_image_utils_rationale_57",
       "community": 28,
-      "norm_label": "\u4e0b\u8f09\u4e26\u5132\u5b58\u4efb\u52d9\u7684\u6240\u6709\u5716\u7247\u81f3 task_dir/images/\u3002     \u56de\u50b3\u5df2\u5b58\u6a94\u540d\u7a31\u6e05\u55ae(\u76f8\u5c0d\u65bc task_dir)\u3002"
+      "norm_label": "\u4e0b\u8f09\u4e26\u5132\u5b58\u4efb\u52d9\u7684\u6240\u6709\u5716\u7247\u81f3 task_dir/images/\u3002     \u56de\u50b3\u5df2\u5b58\u6a94\u540d\u7a31\u6e05\u55ae(\u76f8\u5c0d\u65bc task_dir)\u3002",
+      "id": "tools_image_utils_rationale_57"
     },
     {
       "label": "curl.py",
       "file_type": "code",
       "source_file": "tools/curl.py",
       "source_location": "L1",
-      "id": "tools_curl_py",
       "community": 28,
-      "norm_label": "curl.py"
+      "norm_label": "curl.py",
+      "id": "tools_curl_py"
     },
     {
       "label": "remove_images_only()",
       "file_type": "code",
       "source_file": "tools/curl.py",
       "source_location": "L23",
-      "id": "tools_curl_remove_images_only",
       "community": 28,
-      "norm_label": "remove_images_only()"
+      "norm_label": "remove_images_only()",
+      "id": "tools_curl_remove_images_only"
     },
     {
       "label": "clean_message_body()",
       "file_type": "code",
       "source_file": "tools/curl.py",
       "source_location": "L32",
-      "id": "tools_curl_clean_message_body",
       "community": 28,
-      "norm_label": "clean_message_body()"
+      "norm_label": "clean_message_body()",
+      "id": "tools_curl_clean_message_body"
     },
     {
       "label": "main()",
       "file_type": "code",
       "source_file": "tools/curl.py",
       "source_location": "L41",
-      "id": "tools_curl_main",
       "community": 28,
-      "norm_label": "main()"
+      "norm_label": "main()",
+      "id": "tools_curl_main"
     },
     {
       "label": "curl_service.py",
       "file_type": "code",
       "source_file": "tools/curl_service.py",
       "source_location": "L1",
-      "id": "tools_curl_service_py",
       "community": 28,
-      "norm_label": "curl_service.py"
+      "norm_label": "curl_service.py",
+      "id": "tools_curl_service_py"
     },
     {
       "label": "clean_message_body()",
       "file_type": "code",
       "source_file": "tools/curl_service.py",
       "source_location": "L27",
-      "id": "tools_curl_service_clean_message_body",
       "community": 28,
-      "norm_label": "clean_message_body()"
+      "norm_label": "clean_message_body()",
+      "id": "tools_curl_service_clean_message_body"
     },
     {
       "label": "main()",
       "file_type": "code",
       "source_file": "tools/curl_service.py",
       "source_location": "L36",
-      "id": "tools_curl_service_main",
       "community": 28,
-      "norm_label": "main()"
+      "norm_label": "main()",
+      "id": "tools_curl_service_main"
     },
     {
       "label": "check_new_messages.py",
@@ -1733,12 +1904,162 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "claude_md",
+      "target": "claude_claude_claude_md_v8_3",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_0_hard_rules",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_1_paths",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_2_knowledge_retrieval_decision_tree",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_3_task_spec",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_4_edit_protocol",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_5_odoo_constraints",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L110",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_6_output_style",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L113",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_7_pipeline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_8_blocker_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L138",
+      "weight": 1.0,
+      "source": "claude_claude_claude_md_v8_3",
+      "target": "claude_claude_9_general_engineering_rules",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "claude_claude_3_task_spec",
+      "target": "claude_claude_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "claude_claude_3_task_spec",
+      "target": "claude_claude_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "agents/qa-analyst.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "agents_qa_analyst_md",
+      "target": "agents_qa_analyst_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "agents/senior-software-engineer.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "agents_senior_software_engineer_md",
+      "target": "agents_senior_software_engineer_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "README.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "readme_md",
-      "target": "claude_readme_kingsmvps_pipeline_v8_3",
-      "confidence_score": 1.0
+      "target": "claude_readme_kingsmvps_pipeline_v8_3"
     },
     {
       "relation": "contains",
@@ -1756,9 +2077,9 @@
       "source_file": "README.md",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_plugins_\u8207_mcp",
-      "confidence_score": 1.0
+      "target": "claude_readme_plugins_\u8207_mcp"
     },
     {
       "relation": "contains",
@@ -1766,9 +2087,9 @@
       "source_file": "README.md",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_\u5b89\u88dd",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u5b89\u88dd"
     },
     {
       "relation": "contains",
@@ -1776,9 +2097,9 @@
       "source_file": "README.md",
       "source_location": "L62",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_\u600e\u9ebc\u7528",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u600e\u9ebc\u7528"
     },
     {
       "relation": "contains",
@@ -1786,9 +2107,9 @@
       "source_file": "README.md",
       "source_location": "L73",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_\u4efb\u52d9\u4f86\u6e90",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u4efb\u52d9\u4f86\u6e90"
     },
     {
       "relation": "contains",
@@ -1796,9 +2117,9 @@
       "source_file": "README.md",
       "source_location": "L86",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_\u4efb\u52d9\u6d41\u5411",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u4efb\u52d9\u6d41\u5411"
     },
     {
       "relation": "contains",
@@ -1806,9 +2127,9 @@
       "source_file": "README.md",
       "source_location": "L114",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_\u591a\u5de5\u8aaa\u660e",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u591a\u5de5\u8aaa\u660e"
     },
     {
       "relation": "contains",
@@ -1816,9 +2137,9 @@
       "source_file": "README.md",
       "source_location": "L124",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee",
-      "confidence_score": 1.0
+      "target": "claude_readme_qa_\u6aa2\u67e5\u9805\u76ee"
     },
     {
       "relation": "contains",
@@ -1826,9 +2147,9 @@
       "source_file": "README.md",
       "source_location": "L134",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_blocker_\u985e\u578b",
-      "confidence_score": 1.0
+      "target": "claude_readme_blocker_\u985e\u578b"
     },
     {
       "relation": "contains",
@@ -1836,9 +2157,9 @@
       "source_file": "README.md",
       "source_location": "L148",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_\u9047\u5230\u554f\u984c",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u9047\u5230\u554f\u984c"
     },
     {
       "relation": "contains",
@@ -1846,9 +2167,9 @@
       "source_file": "README.md",
       "source_location": "L165",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_\u76ee\u9304\u7d50\u69cb",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u76ee\u9304\u7d50\u69cb"
     },
     {
       "relation": "contains",
@@ -1856,9 +2177,9 @@
       "source_file": "README.md",
       "source_location": "L202",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_kingsmvps_pipeline_v8_3",
-      "target": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table",
-      "confidence_score": 1.0
+      "target": "claude_readme_stage_\u6a19\u8a18\u4e00\u89bd_unified_marker_table"
     },
     {
       "relation": "contains",
@@ -1866,9 +2187,9 @@
       "source_file": "README.md",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_plugins_\u8207_mcp",
-      "target": "claude_readme_plugins_\u555f\u7528\u4e2d",
-      "confidence_score": 1.0
+      "target": "claude_readme_plugins_\u555f\u7528\u4e2d"
     },
     {
       "relation": "contains",
@@ -1876,9 +2197,9 @@
       "source_file": "README.md",
       "source_location": "L20",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_plugins_\u8207_mcp",
-      "target": "claude_readme_\u81ea\u8a02_skills",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u81ea\u8a02_skills"
     },
     {
       "relation": "contains",
@@ -1886,9 +2207,9 @@
       "source_file": "README.md",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_plugins_\u8207_mcp",
-      "target": "claude_readme_mcp_servers_\u555f\u7528\u4e2d",
-      "confidence_score": 1.0
+      "target": "claude_readme_mcp_servers_\u555f\u7528\u4e2d"
     },
     {
       "relation": "contains",
@@ -1916,9 +2237,9 @@
       "source_file": "README.md",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_readme_\u5b89\u88dd",
-      "target": "claude_readme_\u9032\u968e\u74b0\u5883\u8b8a\u6578_\u9078\u586b",
-      "confidence_score": 1.0
+      "target": "claude_readme_\u9032\u968e\u74b0\u5883\u8b8a\u6578_\u9078\u586b"
     },
     {
       "relation": "contains",
@@ -2876,9 +3197,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_py",
-      "target": "tools_image_utils_extract_img_srcs",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_extract_img_srcs"
     },
     {
       "relation": "contains",
@@ -2886,9 +3207,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_py",
-      "target": "tools_image_utils_download_url",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_download_url"
     },
     {
       "relation": "contains",
@@ -2896,9 +3217,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_py",
-      "target": "tools_image_utils_safe_filename",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_safe_filename"
     },
     {
       "relation": "contains",
@@ -2906,9 +3227,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L56",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_py",
-      "target": "tools_image_utils_save_task_images",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_save_task_images"
     },
     {
       "relation": "calls",
@@ -2917,9 +3238,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L99",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_save_task_images",
-      "target": "tools_image_utils_extract_img_srcs",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_extract_img_srcs"
     },
     {
       "relation": "calls",
@@ -2928,9 +3249,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L100",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_save_task_images",
-      "target": "tools_image_utils_download_url",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_download_url"
     },
     {
       "relation": "rationale_for",
@@ -2938,9 +3259,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_rationale_19",
-      "target": "tools_image_utils_download_url",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_download_url"
     },
     {
       "relation": "calls",
@@ -2949,9 +3270,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L90",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_save_task_images",
-      "target": "tools_image_utils_safe_filename",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_safe_filename"
     },
     {
       "relation": "rationale_for",
@@ -2959,9 +3280,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_rationale_46",
-      "target": "tools_image_utils_safe_filename",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_safe_filename"
     },
     {
       "relation": "rationale_for",
@@ -2969,9 +3290,9 @@
       "source_file": "tools/_image_utils.py",
       "source_location": "L57",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_image_utils_rationale_57",
-      "target": "tools_image_utils_save_task_images",
-      "confidence_score": 1.0
+      "target": "tools_image_utils_save_task_images"
     },
     {
       "relation": "calls",
@@ -3001,9 +3322,9 @@
       "source_file": "tools/curl.py",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_curl_py",
-      "target": "tools_curl_remove_images_only",
-      "confidence_score": 1.0
+      "target": "tools_curl_remove_images_only"
     },
     {
       "relation": "contains",
@@ -3011,9 +3332,9 @@
       "source_file": "tools/curl.py",
       "source_location": "L32",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_curl_py",
-      "target": "tools_curl_clean_message_body",
-      "confidence_score": 1.0
+      "target": "tools_curl_clean_message_body"
     },
     {
       "relation": "contains",
@@ -3021,9 +3342,9 @@
       "source_file": "tools/curl.py",
       "source_location": "L41",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_curl_py",
-      "target": "tools_curl_main",
-      "confidence_score": 1.0
+      "target": "tools_curl_main"
     },
     {
       "relation": "calls",
@@ -3032,9 +3353,9 @@
       "source_file": "tools/curl.py",
       "source_location": "L122",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_curl_main",
-      "target": "tools_curl_remove_images_only",
-      "confidence_score": 1.0
+      "target": "tools_curl_remove_images_only"
     },
     {
       "relation": "calls",
@@ -3043,9 +3364,9 @@
       "source_file": "tools/curl.py",
       "source_location": "L148",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_curl_main",
-      "target": "tools_curl_clean_message_body",
-      "confidence_score": 1.0
+      "target": "tools_curl_clean_message_body"
     },
     {
       "relation": "contains",
@@ -4006,5 +4327,5 @@
       "source_file": "19/odoo19_e_service/wizard/service_holiday_wizard.py"
     }
   ],
-  "built_at_commit": "0e221f4198148c9963554a69dfebfa2aea7d04ee"
+  "built_at_commit": "7a718398edb1fbc35d87fe146d42b7e0dfa26510"
 }
