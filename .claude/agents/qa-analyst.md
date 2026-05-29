@@ -73,11 +73,16 @@ issues:
     suggestion: ""
 ---END_YAML---
 
+FILE SCOPE (read only these files — do NOT scan the entire module)
+- Files listed in `technical_specification.project_structure` (skip comment lines starting with `#`)
+- `__manifest__.py` (always read for manifest check)
+- Do NOT read any other file unless a specific check requires it.
+
 CHECKS TO PERFORM — SPEC COMPLIANCE
 
 1. All models from `technical_specification` exist
 2. All fields are defined with correct types
-3. All views are created or inherited correctly
+3. All views are created or inherited correctly AND each view's XML file is listed in `__manifest__.py` `data` array
 4. Security access rights are defined
 5. No `NotImplementedError` remains in code
 6. Code follows Odoo conventions (`_name`, `_description`, `_inherit` usage)

@@ -39,13 +39,17 @@ If the directory exists, read existing code first and modify/add as needed.
 EXISTING CODE CHECK (run before any implementation)
 
 Before writing any file:
-1. For each field/model in `technical_specification.odoo_models`, run a targeted Grep for the
-   field_name in the OUTPUT PATH.
-2. If ALL specified fields/views/logic already exist in the codebase:
+1. For each model/function in `technical_specification.odoo_models` and `core_logic`, run a
+   targeted Grep for the symbol name in the OUTPUT PATH.
+2. For each view in `technical_specification.odoo_views_and_actions`, check BOTH:
+   a. The xml_id exists in the corresponding XML file.
+   b. That XML file is listed in `__manifest__.py` `data` array.
+   If (b) fails → the view is NOT fully implemented; proceed to full implementation.
+3. If ALL specified fields/views/logic exist AND manifest is correct:
    - Run `python -m py_compile` and `xmllint` on affected files only.
    - If verify passes → write `system/.implement_done`, then skip to completion protocol.
    - If verify fails → fix syntax only; do NOT re-implement from scratch.
-3. Only proceed to full implementation if the spec items are genuinely missing.
+4. Only proceed to full implementation if the spec items are genuinely missing.
 
 IMPLEMENTATION RULES
 

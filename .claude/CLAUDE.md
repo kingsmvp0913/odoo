@@ -115,6 +115,12 @@ execution_mode: "MODE_A"  # enum: MODE_A（直接實作）或 MODE_B（先確認
 
 `_PIPELINE_WAITING`：純狀態旗標（**非觸發條件**），表示 PS1 機械處理已完成、有任務等待 AI。Claude **不得**因此旗標自動啟動，未收到「開工」前保持待命。TTL 30 分鐘（過期由 PS1 清除，不觸發任何流程）。
 
+**對話答案處理（Hard Rule）**：若使用者在對話中回答了 `clarification_channel` 的問題：
+1. **立刻**將答案寫入 `analysis.yaml` 對應的 `user_answer` 欄位（在任何 pipeline 操作之前）
+2. spawn agent 時**必須以原始 `system/pending_prompt.txt` 不加任何修改**作為 prompt
+3. **絕對禁止**在 agent prompt 中注入對話答案、背景資訊或任何 pending_prompt.txt 以外的業務內容
+4. 正確流程：更新 yaml → 讓 pipeline STEP 3a 自然偵測答案完整 → 走 MODE_B SHORTCUT（省 ~45,000 tokens）
+
 Full pipeline spec: **`.claude/pipeline.md`**
 
 ## 8. Blocker Types
