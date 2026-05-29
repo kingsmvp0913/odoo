@@ -5,6 +5,7 @@ Thumbs.db
 .idea/
 *.swp
 *.bak
+/graphify-out/
 
 # --- Python ---
 __pycache__/
