@@ -606,6 +606,40 @@ function Increment-TotalReentry {
 }
 
 # ============================================================
+# 新訊息偵測 helpers
+# ============================================================
+function Get-LastMessageTs {
+    param([string]$originalTxt)
+    if (-not (Test-Path $originalTxt)) { return $null }
+    $content = Get-Content $originalTxt -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+    if (-not $content) { return $null }
+    # 訊息以 date desc 排序寫入，第一個 timestamp 即最新
+    $m = [regex]::Match($content, '\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]')
+    if ($m.Success) { return $m.Groups[1].Value }
+    return $null
+}
+
+function Get-OdooSourceParams {
+    param([string]$taskName)
+    if ($taskName -match '^task_service_') {
+        return @{
+            URL      = $script:ODOO_SERVICE_URL
+            DB       = $script:ODOO_SERVICE_DB
+            Username = $script:ODOO_SERVICE_USERNAME
+            Password = $env:ODOO_SERVICE_PASSWORD
+            Model    = "service.question.feedback"
+        }
+    }
+    return @{
+        URL      = $script:ODOO_URL
+        DB       = $script:ODOO_DB
+        Username = $script:ODOO_USERNAME
+        Password = $env:ODOO_PASSWORD
+        Model    = "project.task"
+    }
+}
+
+# ============================================================
 # 安全移動（失敗時自動清除已寫入的 rollback 檔案）
 # ============================================================
 function Safe-MoveWithRollback {

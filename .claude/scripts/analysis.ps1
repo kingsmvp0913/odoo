@@ -278,7 +278,56 @@ if (-not (Acquire-Lock $lock3a 300)) {
                 $allAnswered = $noQuestions -or (-not $parsed['has_null_answer'] -and $parsed['has_any_answer'])
 
                 if (-not $allAnswered) {
-                    Write-Host "[WAIT] $taskName - 等待填寫 user_answer" -ForegroundColor DarkGray
+                    # ── 新訊息偵測：若收到人工留言，重新排隊更新分析問題 ──
+                    $newMsgHandled = $false
+                    $originalTxt  = Join-Path $taskDir.FullName "original.txt"
+                    $lastKnownTs  = Get-LastMessageTs $originalTxt
+                    if ($lastKnownTs) {
+                        $srcParams = Get-OdooSourceParams $taskName
+                        if ($srcParams.Password -and ($taskName -match '^task_(?:service_|odoo_)?(\d+)$')) {
+                            $numericId   = $matches[1]
+                            $pyCheck     = Join-Path $script:CLAUDE_DIR "tools\check_new_messages.py"
+                            $newMsgRaw   = python $pyCheck $srcParams.URL $srcParams.DB $srcParams.Username $srcParams.Password $srcParams.Model $numericId $lastKnownTs 2>$null
+                            $newMsgLines = @($newMsgRaw | Where-Object { $_ -match '^\[NEW_MSG\]' })
+                            if ($newMsgLines.Count -gt 0) {
+                                $appendBlock = "`n`n[NEW_MESSAGES detected at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')]`n" + ($newMsgLines -join "`n")
+                                $existing    = Get-Content $originalTxt -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+                                Atomic-WriteFile $originalTxt ($existing + $appendBlock) | Out-Null
+
+                                $wikiCache    = Get-WikiCache -moduleName ($parsed['module']) -odooVersion ($parsed['odoo_version']) -projectName ($parsed['project_name'])
+                                $clarSection  = Get-YamlSection -yaml $yaml -key 'clarification_channel'
+                                $inferSection = Get-YamlSection -yaml $yaml -key 'inferred_target'
+                                $clarPart     = if ($clarSection)  { $clarSection }  else { $yaml }
+                                $inferPart    = if ($inferSection) { "`n`n$inferSection" } else { "" }
+                                $newMsgBlock  = ($newMsgLines | ForEach-Object { $_ -replace '^\[NEW_MSG\]\s*', '' }) -join "`n"
+
+                                $rePrompt = $agentTemplate `
+                                    -replace '__CASE_ID__', $taskName `
+                                    -replace '__CURRENT_TIME__', (Get-Date -Format "yyyy-MM-ddTHH:mm:ss")
+
+                                $fullPrompt = $wikiCache + $rePrompt +
+                                    "`n`n【SYSTEM CONFIRMED】odoo_version = `"$($parsed['odoo_version'])`" — 固定事實，不得質疑。" +
+                                    "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
+                                    "`n`n【EXISTING ANALYSIS】`n<existing_analysis>`n$clarPart$inferPart`n</existing_analysis>" +
+                                    "`n`n【NEW MESSAGES】`n<new_messages>`n$newMsgBlock`n</new_messages>" +
+                                    "`n`n此任務已完成初始分析（MODE_A）。請根據新訊息更新 clarification_channel：`n" +
+                                    "1. 保留所有現有條目，不得刪除或覆蓋已填寫的 user_answer`n" +
+                                    "2. 若新訊息已直接回答某個 user_answer: null 的問題，填入答案`n" +
+                                    "3. 若新訊息帶來新的不確定性，在現有條目後新增問題（id 繼續遞增）`n" +
+                                    "4. 若新訊息未帶來任何新資訊，保持現有 clarification_channel 不變`n`n" +
+                                    "更新 analysis.yaml（保留完整 YAML 結構），重寫 system/.analysis_done。" +
+                                    "完成後依序：(a) 將 system/pending_prompt.txt 寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(b) 刪除 system/.pending_analysis。" +
+                                    "`n`n" + (Get-McpBudgetBlock)
+
+                                Write-PendingPrompt -taskDir $taskDir.FullName -stage "analysis" -prompt $fullPrompt
+                                Write-Host "[MSG-UPDATE] $taskName - $($newMsgLines.Count) 條新訊息，重新排隊分析" -ForegroundColor Cyan
+                                $newMsgHandled = $true
+                            }
+                        }
+                    }
+                    if (-not $newMsgHandled) {
+                        Write-Host "[WAIT] $taskName - 等待填寫 user_answer" -ForegroundColor DarkGray
+                    }
                     continue
                 }
 
