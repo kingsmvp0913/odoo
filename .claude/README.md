@@ -96,7 +96,7 @@ start/       新任務
 confirm/     待確認
    │ 填寫問題，答案全部填寫且為有效答案後往下一步
    ↓
-analysis/    分析agent使用ultra think產出完整技術規格SD
+analysis/    分析agent產出完整技術規格SD
    │  │
    │  ├─ confidence >= 0.9 → 往下一步開始實作
    │  └─ confidence < 0.9  → 退回confirm 補充問題（超過3次→blocker.spec）

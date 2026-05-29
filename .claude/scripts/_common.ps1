@@ -613,10 +613,11 @@ function Get-LastMessageTs {
     if (-not (Test-Path $originalTxt)) { return $null }
     $content = Get-Content $originalTxt -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
     if (-not $content) { return $null }
-    # 訊息以 date desc 排序寫入，第一個 timestamp 即最新
-    $m = [regex]::Match($content, '\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]')
-    if ($m.Success) { return $m.Groups[1].Value }
-    return $null
+    # 取所有 [YYYY-MM-DD HH:MM:SS] 中最大值（含 append 後的 detected-at 時間戳，防重複偵測）
+    $allTs = [regex]::Matches($content, '\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]') |
+        ForEach-Object { $_.Groups[1].Value }
+    if (-not $allTs) { return $null }
+    return ($allTs | Sort-Object -Descending | Select-Object -First 1)
 }
 
 function Get-OdooSourceParams {

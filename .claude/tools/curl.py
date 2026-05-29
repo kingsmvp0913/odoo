@@ -6,9 +6,19 @@ Odoo 任務同步腳本
 
 import os
 import sys
-import requests
-from bs4 import BeautifulSoup
 from pathlib import Path
+from bs4 import BeautifulSoup
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _image_utils import save_task_images
+
+try:
+    import requests
+except ImportError:
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
+    import requests
+
 
 def remove_images_only(html_str):
     if not html_str or not isinstance(html_str, str):
@@ -18,6 +28,7 @@ def remove_images_only(html_str):
         img.decompose()
     return str(soup)
 
+
 def clean_message_body(html_str):
     if not html_str or not isinstance(html_str, str):
         return ""
@@ -25,6 +36,7 @@ def clean_message_body(html_str):
     for img in soup.find_all("img"):
         img.decompose()
     return soup.get_text(separator="\n", strip=True)
+
 
 def main():
     if len(sys.argv) < 8:
@@ -105,8 +117,9 @@ def main():
         # 建立任務目錄
         task_dir.mkdir(parents=True, exist_ok=True)
 
-        # 清理描述
-        clean_description = remove_images_only(task.get("description"))
+        # 處理描述
+        description_raw = task.get("description") or ""
+        clean_description = remove_images_only(description_raw)
         project_name = task["project_id"][1] if task.get("project_id") else "未知專案"
         stage_name = task["stage_id"][1] if task.get("stage_id") else "未知階段"
 
@@ -138,6 +151,15 @@ def main():
 
         all_messages_text = "\n".join(message_lines) if message_lines else "無訊息內容"
 
+        # 下載圖片
+        msg_bodies = [msg.get("body", "") for msg in messages_data]
+        image_files = save_task_images(
+            session, ODOO_URL, call_url,
+            "project.task", task_id, task_dir,
+            description_raw, msg_bodies
+        )
+        images_section = "\n".join(image_files) if image_files else "無圖片"
+
         # 寫入 original.txt
         original_content = f"""---id---
 {task_id}
@@ -150,12 +172,15 @@ def main():
 ---description---
 {clean_description}
 ---message---
-{all_messages_text}"""
+{all_messages_text}
+---images---
+{images_section}"""
 
         original_file = task_dir / "original.txt"
         original_file.write_text(original_content, encoding="utf-8")
 
-        print(f"[TASK] 建立 {task_dir}/original.txt: {task_name}")
+        img_count = len(image_files)
+        print(f"[TASK] 建立 {task_dir}/original.txt: {task_name}（圖片: {img_count} 張）")
 
 if __name__ == "__main__":
     main()

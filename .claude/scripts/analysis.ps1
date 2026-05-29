@@ -473,7 +473,7 @@ if (-not (Acquire-Lock $lock3b 300)) {
                     "<analysis_yaml>`n$clarPart$inferPart`n</analysis_yaml>"
                 }
 
-                $fullPrompt = "ultrathink`n`n" + (Get-McpBudgetBlock) + $wikiCache + $prompt +
+                $fullPrompt = (Get-McpBudgetBlock) + $wikiCache + $prompt +
                     "`n`n【TASK DIRECTORY】`n$($taskDir.FullName)" +
                     "`n`n【EXISTING ANALYSIS WITH USER ANSWERS】`n$yamlForAgent" +
                     "`n`n使用者答案已填寫完畢。產生 MODE_B 完整 technical_specification，更新【TASK DIRECTORY】內的 analysis.yaml 並寫入 system/.final_done。完成後依序：(a) 寫入 system/.final_done (b) 將 system/pending_prompt.txt 內容寫入 log/done_prompt.txt，然後刪除 system/pending_prompt.txt（移動不是複製，來源必須刪除）(c) 刪除 system/.pending_final。"
