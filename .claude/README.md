@@ -1,7 +1,7 @@
 # Kingsmvps Pipeline (V8.3)
 
-輸入「**開工**」，Claude 自動完成需求分析 → 實作 → QA
-輸入「**同步**」，只拉取最新 Odoo 任務到 `start/`，不觸發 pipeline。
+* 輸入「**開工**」，Claude 自動完成需求分析 → 實作 → QA
+* 輸入「**同步**」，只拉取最新 Odoo 任務到 `start/`，不觸發 pipeline。
 
 ---
 
