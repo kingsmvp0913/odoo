@@ -321,7 +321,7 @@ function Test-YamlComplete {
     $content = Get-Content $yamlPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
     if (-not $content) { return $false }
     $hasTechSpec = $content -match '(?m)^technical_specification:'
-    $hasModel    = $content -match '(?m)\bmodel_name:\s*\S'
+    $hasModel    = ($content -match '(?m)\bmodel_name:\s*\S') -or ($content -match '(?m)odoo_models:')
     return $hasTechSpec -and $hasModel
 }
 

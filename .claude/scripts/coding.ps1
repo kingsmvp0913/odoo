@@ -101,7 +101,7 @@ foreach ($taskDir in $analysisTasks) {
 
         if (-not (Test-YamlComplete $analysisYamlPath)) {
             $blockerPath = Join-Path (Get-SystemDir $taskDir.FullName) "blocker.spec.txt"
-            $blockerMsg = "technical_specification 不完整（缺少 model_name），無法開始實作。請重新產生規格。"
+            $blockerMsg = "technical_specification 不完整（缺少 odoo_models 欄位或 technical_specification 區塊），無法開始實作。請重新產生規格。"
             Atomic-WriteFile $blockerPath $blockerMsg | Out-Null
             Write-Host "[BLOCKER] $taskName YAML 規格不完整，已寫入 blocker.spec.txt" -ForegroundColor Red
             continue
