@@ -289,6 +289,8 @@ def main():
         project_name = ts["project_id"][1] if ts.get("project_id") else "未知專案"
         task_name = ts["task_id"][1] if ts.get("task_id") else ""
         key = _resolve_pending_key(project_name, task_name)
+        if key == "教育訓練" and "AI" in description:
+            key = "AI流程調整"
         project_stats[key]["hours"] += ts_hours
         if description:
             project_stats[key]["tasks"].add(description)
