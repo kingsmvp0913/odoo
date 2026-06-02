@@ -83,7 +83,7 @@ def main():
                     ["processing_staff", "in", [USER_ID]],
                     ["state", "in", ["draft", "open"]]
                 ],
-                "fields": ["id", "name_seq", "subject", "system", "state", "question_description", "classification", "respondent"],
+                "fields": ["id", "name_seq", "subject", "system", "state", "question_description", "classification", "respondent", "file"],
                 "limit": 30
             }
         }
@@ -141,7 +141,7 @@ def main():
                 "args": [],
                 "kwargs": {
                     "domain": [["model", "=", "service.question.feedback"], ["res_id", "=", task_id]],
-                    "fields": ["date", "body"],
+                    "fields": ["date", "body", "attachment_ids"],
                     "order": "date desc",
                     "limit": 20
                 }
@@ -163,12 +163,17 @@ def main():
 
         all_messages_text = "\n".join(message_lines) if message_lines else "無訊息內容"
 
-        # 下載圖片
+        # 下載圖片（含 file M2M 附件 + chatter 附件）
         msg_bodies = [msg.get("body", "") for msg in messages_data]
+        msg_att_ids = []
+        for msg in messages_data:
+            msg_att_ids.extend(msg.get("attachment_ids") or [])
+        file_att_ids = (task.get("file") or []) + msg_att_ids
         image_files = save_task_images(
             session, ODOO_URL, call_url,
             "service.question.feedback", task_id, task_dir,
-            question_description_raw, msg_bodies
+            question_description_raw, msg_bodies,
+            extra_attachment_ids=file_att_ids,
         )
         images_section = "\n".join(image_files) if image_files else "無圖片"
 

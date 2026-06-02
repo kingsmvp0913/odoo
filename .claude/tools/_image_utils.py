@@ -53,9 +53,10 @@ def _safe_filename(images_dir, name):
     return p
 
 
-def save_task_images(session, odoo_url, call_url, model_name, task_id, task_dir, desc_html, msg_html_list):
+def save_task_images(session, odoo_url, call_url, model_name, task_id, task_dir, desc_html, msg_html_list, extra_attachment_ids=None):
     """
     下載並儲存任務的所有圖片至 task_dir/images/。
+    extra_attachment_ids: M2M 附件欄位的 ir.attachment ID 列表（不走 res_model/res_id 機制）。
     回傳已存檔名稱清單（相對於 task_dir）。
     """
     images_dir = task_dir / "images"
@@ -63,7 +64,9 @@ def save_task_images(session, odoo_url, call_url, model_name, task_id, task_dir,
     desc_idx = 0
     msg_idx = 0
 
-    # 1. ir.attachment（image/* 附件）
+    _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".svg"}
+
+    # 1. ir.attachment（res_model/res_id 機制，不限 mimetype，用副檔名判斷圖片）
     try:
         resp = session.post(call_url, json={
             "jsonrpc": "2.0", "method": "call",
@@ -73,7 +76,6 @@ def save_task_images(session, odoo_url, call_url, model_name, task_id, task_dir,
                     "domain": [
                         ["res_model", "=", model_name],
                         ["res_id", "=", task_id],
-                        ["mimetype", "=like", "image/%"]
                     ],
                     "fields": ["id", "name", "mimetype"],
                     "limit": 50
@@ -81,12 +83,17 @@ def save_task_images(session, odoo_url, call_url, model_name, task_id, task_dir,
             }
         }).json()
         for att in resp.get("result", []):
+            mimetype = att.get("mimetype") or ""
+            fname_raw = att.get("name") or f"attach_{att['id']}.bin"
+            ext = Path(fname_raw).suffix.lower()
+            is_image = mimetype.startswith("image/") or ext in _IMAGE_EXTS
+            if not is_image:
+                continue
             url = f"{odoo_url}/web/content/{att['id']}?download=true"
             try:
                 r = session.get(url, timeout=30)
                 if r.status_code == 200:
                     images_dir.mkdir(parents=True, exist_ok=True)
-                    fname_raw = att.get("name") or f"attach_{att['id']}.bin"
                     fp = _safe_filename(images_dir, fname_raw)
                     fp.write_bytes(r.content)
                     saved.append(f"images/{fp.name}")
@@ -94,6 +101,37 @@ def save_task_images(session, odoo_url, call_url, model_name, task_id, task_dir,
                 pass
     except Exception:
         pass
+
+    # 1b. M2M 附件欄位（extra_attachment_ids，例如 service.question.feedback.file）
+    # 用 read() 而非 search_read()，繞過 res_id=0 導致的 record rule 擋查
+    if extra_attachment_ids:
+        try:
+            att_resp = session.post(call_url, json={
+                "jsonrpc": "2.0", "method": "call",
+                "params": {
+                    "model": "ir.attachment", "method": "read",
+                    "args": [extra_attachment_ids],
+                    "kwargs": {"fields": ["id", "name", "mimetype"]}
+                }
+            }).json()
+            for att in att_resp.get("result", []):
+                mimetype = att.get("mimetype", "")
+                fname_raw_b = att.get("name") or f"file_{att['id']}.bin"
+                ext_b = Path(fname_raw_b).suffix.lower()
+                if not (mimetype.startswith("image/") or ext_b in _IMAGE_EXTS):
+                    continue
+                url = f"{odoo_url}/web/content/{att['id']}?download=true"
+                try:
+                    r = session.get(url, timeout=30)
+                    if r.status_code == 200:
+                        images_dir.mkdir(parents=True, exist_ok=True)
+                        fp = _safe_filename(images_dir, fname_raw_b)
+                        fp.write_bytes(r.content)
+                        saved.append(f"images/{fp.name}")
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     # 2. description 內嵌圖片
     for src in extract_img_srcs(desc_html):
