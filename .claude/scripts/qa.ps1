@@ -66,6 +66,18 @@ foreach ($taskDir in $codingTasks) {
             Write-Host "[ERROR] $taskName 無法解析 module 名稱" -ForegroundColor Red; continue
         }
 
+        # NO_CHANGE_NEEDED 快速路徑：直接寫 .qa_done，跳過 QA agent（0 tokens）
+        if ($yamlContent -match 'NO_CHANGE_NEEDED') {
+            $logDir2  = Get-LogDir    $taskDir.FullName
+            $sysDir2  = Get-SystemDir $taskDir.FullName
+            $qaRpt    = "status: PASSED`nchecked_at: `"$(Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')`"`nitems: []`nissues:`n  - severity: warning`n    description: `"SKIP-QA: NO_CHANGE_NEEDED — no code written; QA not applicable`"`n    suggestion: `"`"`n"
+            Atomic-WriteFile (Join-Path $logDir2 "qa_report.yaml") $qaRpt | Out-Null
+            Atomic-WriteFile (Join-Path $sysDir2 ".qa_done")        ""     | Out-Null
+            Release-Lock $taskLock
+            Write-Host "[SKIP-QA] $taskName NO_CHANGE_NEEDED → 自動 QA PASS，跳過 QA agent" -ForegroundColor Cyan
+            continue
+        }
+
         # Module 序列鎖：同一模組只允許一個 QA 任務並行
         if ($qaModulePending.ContainsKey($moduleName)) {
             Write-Host "[QUEUE] $taskName - 模組 $moduleName QA 序列等待，下輪處理" -ForegroundColor DarkYellow

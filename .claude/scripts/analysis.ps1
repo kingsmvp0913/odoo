@@ -442,6 +442,14 @@ if (-not (Acquire-Lock $lock3b 300)) {
                 $currentYaml = Get-Content $yamlPath -Raw -Encoding UTF8
                 $parsed      = ConvertFrom-Yaml $currentYaml
 
+                # NO_CHANGE_NEEDED 快速路徑：直接寫 .final_done，跳過 MODE_B agent（0 tokens）
+                if ($currentYaml -match 'NO_CHANGE_NEEDED') {
+                    Atomic-WriteFile $finalDone "" | Out-Null
+                    Write-Host "[AUTO-FINAL] $taskName 偵測到 NO_CHANGE_NEEDED → 直接 .final_done，跳過 MODE_B agent" -ForegroundColor Cyan
+                    Release-Lock $taskLock
+                    continue
+                }
+
                 $currentTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
                 $prompt = $agentTemplate `
                     -replace '__CASE_ID__', $taskName `
