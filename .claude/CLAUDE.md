@@ -1,4 +1,4 @@
-# CLAUDE.md (V8.3)
+# CLAUDE.md (V8.4)
 
 ## 0. Hard Rules
 - NEVER modify core Odoo files. Custom code in `$ONLINE_ADDONS_DIR` (`C:\online_addons\` on Windows, `/online_addons` on Linux) only. Never touch `custom_addons/`.
@@ -106,6 +106,13 @@ execution_mode: "MODE_A"  # enum: MODE_A（直接實作）或 MODE_B（先確認
 - Models: `_inherit`. Views: `inherit_id` + `xpath`. Controllers: `super()`.
 - Cannot achieve via standard Odoo extension → write `system/blocker.tech.txt` (see §8).
 - Commit: `[Module]: Why (not what)`. File edit: `@Path | Anchor | Action`.
+- Views XML 命名：`<model>_views.xml`；同一 Model 只能有一個 view 檔案。
+- View 繼承：同一 addons 若已繼承某原生 view，新增內容直接寫入該繼承 view，禁止另建第二個繼承。
+- Models 命名：一個 Model 一個 `.py` 檔；單頭＋明細單據（如 `sale.order` + `sale.order.line`）合併，以單頭為檔名（`sale_order.py`）。
+- View 放置：依 view 所屬的 Model 放入對應 XML。例：銷售訂單頁的 product tree view → `product_template_views.xml`。
+- 樣板文件（xls/docx）一律放 `<module>/static/<type>/`。例：`hr/static/xls/abc-test.xlsx`。
+- 禁用原生 `round()`（銀行家捨入，30.5→30，非台灣四捨五入）；改用 `Decimal` + `ROUND_HALF_UP`。
+- 原生 SQL 執行前呼叫 `flush_model()`，執行後呼叫 `invalidate_model()`，避免 ORM cache 導致畫面不更新。
 
 ## 6. Output Style
 繁中術語：專案/資料庫/佈署/模組. Keep English: Variable/Function/Hook/Class/Field/Model/Method/Controller.
