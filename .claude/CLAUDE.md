@@ -113,7 +113,6 @@ execution_mode: "MODE_A"  # enum: MODE_A（直接實作）或 MODE_B（先確認
 - 樣板文件（xls/docx）一律放 `<module>/static/<type>/`。例：`hr/static/xls/abc-test.xlsx`。
 - 禁用原生 `round()`（銀行家捨入，30.5→30，非台灣四捨五入）；改用 `Decimal` + `ROUND_HALF_UP`。
 - 原生 SQL 執行前呼叫 `flush_model()`，執行後呼叫 `invalidate_model()`，避免 ORM cache 導致畫面不更新。
-- 當 bug 症狀疑似「UI 正常但背景操作異常」或「特定角色/流程出現權限錯誤」時，分析 `write()`/`create()` override 的 `self.env.su`/`self.env.context`/`self.env.user` 判斷，須列出最可能的 2–3 條非 UI 呼叫路徑（postcommit、queue job、cron），確認各路徑的 env 狀態；不需全量追蹤所有路徑。
 
 ## 6. Output Style
 繁中術語：專案/資料庫/佈署/模組. Keep English: Variable/Function/Hook/Class/Field/Model/Method/Controller.
