@@ -46,6 +46,7 @@ def main():
     START_DIR = sys.argv[6]
     PREFIX = sys.argv[7]
     SKIP_IDS = set(sys.argv[8].split(",")) if len(sys.argv) > 8 and sys.argv[8] else set()
+    STOP_IDS = set(sys.argv[9].split(",")) if len(sys.argv) > 9 and sys.argv[9] else set()
 
     CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
@@ -110,6 +111,9 @@ def main():
         subject = task.get("subject", "未命名任務")
         task_title = f"{name_seq}: {subject}" if name_seq else subject
 
+        if str(task_id) in STOP_IDS:
+            print(f"[SKIP] {PREFIX}{task_id} 已在 stop 中（不重新同步）")
+            continue
         if str(task_id) in SKIP_IDS:
             print(f"[SKIP] {PREFIX}{task_id} 已在 pipeline 中")
             continue

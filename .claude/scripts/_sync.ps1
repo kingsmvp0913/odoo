@@ -11,7 +11,7 @@ if (Test-Path $odooDisableFlag) {
     exit 0
 }
 
-$allDirs = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR, $script:STOP_DIR)
+$allDirs = @($script:START_DIR, $script:CONFIRM_DIR, $script:ANALYSIS_DIR, $script:CODING_DIR, $script:FINAL_DIR)
 
 # 來源 1（odoo）skip list：task_N 和 task_odoo_N
 $odooSkipIds = @()
@@ -35,6 +35,15 @@ foreach ($dir in $allDirs) {
 }
 $serviceSkipStr = ($serviceSkipIds | Select-Object -Unique) -join ","
 
+# 來源 2（service）stop skip list
+$serviceStopIds = @()
+if (Test-Path $script:STOP_DIR) {
+    Get-ChildItem $script:STOP_DIR -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.Name -match '^task_service_(\d+)$') { $serviceStopIds += $matches[1] }
+    }
+}
+$serviceStopStr = ($serviceStopIds | Select-Object -Unique) -join ","
+
 $pyScript1 = Join-Path $script:CLAUDE_DIR "tools\curl.py"
 $pyScript2 = Join-Path $script:CLAUDE_DIR "tools\curl_service.py"
 
@@ -54,7 +63,7 @@ if ($env:ODOO_PASSWORD) {
 # 來源 2：service（service.question.feedback）
 if ($env:ODOO_SERVICE_PASSWORD) {
     try {
-        $out = python $pyScript2 $script:ODOO_SERVICE_URL $script:ODOO_SERVICE_DB $script:ODOO_SERVICE_USERNAME $env:ODOO_SERVICE_PASSWORD $script:ODOO_SERVICE_USER_ID $script:START_DIR "task_service_" $serviceSkipStr 2>&1
+        $out = python $pyScript2 $script:ODOO_SERVICE_URL $script:ODOO_SERVICE_DB $script:ODOO_SERVICE_USERNAME $env:ODOO_SERVICE_PASSWORD $script:ODOO_SERVICE_USER_ID $script:START_DIR "task_service_" $serviceSkipStr $serviceStopStr 2>&1
         $out | ForEach-Object { Write-Host $_ }
         if ($LASTEXITCODE -ne 0) { Write-Host "[WARN] Odoo 來源 2 同步失敗，exit: $LASTEXITCODE" -ForegroundColor Yellow }
     } catch {

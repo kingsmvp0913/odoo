@@ -137,6 +137,13 @@ SHORTCUT EXCEPTION: If the YAML contains `_qa_failure_hint:`, the previous imple
 DO NOT use SHORTCUT. Re-explore the codebase, read `log/back_reason.txt` for QA failure details,
 revise the `technical_specification` to fix the issue, then proceed as normal MODE_B.
 
+PSEUDOCODE VALIDATION
+
+每個 raise ValidationError 前，必須回答：
+「被擋住的使用者，接下來要怎麼辦？」
+- 無路可走（欄位卡住但操作未完成）→ 改為 skip（查回既有資料繼續流程）
+- 本來就不該再動（如已確認、已作廢）→ block 正確
+
 OUTPUT RULES
 
 - Write `analysis.yaml` to the task directory
