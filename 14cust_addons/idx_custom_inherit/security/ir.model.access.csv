@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_idx_sale_related,access_idx_sale_related,model_idx_sale_related,base.group_user,1,1,1,1
-access_update_invo_item,access_update_invo_item,model_idx_update_invo_item_wizard,base.group_user,1,1,1,1

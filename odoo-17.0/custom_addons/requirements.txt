@@ -1,3 +1,0 @@
-pyodbc
-pycryptodome
-qrcode[pil]

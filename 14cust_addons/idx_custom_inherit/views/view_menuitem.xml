@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<odoo>
-    <menuitem name="前台管理" id="idx_front_root"/>
-        <menuitem name="建立訊息公告" id="idx_update_invo_item_wizard_menu" parent="idx_front_root" action="idx_update_invo_item_wizard"/>
-</odoo>

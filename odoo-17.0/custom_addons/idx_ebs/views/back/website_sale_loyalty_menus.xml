@@ -1,9 +1,0 @@
-<odoo>
-
-    <record id="website_sale_loyalty.menu_loyalty" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('idx_ebs.group_back_sale'), ref('idx_ebs.group_back_doctor_sale_manager'),
-        ref('idx_ebs.group_back_doctor_sale_manager'), ref('idx_ebs.group_back_international_sale_manager'), ref('idx_ebs.group_back_animal_sale_manager'),
-        ref('idx_ebs.group_back_economic_animal_sale_manager'), ref('idx_ebs.group_back_document_management'), ref('idx_ebs.group_back_it')])]"/>
-    </record>
-
-</odoo>

@@ -14,31 +14,11 @@ venv_odoo*/
 # --- private ---
 筆記.md
 
-# =========================================================
-# ODOO 全版本通用自動優化規則
-# =========================================================
-
-odoo-[0-9]*.*/.github/
-odoo-[0-9]*.*/addons/
-odoo-[0-9]*.*/debian/
-odoo-[0-9]*.*/doc/
-odoo-[0-9]*.*/docs/
-odoo-[0-9]*.*/odoo/
-odoo-[0-9]*.*/setup/
-odoo-[0-9]*.*/.weblate.json
-odoo-[0-9]*.*/CONTRIBUTING.md
-odoo-[0-9]*.*/COPYRIGHT
-odoo-[0-9]*.*/LICENSE
-odoo-[0-9]*.*/MANIFEST.in
-odoo-[0-9]*.*/odoo-bin
-odoo-[0-9]*.*/requirements.txt
-odoo-[0-9]*.*/setup.cfg
-odoo-[0-9]*.*/setup.py
-odoo-[0-9]*.*/custom_addons
-
-
-.claude/settings.local.json
-
-# --- kingsmvpsplan: 只同步 README.md，其餘全忽略（細則在子目錄 .gitignore）---
-.claude/kingsmvpsplan/**
-!.claude/kingsmvpsplan/.gitignore
+# --- AI 工作流程無關的大型目錄 ---
+14cust_addons/
+odoo_sample/
+odoo-13.0/
+odoo-14.0/
+odoo-17.0/
+odoo-18.0/
+odoo-19.0/

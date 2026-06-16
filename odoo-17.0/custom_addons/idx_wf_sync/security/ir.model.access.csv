@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_wf_mapping_user,wf.mapping.user,model_wf_mapping,base.group_user,1,1,1,1
-access_wf_mapping_line_user,wf.mapping.line.user,model_wf_mapping_line,base.group_user,1,1,1,1
-access_wf_mapping_sync_info,wf.mapping.sync.info.user,model_wf_mapping_sync_info,base.group_user,1,1,1,1
-access_wf_mapping_sub_user,wf.mapping.sub.user,model_wf_mapping_sub,base.group_user,1,1,1,1

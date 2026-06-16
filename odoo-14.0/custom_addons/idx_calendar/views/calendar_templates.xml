@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <template id="assets_backend" name="idx_calendar assets" inherit_id="web.assets_backend">
-        <xpath expr="." position="inside">
-            <script type="text/javascript" src="/idx_calendar/static/src/js/idx_calendar_popover.js"></script>
-        </xpath>
-    </template>
-</odoo>

@@ -1,3 +1,0 @@
-<template >
-    <t t-name="mail.SuggestedRecipients" t-inherit="mail.SuggestedRecipients">
-</template>
