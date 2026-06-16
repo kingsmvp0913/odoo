@@ -1,35 +1,7 @@
 # Kingsmvps Pipeline (V8.3)
 
-* 輸入「**開工**」，Claude 自動完成需求分析 → 實作 → QA
+* 輸入「**開工**」，Claude 自動完成抓待辦任務 → 需求分析 → 實作 → QA
 * 輸入「**同步**」，只拉取最新 Odoo 任務到 `start/`，不觸發 pipeline。
-
----
-
-## Plugins 與 MCP
-
-### Plugins（啟用中）
-
-| Plugin | 用途 |
-|--------|------|
-| **superpowers** | 核心 skill 框架：brainstorming、TDD、systematic debugging、parallel agents 等工作流程技能 |
-| **context7** | 即時抓取第三方套件文件（Odoo API、框架 method signature），避免訓練資料過時 |
-| **hookify** | 分析對話記錄，建立 hook 規則防止 Claude 重複犯相同錯誤 |
-| **code-review** | PR/分支程式碼審查 skill |
-| **security-guidance** | 安全性審查與建議 |
-
-### 自訂 Skills
-
-| Skill | 用途 |
-|-------|------|
-| **graphify** | 將程式碼/文件轉換成知識圖譜（HTML + JSON），並輸出 `graphify-out/wiki/index.md` 供 pipeline 的 wiki cache 注入使用；觸發指令：`/graphify` |
-
-### MCP Servers（啟用中）
-
-| MCP | 用途 |
-|-----|------|
-| **serena-online** | 程式碼智能導航：跨檔案符號搜尋、find references/implementations、call chain 追蹤，範圍限定 `online_addons/`（降低 token 消耗；原生 Odoo API 改由 Context7 負責） |
-
-> **知識檢索優先順序**（見 CLAUDE.md §2）：Graphify wiki → Serena → Context7
 
 ---
 
@@ -212,3 +184,32 @@ Blocker 模板在 `.claude/templates/` 目錄。
 | archive | — | — | `final/` |
 
 ---
+
+## Plugins 與 MCP
+
+### Plugins（啟用中）
+
+| Plugin | 用途 |
+|--------|------|
+| **superpowers** | 核心 skill 框架：brainstorming、TDD、systematic debugging、parallel agents 等工作流程技能 |
+| **context7** | 即時抓取第三方套件文件（Odoo API、框架 method signature），避免訓練資料過時 |
+| **hookify** | 分析對話記錄，建立 hook 規則防止 Claude 重複犯相同錯誤 |
+| **code-review** | PR/分支程式碼審查 skill |
+| **security-guidance** | 安全性審查與建議 |
+
+### 自訂 Skills
+
+| Skill | 用途 |
+|-------|------|
+| **graphify** | 將程式碼/文件轉換成知識圖譜（HTML + JSON），並輸出 `graphify-out/wiki/index.md` 供 pipeline 的 wiki cache 注入使用；觸發指令：`/graphify` |
+
+### MCP Servers（啟用中）
+
+| MCP | 用途 |
+|-----|------|
+| **serena-online** | 程式碼智能導航：跨檔案符號搜尋、find references/implementations、call chain 追蹤，範圍限定 `online_addons/`（降低 token 消耗；原生 Odoo API 改由 Context7 負責） |
+
+> **知識檢索優先順序**（見 CLAUDE.md §2）：Graphify wiki → Serena → Context7
+
+---
+
