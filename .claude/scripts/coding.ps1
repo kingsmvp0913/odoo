@@ -7,7 +7,8 @@ Initialize-PipelineDirs
 
 Write-Host "[STEP 4] 準備實作任務（analysis/ → coding/）..." -ForegroundColor Cyan
 
-$agentPath     = Join-Path $script:CLAUDE_DIR "agents\senior-software-engineer.md"
+$agentDir      = if ($env:PIPELINE_AGENTS_DIR) { $env:PIPELINE_AGENTS_DIR } else { Join-Path $script:CLAUDE_DIR "agents" }
+$agentPath     = Join-Path $agentDir "senior-software-engineer.md"
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
 $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 

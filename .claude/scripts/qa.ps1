@@ -5,7 +5,8 @@
 
 Initialize-PipelineDirs
 
-$agentPath     = Join-Path $script:CLAUDE_DIR "agents\qa-analyst.md"
+$agentDir      = if ($env:PIPELINE_AGENTS_DIR) { $env:PIPELINE_AGENTS_DIR } else { Join-Path $script:CLAUDE_DIR "agents" }
+$agentPath     = Join-Path $agentDir "qa-analyst.md"
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
 $agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
 
