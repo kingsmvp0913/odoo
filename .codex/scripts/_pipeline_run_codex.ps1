@@ -10,7 +10,7 @@
 #   CODEX_APPROVAL_MODE   — (選用) 預設 full-auto
 
 # 使用 .claude/scripts/_common.ps1（dot-source 後 $PSScriptRoot 仍為 _common.ps1 所在目錄，路徑常數正確）
-$commonPath = Join-Path $PSScriptRoot "..\..\..\.claude\scripts\_common.ps1" | Resolve-Path
+$commonPath = Join-Path $PSScriptRoot "..\..\.claude\scripts\_common.ps1" | Resolve-Path
 . $commonPath
 
 $claudeScriptsDir = Split-Path $commonPath -Parent

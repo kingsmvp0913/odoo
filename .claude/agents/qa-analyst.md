@@ -67,6 +67,12 @@ items:
   - check: "exception_not_bare"
     passed: true
     message: ""
+  - check: "no_native_round"
+    passed: true
+    message: ""
+  - check: "odoo_version_compliance"
+    passed: true
+    message: ""
 issues:
   - severity: "error | warning"
     description: ""
@@ -89,7 +95,7 @@ CHECKS TO PERFORM — SPEC COMPLIANCE
 
 CHECKS TO PERFORM — CODE QUALITY
 
-PRE-EXISTING CODE EXCEPTION: Code quality checks (7–12) apply only to **code introduced or modified by this task**.
+PRE-EXISTING CODE EXCEPTION: Code quality checks (7–14) apply only to **code introduced or modified by this task**.
 - If `implementation_status.verdict == "ALREADY_IMPLEMENTED"` in the spec → ALL files are pre-existing; code quality issues found are `severity: warning` only and do NOT cause `status = FAILED`.
 - For other verdicts → check only files listed in `project_structure` without a `# 已存在` / `# already exists` comment. Files marked as pre-existing follow the same warning-only rule.
 - In `items`, set `passed: true` with message `"pre-existing, recorded as warning"` for pre-existing issues. Add a corresponding `severity: warning` entry in `issues`.
@@ -119,10 +125,46 @@ PRE-EXISTING CODE EXCEPTION: Code quality checks (7–12) apply only to **code i
     FAIL if bare `except:` or `except Exception:` without re-raise or
     specific logging appears. Must catch specific exception types.
 
+13. **no_native_round**
+    FAIL if Python built-in `round()` is called on any monetary, cost, price, or quantity
+    expression. Taiwan uses 四捨五入 (ROUND_HALF_UP); Python's `round()` uses banker's
+    rounding (e.g. `round(30.5)` → 30, not 31).
+    Required pattern:
+    ```python
+    from decimal import Decimal, ROUND_HALF_UP
+    result = float(Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+    ```
+    Grep for `round(` in new code. FAIL only if the matching line also contains a
+    monetary indicator: variable/field name containing `price`, `cost`, `amount`,
+    `total`, `subtotal`, `tax`, `discount`, or `margin`.
+    Skip lines where the first non-whitespace character is `#` (comment lines).
+
+14. **odoo_version_compliance**
+    Read `odoo_version` from technical_specification. Apply ALL rules for that version
+    AND every earlier breaking-change tier listed below (cumulative).
+
+    Grep each forbidden pattern in files listed in project_structure (skip pre-existing files).
+    Any match → FAIL with the pattern and line as description.
+
+    | Tier  | Forbidden pattern                        | Reason / Replacement                        |
+    |-------|------------------------------------------|---------------------------------------------|
+    | v10+  | `_columns\s*=\s*{`                       | Old dict-style fields; use `fields.X = ...` |
+    | v10+  | `fields\.related\(`                      | Deprecated; use `related=` param on field   |
+    | v10+  | `openerp\.` (non-comment lines only)     | Namespace removed; use `odoo.`              |
+    | v13+  | `@api\.multi`                            | Removed in v13; just `def method(self):`    |
+    | v13+  | `@api\.one`                              | Removed in v13                              |
+    | v14+  | `track_visibility\s*=`                   | Replaced by `tracking=True`                 |
+    | v16+  | `<template.*inherit_id=.*assets_backend` | Old asset injection via template; use `ir.asset` records |
+
+    For `openerp\.`: skip any line where the first non-whitespace character is `#`.
+
+    If `odoo_version` is not set or unreadable, skip this check and record
+    `passed: true` with message `"odoo_version not specified, skipped"`.
+
 OUTPUT RULES
 
 - If any spec compliance check (1–6) fails, `status = FAILED`
-- Code quality checks (7–12) on pre-existing code: `passed: true` in items + `severity: warning` in issues — never cause FAILED
+- Code quality checks (7–14) on pre-existing code: `passed: true` in items + `severity: warning` in issues — never cause FAILED
 - Include actionable suggestions for fixes
 - No natural language outside YAML block and AGENT-RESULT block
 - Write `log/qa_report.yaml` and `system/.qa_done`

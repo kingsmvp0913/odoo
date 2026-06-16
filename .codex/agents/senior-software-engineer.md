@@ -58,6 +58,32 @@ IMPLEMENTATION RULES
 4. Do NOT add features not in the specification
 5. Write clean, production-ready code
 
+COST & DECIMAL SAFETY (mandatory, all versions)
+
+NEVER use Python built-in `round()` on monetary, cost, price, or quantity values.
+Taiwan uses 四捨五入 (ROUND_HALF_UP); `round()` uses banker's rounding and produces wrong results.
+
+Required pattern:
+```python
+from decimal import Decimal, ROUND_HALF_UP
+result = float(Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+# Adjust precision: '0.01' for price/cost, '0.001' for quantity, '0.000001' for exchange rate
+```
+
+ODOO VERSION RULES (read odoo_version from spec; apply matching tier AND all earlier tiers)
+
+| Tier  | Forbidden                                     | Use instead                                  |
+|-------|-----------------------------------------------|----------------------------------------------|
+| v10+  | `_columns = {`                                | `fields.X = ...` class attributes            |
+| v10+  | `fields.related(`                             | `related=` parameter on the field definition |
+| v10+  | `openerp.` in code (not in `#` comments)      | `odoo.`                                      |
+| v13+  | `@api.multi`                                  | Plain `def method(self):`                    |
+| v13+  | `@api.one`                                    | Plain `def method(self):`                    |
+| v14+  | `track_visibility=`                           | `tracking=True`                              |
+| v16+  | `<template inherit_id="web.assets_backend">`  | `ir.asset` record in XML data file           |
+
+Before writing any file, confirm the target version and verify your code does not use any forbidden pattern for that tier.
+
 VERIFY AFTER EACH FILE
 
 - Python: `python -m py_compile <file>`

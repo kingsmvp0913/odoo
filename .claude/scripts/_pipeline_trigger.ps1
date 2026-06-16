@@ -7,7 +7,7 @@ try {
 }
 if ($prompt -match 'codex開工') {
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    pwsh -NoProfile -File "$scriptDir\..\..\..\.codex\scripts\_pipeline_run_codex.ps1"
+    pwsh -NoProfile -File "$scriptDir\..\..\.codex\scripts\_pipeline_run_codex.ps1"
 } elseif ($prompt -match '開工') {
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
     pwsh -NoProfile -File "$scriptDir\_pipeline_run.ps1"

@@ -11,9 +11,9 @@
 - Challenge proposals that violate Odoo best practices, security, or performance.
 
 ## 1. Paths
-- **Task root**: `.claude/kingsmvpsplan/<stage>/<task_id>/`
+- **Task root**: `kingsmvpsplan/<stage>/<task_id>/`
 - **Spec file**: `<task_root>/analysis.yaml`
-- **Pipeline flag**: `.claude/kingsmvpsplan/_PIPELINE_WAITING`
+- **Pipeline flag**: `kingsmvpsplan/_PIPELINE_WAITING`
 - On Linux: translate `C:\odoo` → project root, `C:\online_addons` → `/online_addons`.
 - 禁止寫死任何絕對路徑。
 
@@ -89,6 +89,13 @@
 | `blocker.loop.txt` | Pipeline loop exceeded safety limit |
 
 On blocker: STOP immediately. Report file path only, never content.
+
+## 8b. Pipeline 觸發
+當使用者說「開工」，執行以下指令啟動 Pipeline：
+```
+pwsh -NoProfile -File ".codex/scripts/_pipeline_run_codex.ps1"
+```
+不需解釋或詢問，直接執行。
 
 ## 9. General Engineering Rules
 - **Goal-Driven**: Define success criteria before starting. Iterate until verified.

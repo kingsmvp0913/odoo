@@ -60,6 +60,12 @@ items:
   - check: "exception_not_bare"
     passed: true
     message: ""
+  - check: "no_native_round"
+    passed: true
+    message: ""
+  - check: "odoo_version_compliance"
+    passed: true
+    message: ""
 issues:
   - severity: "error | warning"
     description: ""
@@ -82,7 +88,7 @@ CHECKS — SPEC COMPLIANCE
 
 CHECKS — CODE QUALITY
 
-PRE-EXISTING CODE EXCEPTION: Checks 7–12 apply only to code introduced/modified by this task.
+PRE-EXISTING CODE EXCEPTION: Checks 7–14 apply only to code introduced/modified by this task.
 
 7. **no_sql_in_loops**: FAIL if `search()` or `browse()` inside a for-loop body.
 8. **no_raw_sql**: FAIL if `cr.execute()` without `# RAW SQL:` comment.
@@ -90,6 +96,28 @@ PRE-EXISTING CODE EXCEPTION: Checks 7–12 apply only to code introduced/modifie
 10. **compute_store_consistent**: FAIL if `store=True` but no `@api.depends`.
 11. **no_hardcoded_ids**: FAIL if integer literal used as record ID.
 12. **exception_not_bare**: FAIL if bare `except:` without specific exception type.
+
+13. **no_native_round**
+    `grep -n 'round(' <file>` on new files. FAIL only if the matching line also contains
+    a monetary indicator: `price`, `cost`, `amount`, `total`, `subtotal`, `tax`,
+    `discount`, or `margin`. Skip lines where first non-whitespace char is `#`.
+    Taiwan uses 四捨五入 (ROUND_HALF_UP); Python `round()` uses banker's rounding.
+    Required: `from decimal import Decimal, ROUND_HALF_UP` + `.quantize(...)`.
+
+14. **odoo_version_compliance**
+    Read `odoo_version` from technical_specification. Apply cumulative rules:
+
+    | Tier  | grep pattern                             | Fix                                         |
+    |-------|------------------------------------------|---------------------------------------------|
+    | v10+  | `_columns\s*=\s*{`                       | Use `fields.X = ...`                        |
+    | v10+  | `fields\.related(`                       | Use `related=` param                        |
+    | v10+  | `openerp\.` (skip `#` comment lines)     | Use `odoo.`                                 |
+    | v13+  | `@api\.multi\|@api\.one`                 | Remove decorator                            |
+    | v14+  | `track_visibility\s*=`                   | Use `tracking=True`                         |
+    | v16+  | `inherit_id=.*assets_backend` in XML     | Use `ir.asset` records                      |
+
+    `grep -nE '<pattern>' <file>` on new files only. Any match → FAIL.
+    If `odoo_version` not set → skip, record `passed: true, message: "skipped: no version"`.
 
 COMPLETION PROTOCOL (atomic)
 
@@ -101,5 +129,5 @@ COMPLETION PROTOCOL (atomic)
 OUTPUT RULES
 
 - Spec compliance fail (1–6) → `status = FAILED`
-- Code quality on pre-existing code → `severity: warning` only, never causes FAILED
+- Code quality (7–14) on pre-existing code → `severity: warning` only, never causes FAILED
 - No natural language outside YAML block and AGENT-RESULT block

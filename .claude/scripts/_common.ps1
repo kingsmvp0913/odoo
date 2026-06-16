@@ -7,7 +7,7 @@ $script:CLAUDE_DIR       = Split-Path -Parent $PSScriptRoot
 $script:ROOT             = Split-Path -Parent $script:CLAUDE_DIR
 $script:ONLINE_ADDONS_DIR = if ($env:ONLINE_ADDONS_DIR) { $env:ONLINE_ADDONS_DIR } elseif ($IsLinux) { "/online_addons" } else { "C:\online_addons" }
 
-$script:PLAN_DIR     = Join-Path $script:CLAUDE_DIR "kingsmvpsplan"
+$script:PLAN_DIR     = Join-Path $script:ROOT "kingsmvpsplan"
 
 $script:START_DIR    = Join-Path $script:PLAN_DIR "start"
 $script:CONFIRM_DIR  = Join-Path $script:PLAN_DIR "confirm"

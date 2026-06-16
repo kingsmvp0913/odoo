@@ -12,10 +12,10 @@
 - NEVER modify any workflow (pipeline scripts, PS1 files, CLAUDE.md, agent prompts, hook configs, pipeline spec) without explicit user approval.
 
 ## 1. Paths
-- **Task root**: `.claude/kingsmvpsplan/<stage>/<task_id>/`
+- **Task root**: `kingsmvpsplan/<stage>/<task_id>/`
 - **Spec file**: `<task_root>/analysis.yaml`
-- **Pipeline flag**: `.claude/kingsmvpsplan/_PIPELINE_WAITING` (content = ISO timestamp; TTL 30 min)
-- **Loop counter**: `.claude/kingsmvpsplan/_LOOP_COUNTER.json`
+- **Pipeline flag**: `kingsmvpsplan/_PIPELINE_WAITING` (content = ISO timestamp; TTL 30 min)
+- **Loop counter**: `kingsmvpsplan/_LOOP_COUNTER.json`
 - PS1 scripts run on the user's machine; paths are computed via `$PSScriptRoot` (cross-platform). When Claude executes on Linux, translate `C:\odoo` → project root, `C:\online_addons` → `$ONLINE_ADDONS_DIR` (fallback: `/online_addons`).
 - Agent 寫入專案檔案時一律使用相對路徑或環境變數，**禁止寫死任何絕對路徑**（包括 `C:\` 或 `/home/...`）。
 
