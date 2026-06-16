@@ -1,6 +1,7 @@
-# Kingsmvps Pipeline (V8.3)
+# Kingsmvps Pipeline (V8.5)
 
 * 輸入「**開工**」，Claude 自動完成抓待辦任務 → 需求分析 → 實作 → QA
+* 輸入「**codex開工**」，改由 OpenAI Codex 執行 AI 階段（Claude Code 不可用時的備援）
 * 輸入「**同步**」，只拉取最新 Odoo 任務到 `start/`，不觸發 pipeline。
 
 ---
@@ -12,6 +13,7 @@
 - PowerShell 7+（`pwsh`）
 - Python 3.x
 - Claude Code CLI（已登入）
+- OpenAI Codex（備援，`npm install -g @openai/codex`）
 
 ### 設定步驟
 
@@ -126,7 +128,7 @@ Blocker 模板在 `.claude/templates/` 目錄。
 | MODE_B 低信心退回 | 同上；Claude 新增的問題也在 `analysis.yaml` 的 `clarification_channel` 裡 |
 | QA 一直失敗 | 查看 `coding/task_N/log/qa_report.yaml` 的 issues 說明 |
 | Pipeline 沒有自動觸發 | 確認 `_PIPELINE_WAITING` flag 是否存在且未超過 30 分鐘 |
-| 任務卡住診斷 | `find .claude/kingsmvpsplan -name "blocker.*.txt"` 一行查所有 blocker |
+| 任務卡住診斷 | `find kingsmvpsplan -name "blocker.*.txt"` 一行查所有 blocker |
 | Odoo 任務沒收到完成通知 | 設定環境變數 `ODOO_PASSWORD`；未設定時通知靜默跳過 |
 | git pull 失敗（blocker.git.txt） | 手動進入 repo 目錄執行 `git pull`，解決衝突後刪除 blocker 檔再輸入「開工」 |
 | 想暫停某任務開發 | 將任務目錄手動移入 `stop/`；想恢復時手動移回對應 stage 目錄 |
@@ -137,25 +139,9 @@ Blocker 模板在 `.claude/templates/` 目錄。
 ## 目錄結構
 
 ```
-.claude/
-├── scripts/
-│   ├── _common.ps1             共用函數庫
-│   ├── _pipeline_run.ps1       「開工」完整 pipeline 入口
-│   ├── _pipeline_trigger.ps1   UserPromptSubmit hook（解析「開工」/「同步」關鍵字）
-│   ├── _sync.ps1               「同步」獨立同步入口（不觸發 pipeline）
-│   ├── analysis.ps1            STEP 1-3
-│   ├── coding.ps1              STEP 4
-│   └── qa.ps1                  STEP 5-6
-├── tools/
-│   ├── curl.py                 Odoo 來源1 任務同步（task_odoo_N）
-│   ├── curl_service.py         Odoo 來源2 任務同步（task_service_N）
-│   └── send_message.py         Odoo 訊息發送
-├── agents/
-│   ├── requirements-analyst.md
-│   ├── senior-software-engineer.md
-│   └── qa-analyst.md
-├── templates/                  Blocker 模板
-├── kingsmvpsplan/
+<repo_root>/
+├── AGENTS.md                   Codex AI 全域指令（.codex/ 的鏡像）
+├── kingsmvpsplan/              任務狀態目錄（Claude / Codex 共用）
 │   ├── start/                  新任務暫存（curl.py 同步後）
 │   ├── confirm/                初始分析完成，等待 user_answer
 │   ├── analysis/               答案完整，等待 MODE_B 規格生成
@@ -163,12 +149,40 @@ Blocker 模板在 `.claude/templates/` 目錄。
 │   ├── final/                  QA 通過歸檔（唯讀）
 │   ├── stop/                   暫停開發任務（手動移入/移出）
 │   └── log/
-│       └── pipeline_run_summary.yaml   每次 pipeline run 結束後的執行摘要
-├── CLAUDE.md               Claude AI 指令
-├── pipeline.md             Pipeline 完整規格
-├── README.md               本文件
-├── project_version_map.json  專案版本對照表
-└── settings.json           Claude hooks 與權限設定
+│       └── pipeline_run_summary.yaml
+│
+├── .claude/
+│   ├── scripts/
+│   │   ├── _common.ps1             共用函數庫（含 TOML 解析）
+│   │   ├── _pipeline_run.ps1       「開工」Claude pipeline 入口
+│   │   ├── _pipeline_trigger.ps1   UserPromptSubmit hook（「開工」/「codex開工」/「同步」）
+│   │   ├── _sync.ps1               「同步」獨立同步入口
+│   │   ├── analysis.ps1            STEP 1-3（Claude/Codex 共用）
+│   │   ├── coding.ps1              STEP 4（共用）
+│   │   └── qa.ps1                  STEP 5-6（共用）
+│   ├── tools/
+│   │   ├── curl.py                 Odoo 來源1 任務同步
+│   │   ├── curl_service.py         Odoo 來源2 任務同步
+│   │   └── send_message.py         Odoo 訊息發送
+│   ├── agents/
+│   │   ├── requirements-analyst.md     Claude 版 agent 提示
+│   │   ├── senior-software-engineer.md
+│   │   └── qa-analyst.md
+│   ├── templates/              Blocker 模板
+│   ├── CLAUDE.md               Claude AI 指令
+│   ├── pipeline.md             Pipeline 完整規格
+│   ├── README.md               本文件
+│   ├── project_version_map.json
+│   └── settings.json           Claude hooks 與權限設定
+│
+└── .codex/
+    ├── AGENTS.md               Codex AI 全域指令
+    ├── agents/
+    │   ├── requirements-analyst.toml   Codex 版 agent（prompt + model 設定合一）
+    │   ├── senior-software-engineer.toml
+    │   └── qa-analyst.toml
+    └── scripts/
+        └── _pipeline_run_codex.ps1    「codex開工」Codex pipeline 入口
 ```
 
 ## Stage 標記一覽（Unified Marker Table）

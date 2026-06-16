@@ -11,9 +11,11 @@ if (-not $env:ODOO_PASSWORD) {
 Initialize-PipelineDirs
 
 $agentDir      = if ($env:PIPELINE_AGENTS_DIR) { $env:PIPELINE_AGENTS_DIR } else { Join-Path $script:CLAUDE_DIR "agents" }
-$agentPath     = Join-Path $agentDir "requirements-analyst.md"
+$tomlPath      = Join-Path $agentDir "requirements-analyst.toml"
+$mdPath        = Join-Path $agentDir "requirements-analyst.md"
+$agentPath     = if (Test-Path $tomlPath) { $tomlPath } else { $mdPath }
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
-$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
+$agentTemplate = if ($agentPath -like "*.toml") { Get-TomlPromptContent $agentRaw } else { $agentRaw -replace '(?s)^---.*?---\r?\n', '' }
 
 # ============================================================
 # STEP 1: 同步 Odoo 任務 → start/task_N/original.txt

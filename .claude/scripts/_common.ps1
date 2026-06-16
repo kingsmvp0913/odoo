@@ -430,6 +430,28 @@ function Get-WikiCache {
 }
 
 # ============================================================
+# TOML Agent 檔案解析（供 Codex pipeline 讀取 .codex/agents/*.toml）
+# ============================================================
+
+function Get-TomlValue {
+    param([string]$toml, [string]$section, [string]$key)
+    # 取 [section] 下 key = "value" 的值（僅支援雙引號字串）
+    if ($toml -match "(?ms)\[$([regex]::Escape($section))\][^\[]*?^$([regex]::Escape($key))\s*=\s*`"([^`"]*)`"") {
+        return $matches[1]
+    }
+    return $null
+}
+
+function Get-TomlPromptContent {
+    param([string]$toml)
+    # 取 [prompt] 下 content = """...""" 多行字串內容
+    if ($toml -match '(?s)\[prompt\][^\[]*?content\s*=\s*"""\s*\r?\n(.*?)\r?\n"""') {
+        return $matches[1]
+    }
+    return $null
+}
+
+# ============================================================
 # MCP Budget 區塊（注入 pending_prompt.txt，防 session 內無限重試）
 # ============================================================
 function Get-McpBudgetBlock {

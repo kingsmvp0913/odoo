@@ -6,9 +6,11 @@
 Initialize-PipelineDirs
 
 $agentDir      = if ($env:PIPELINE_AGENTS_DIR) { $env:PIPELINE_AGENTS_DIR } else { Join-Path $script:CLAUDE_DIR "agents" }
-$agentPath     = Join-Path $agentDir "qa-analyst.md"
+$tomlPath      = Join-Path $agentDir "qa-analyst.toml"
+$mdPath        = Join-Path $agentDir "qa-analyst.md"
+$agentPath     = if (Test-Path $tomlPath) { $tomlPath } else { $mdPath }
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
-$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
+$agentTemplate = if ($agentPath -like "*.toml") { Get-TomlPromptContent $agentRaw } else { $agentRaw -replace '(?s)^---.*?---\r?\n', '' }
 
 # ============================================================
 # STEP 5: coding/ → 寫 QA pending prompt（不等 AI）

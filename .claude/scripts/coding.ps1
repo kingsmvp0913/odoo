@@ -8,9 +8,11 @@ Initialize-PipelineDirs
 Write-Host "[STEP 4] 準備實作任務（analysis/ → coding/）..." -ForegroundColor Cyan
 
 $agentDir      = if ($env:PIPELINE_AGENTS_DIR) { $env:PIPELINE_AGENTS_DIR } else { Join-Path $script:CLAUDE_DIR "agents" }
-$agentPath     = Join-Path $agentDir "senior-software-engineer.md"
+$tomlPath      = Join-Path $agentDir "senior-software-engineer.toml"
+$mdPath        = Join-Path $agentDir "senior-software-engineer.md"
+$agentPath     = if (Test-Path $tomlPath) { $tomlPath } else { $mdPath }
 $agentRaw      = Get-Content $agentPath -Raw -Encoding UTF8
-$agentTemplate = $agentRaw -replace '(?s)^---.*?---\r?\n', ''
+$agentTemplate = if ($agentPath -like "*.toml") { Get-TomlPromptContent $agentRaw } else { $agentRaw -replace '(?s)^---.*?---\r?\n', '' }
 
 # Module 序列鎖：收集 coding/ 中已有活動任務的模組（不重複處理同一模組）
 $activeModules = @{}

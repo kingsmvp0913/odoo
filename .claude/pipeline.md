@@ -27,7 +27,7 @@
 
 ## Loop 安全上限（防死循環）
 
-持久化計數器：`.claude/kingsmvpsplan/_LOOP_COUNTER.json`
+持久化計數器：`kingsmvpsplan/_LOOP_COUNTER.json`
 ```json
 {
   "run_started_at": "2026-01-01T00:00:00",
@@ -44,7 +44,7 @@
 
 每次進入循環前讀取並更新 `_LOOP_COUNTER.json`。
 
-1. **掃描**：收集所有 `.claude/kingsmvpsplan/*/system/pending_prompt.txt`
+1. **掃描**：收集所有 `kingsmvpsplan/*/system/pending_prompt.txt`
 2. **讀 stage**：每個任務目錄的 `system/` 下找 `.pending_<stage>` flag 檔；stage = 去掉 `.pending_` 前綴。
    有效 Claude-facing stage：`analysis` / `final` / `coding` / `qa`
 3. **分批**：依 `analysis → final → coding → qa` 順序。
@@ -131,7 +131,7 @@ flag 檔內容為建立時的 ISO 8601 時間戳（由 `_pipeline_run.ps1` 與 `
 import os
 from datetime import datetime, timezone
 
-flag = '.claude/kingsmvpsplan/_PIPELINE_WAITING'
+flag = 'kingsmvpsplan/_PIPELINE_WAITING'
 if os.path.exists(flag):
     content = open(flag).read().strip()
     try:
@@ -176,7 +176,7 @@ blocker 後人工修復流程：
 
 ## Pipeline Run Summary
 
-每次 `_pipeline_run.ps1` 結束時自動寫入 `.claude/kingsmvpsplan/log/pipeline_run_summary.yaml`：
+每次 `_pipeline_run.ps1` 結束時自動寫入 `kingsmvpsplan/log/pipeline_run_summary.yaml`：
 
 ```yaml
 run_id: '<ISO 時間戳>'
@@ -196,7 +196,7 @@ tasks_in_pipeline:
 
 一行查所有 blocker：
 ```bash
-find .claude/kingsmvpsplan -name "blocker.*.txt" -exec echo "==={}" \; -exec grep -E "error_code:|tool:" {} \;
+find kingsmvpsplan -name "blocker.*.txt" -exec echo "==={}" \; -exec grep -E "error_code:|tool:" {} \;
 ```
 
 ## 路徑翻譯（Linux 執行環境）

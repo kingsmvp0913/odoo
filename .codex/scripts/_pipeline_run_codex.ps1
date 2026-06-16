@@ -14,8 +14,13 @@ $commonPath = Join-Path $PSScriptRoot "..\..\.claude\scripts\_common.ps1" | Reso
 . $commonPath
 
 $claudeScriptsDir = Split-Path $commonPath -Parent
-$codexModel       = if ($env:CODEX_MODEL) { $env:CODEX_MODEL } else { "o4-mini" }
-$codexApproval    = if ($env:CODEX_APPROVAL_MODE) { $env:CODEX_APPROVAL_MODE } else { "full-auto" }
+# Stage → agent 檔名對應（從 .codex/agents/<name>.toml 讀取 Codex 設定）
+$stageAgents = @{
+    "analysis" = "requirements-analyst"      # confirm/ → .pending_analysis
+    "final"    = "requirements-analyst"      # analysis/ → .pending_final
+    "coding"   = "senior-software-engineer"  # coding/ → .pending_coding
+    "qa"       = "qa-analyst"               # coding/ → .pending_qa
+}
 
 # 告知 stage scripts 要使用 .codex/agents/（env var fallback 機制）
 $env:PIPELINE_AGENTS_DIR = Join-Path $PSScriptRoot "..\agents" | Resolve-Path
@@ -53,7 +58,7 @@ $counterObj = [PSCustomObject]@{ run_started_at = $startedAt; loop_count = $loop
 try { $counterObj | ConvertTo-Json -Depth 5 | Out-File $counterFile -Encoding UTF8 -Force } catch {}
 
 Write-Host "=== Codex Pipeline 開工 $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -ForegroundColor Cyan
-Write-Host "[LOOP] loop_count=$loopCount / $maxLoops  model=$codexModel" -ForegroundColor DarkCyan
+Write-Host "[LOOP] loop_count=$loopCount / $maxLoops" -ForegroundColor DarkCyan
 
 # ============================================================
 # 共用 PS1 階段：需求分析 → 實作 → QA（機械工作，不含 AI 呼叫）
@@ -69,9 +74,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ============================================================
-# Codex AI 執行：處理 analysis/final stage 的 pending 任務
+# Codex AI 執行：analysis → final → coding → qa
+# analysis 與 final 分開呼叫，確保各 stage 的 flag 都被掃到
 # ============================================================
-Invoke-CodexBatch -Stage "analysis" -StageLabel "需求分析/Final 規格"
+Invoke-CodexBatch -Stage "analysis" -StageLabel "初始分析" -AgentName $stageAgents["analysis"]
+Invoke-CodexBatch -Stage "final"    -StageLabel "Final 規格" -AgentName $stageAgents["final"]
 
 Write-Host "`n--- STEP 4: 實作 (coding.ps1) ---" -ForegroundColor Yellow
 pwsh -NoProfile -File (Join-Path $claudeScriptsDir "coding.ps1")
@@ -81,7 +88,7 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Invoke-CodexBatch -Stage "coding" -StageLabel "實作"
+Invoke-CodexBatch -Stage "coding" -StageLabel "實作" -AgentName $stageAgents["coding"]
 
 Write-Host "`n--- STEP 5-6: QA (qa.ps1) ---" -ForegroundColor Yellow
 pwsh -NoProfile -File (Join-Path $claudeScriptsDir "qa.ps1")
@@ -91,20 +98,22 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Invoke-CodexBatch -Stage "qa" -StageLabel "QA"
+Invoke-CodexBatch -Stage "qa" -StageLabel "QA" -AgentName $stageAgents["qa"]
 
 Remove-Item env:PIPELINE_HOOK_MODE -ErrorAction SilentlyContinue
 
 # ============================================================
-# 最終狀態報告
+# 最終狀態：有新 pending（如 QA 失敗退回）→ 自動進入下一輪
 # ============================================================
-$remainingPending = Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -notlike "*$($script:STOP_DIR)*" -and $_.FullName -notlike "*$($script:FINAL_DIR)*" }
+$remainingPending = @(Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -notlike "*$($script:STOP_DIR)*" -and $_.FullName -notlike "*$($script:FINAL_DIR)*" })
 
-if ($remainingPending -and @($remainingPending).Count -gt 0) {
-    Write-Host "`n[WARN] 仍有 $(@($remainingPending).Count) 個任務未完成（可能有 blocker）" -ForegroundColor Yellow
-    $remainingPending | ForEach-Object {
-        Write-Host "  未完成: $($_.FullName)" -ForegroundColor Red
+if ($remainingPending.Count -gt 0) {
+    if ($loopCount -lt $maxLoops) {
+        Write-Host "`n[LOOP] 偵測到 $($remainingPending.Count) 個新待處理任務，啟動下一輪（loop=$($loopCount+1)）..." -ForegroundColor Cyan
+        & $PSCommandPath
+    } else {
+        Write-Host "`n[WARN] 達到 loop 上限（$maxLoops），停止。仍有 $($remainingPending.Count) 個未完成任務。" -ForegroundColor Yellow
     }
 } else {
     Remove-Item $script:PIPELINE_WAITING -Force -ErrorAction SilentlyContinue
@@ -116,7 +125,7 @@ if ($remainingPending -and @($remainingPending).Count -gt 0) {
 # 函式：Codex Batch 執行（掃描 pending 任務並逐一呼叫 codex CLI）
 # ============================================================
 function Invoke-CodexBatch {
-    param([string]$Stage, [string]$StageLabel)
+    param([string]$Stage, [string]$StageLabel, [string]$AgentName)
 
     $pendingFiles = Get-ChildItem $script:PLAN_DIR -Recurse -Filter "pending_prompt.txt" -ErrorAction SilentlyContinue |
         Where-Object {
@@ -143,23 +152,42 @@ function Invoke-CodexBatch {
             continue
         }
 
-        Write-Host "  [CODEX] 執行 $taskId ($Stage)..." -ForegroundColor Cyan
+        # 從 .codex/agents/<name>.toml 讀取 Codex 設定
+        $tomlPath    = Join-Path $env:PIPELINE_AGENTS_DIR "$AgentName.toml"
+        $tomlContent = Get-Content $tomlPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+        $agentModel  = if ($tomlContent) { Get-TomlValue $tomlContent "codex" "model" } else { "gpt-5.5" }
+        $agentEffort = if ($tomlContent) { Get-TomlValue $tomlContent "codex" "model_reasoning_effort" } else { "medium" }
+        if (-not $agentModel)  { $agentModel  = "gpt-5.5" }
+        if (-not $agentEffort) { $agentEffort = "medium" }
 
-        # 呼叫 codex CLI（stdin 傳入 pending_prompt.txt 內容）
+        Write-Host "  [CODEX] 執行 $taskId ($Stage) [$AgentName  model=$agentModel effort=$agentEffort]..." -ForegroundColor Cyan
+
+        # 呼叫 codex exec（非互動模式，stdin 傳入 pending_prompt.txt）
+        # -c model/effort           : 從 .toml 讀取，覆蓋 ~/.codex/config.toml 預設值
+        # --ask-for-approval never  : 不暫停等待人工確認
+        # --sandbox danger-full-access : agent 需要讀寫多個路徑（online_addons、task 目錄）
+        # --output-last-message     : 只抓 agent 最後一則回覆，避免解析 TUI 輸出
         $promptContent = Get-Content $pf.FullName -Raw -Encoding UTF8
-        $output = $null
+        $tmpOutput     = [System.IO.Path]::GetTempFileName()
+        $output        = $null
         try {
-            $output = $promptContent | & codex `
-                --model $codexModel `
-                --approval-mode $codexApproval `
-                2>&1
+            $promptContent | & codex exec `
+                -c "model=`"$agentModel`"" `
+                -c "model_reasoning_effort=`"$agentEffort`"" `
+                --ask-for-approval never `
+                --sandbox danger-full-access `
+                --output-last-message $tmpOutput `
+                2>&1 | Out-Null
             $exitCode = $LASTEXITCODE
+            $output   = Get-Content $tmpOutput -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
         } catch {
             $exitCode = 1
             $output   = "Exception: $_"
+        } finally {
+            Remove-Item $tmpOutput -Force -ErrorAction SilentlyContinue
         }
 
-        # 解析 ---AGENT-RESULT--- 區塊
+        # 解析 ---AGENT-RESULT--- 區塊（agent 最後一則回覆內）
         $resultStatus  = $null
         $resultMessage = $null
         if ($output -match '(?s)---AGENT-RESULT---(.*?)---END-RESULT---') {
