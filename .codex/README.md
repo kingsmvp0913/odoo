@@ -6,11 +6,11 @@ Claude Code 的備援版本。當 Claude Code 不可用時，改由 OpenAI Codex
 
 ## 觸發方式
 
-| 方式 | 情境 |
+| 指令 | 動作 |
 |------|------|
-| Codex 對話輸入「**開工**」 | 主要使用方式，Codex 讀 `AGENTS.md` 後直接執行 PS1 |
-| Claude Code 對話輸入「**codex開工**」 | Claude Code 運作中，但想改用 Codex 執行 AI 任務 |
-| `pwsh -NoProfile -File ".codex/scripts/_pipeline_run_codex.ps1"` | 腳本直接呼叫 |
+| Codex 輸入「**開工**」 | 執行 Codex pipeline（AI 分析 → 實作 → QA） |
+| Codex 輸入「**同步**」 | 只拉取最新 Odoo 任務，不觸發 pipeline |
+| Claude Code 輸入「**codex開工**」 | 從 Claude Code 觸發 Codex pipeline |
 
 > Codex 需在 `C:\odoo` 目錄下開啟，才能正確讀取根目錄的 `AGENTS.md`
 
@@ -20,15 +20,18 @@ Claude Code 的備援版本。當 Claude Code 不可用時，改由 OpenAI Codex
 
 | 項目 | Claude 版 | Codex 版 |
 |------|-----------|---------|
-| AI 呼叫方式 | Claude Code spawn sub-agents | `codex exec` 每個 task 各自執行 |
-| agent 定義 | `.claude/agents/*.md`（frontmatter + prompt） | `.codex/agents/*.toml`（`[codex]` + `[prompt]`） |
+| AI 身份 | 調度者 + 執行者 | 調度者 + 執行者（同等自主） |
+| 任務執行方式 | 原生 spawn sub-agents | Inline 逐任務處理（同一 session） |
+| agent 定義 | `.claude/agents/*.md` | `.codex/agents/*.toml`（`[codex]` + `[prompt]`） |
+| 調度規格 | `.claude/pipeline.md` | `.codex/pipeline.md` |
 | 全域指令 | `.claude/CLAUDE.md` | `AGENTS.md`（根目錄）+ `.codex/AGENTS.md` |
-| 觸發指令 | 「開工」 | 「codex開工」 |
+| 觸發指令（直接） | 「開工」 | 「開工」（在 Codex 中） |
+| 觸發指令（從 Claude） | — | 「codex開工」 |
 | MCP 工具 | Serena、Context7 | 無（改用 bash grep/find） |
-| 並行執行 | Claude 原生並行 | 目前序列（逐任務） |
-| Pipeline 迴圈 | Claude 手動呼叫 PS1 | PS1 自動自迴圈 |
+| 並行執行 | Claude 原生並行 | 序列（逐任務） |
+| Pipeline 迴圈 | Claude AI 自主判斷 | Codex AI 自主判斷 |
 
-**共用**：`kingsmvpsplan/`、`_common.ps1`、`analysis.ps1`、`coding.ps1`、`qa.ps1`
+**共用**：`kingsmvpsplan/`、`analysis.ps1`、`coding.ps1`、`qa.ps1`（PS1 作為工具）
 
 ---
 

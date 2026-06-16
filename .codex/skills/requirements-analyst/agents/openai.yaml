@@ -1,0 +1,4 @@
+interface:
+  display_name: "Requirements Analyst"
+  short_description: "Odoo pipeline 需求分析 sub-agent：將業務需求轉為 analysis.yaml 技術規格"
+  default_prompt: "Use $requirements-analyst to process this Odoo analysis task: provide the full path to the task's pending_prompt.txt"

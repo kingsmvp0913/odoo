@@ -1,0 +1,4 @@
+interface:
+  display_name: "Senior Software Engineer"
+  short_description: "Odoo pipeline 實作 sub-agent：依 analysis.yaml 規格實作 Odoo 模組程式碼"
+  default_prompt: "Use $senior-software-engineer to implement this Odoo module: provide the full path to the task's pending_prompt.txt"
