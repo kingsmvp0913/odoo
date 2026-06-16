@@ -8,11 +8,11 @@ Claude Code 的備援版本。當 Claude Code 不可用時，改由 OpenAI Codex
 
 | 方式 | 情境 |
 |------|------|
-| Claude Code 對話輸入「**codex開工**」 | Claude Code 仍在運作，但想讓 Codex 執行 AI 任務 |
-| 終端機直接執行 `codex開工`（PowerShell 函式） | Claude Code 無法使用時的完全獨立觸發 |
+| Codex 對話輸入「**開工**」 | 主要使用方式，Codex 讀 `AGENTS.md` 後直接執行 PS1 |
+| Claude Code 對話輸入「**codex開工**」 | Claude Code 運作中，但想改用 Codex 執行 AI 任務 |
 | `pwsh -NoProfile -File ".codex/scripts/_pipeline_run_codex.ps1"` | 腳本直接呼叫 |
 
-> PowerShell profile 函式 `codex開工` 定義在 `C:\Users\kings\OneDrive\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`
+> Codex 需在 `C:\odoo` 目錄下開啟，才能正確讀取根目錄的 `AGENTS.md`
 
 ---
 

@@ -13,8 +13,7 @@ param(
 
 . (Join-Path $PSScriptRoot "_common.ps1")
 
-$script:ROOT = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$planDir = Join-Path (Split-Path $PSScriptRoot -Parent) "kingsmvpsplan"
+$planDir = $script:PLAN_DIR  # 從 _common.ps1 繼承（kingsmvpsplan/ 在 repo 根層）
 
 function Test-SerenaPort {
     param([int]$Port = 8080, [int]$TimeoutMs = 2000)

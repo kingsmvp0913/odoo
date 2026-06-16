@@ -1,7 +1,7 @@
 # Kingsmvps Pipeline (V8.5)
 
 * 輸入「**開工**」，Claude 自動完成抓待辦任務 → 需求分析 → 實作 → QA
-* 輸入「**codex開工**」，改由 OpenAI Codex 執行 AI 階段（Claude Code 不可用時的備援）
+* 輸入「**codex開工**」，改由 OpenAI Codex 執行 AI 階段（Claude Code 不可用時可直接在 Codex 輸入「開工」）
 * 輸入「**同步**」，只拉取最新 Odoo 任務到 `start/`，不觸發 pipeline。
 
 ---
