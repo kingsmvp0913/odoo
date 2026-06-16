@@ -142,7 +142,7 @@ On blocker: STOP immediately. Report file path only, never content.
 - 不需解釋或詢問，立即開始
 - 以 `.codex/pipeline.md` 為唯一調度依據
 - PS1 腳本作為工具呼叫，Codex 負責 AI 決策
-- Sub-agent Skills 逐任務處理，自迴圈直到無 pending 為止
+- 同 stage 內並行最多 5 個 sub-agents（`.codex/agents/*.toml` 定義），自迴圈直到無 pending 為止
 
 ## 9. General Engineering Rules
 

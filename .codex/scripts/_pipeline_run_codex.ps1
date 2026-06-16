@@ -152,11 +152,11 @@ function Invoke-CodexBatch {
             continue
         }
 
-        # 從 .codex/agents/<name>.toml 讀取 Codex 設定
+        # 從 .codex/agents/<name>.toml 讀取 Codex 設定（官方格式：root-level keys）
         $tomlPath    = Join-Path $env:PIPELINE_AGENTS_DIR "$AgentName.toml"
         $tomlContent = Get-Content $tomlPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-        $agentModel  = if ($tomlContent) { Get-TomlValue $tomlContent "codex" "model" } else { "gpt-5.5" }
-        $agentEffort = if ($tomlContent) { Get-TomlValue $tomlContent "codex" "model_reasoning_effort" } else { "medium" }
+        $agentModel  = if ($tomlContent) { Get-TomlValue $tomlContent "" "model" } else { "gpt-5.5" }
+        $agentEffort = if ($tomlContent) { Get-TomlValue $tomlContent "" "model_reasoning_effort" } else { "medium" }
         if (-not $agentModel)  { $agentModel  = "gpt-5.5" }
         if (-not $agentEffort) { $agentEffort = "medium" }
 

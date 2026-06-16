@@ -1,4 +1,0 @@
-interface:
-  display_name: "QA Analyst"
-  short_description: "Odoo pipeline QA sub-agent：依規格審查實作程式碼，產出 qa_report.yaml"
-  default_prompt: "Use $qa-analyst to review this Odoo module implementation: provide the full path to the task's pending_prompt.txt"

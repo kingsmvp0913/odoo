@@ -435,16 +435,27 @@ function Get-WikiCache {
 
 function Get-TomlValue {
     param([string]$toml, [string]$section, [string]$key)
-    # 取 [section] 下 key = "value" 的值（僅支援雙引號字串）
-    if ($toml -match "(?ms)\[$([regex]::Escape($section))\][^\[]*?^$([regex]::Escape($key))\s*=\s*`"([^`"]*)`"") {
-        return $matches[1]
+    if ([string]::IsNullOrEmpty($section)) {
+        # Root-level key（Codex 官方格式：key = "value" 頂層）
+        if ($toml -match "(?m)^$([regex]::Escape($key))\s*=\s*`"([^`"]*)`"") {
+            return $matches[1]
+        }
+    } else {
+        # Section key（舊格式：[section]\nkey = "value"）
+        if ($toml -match "(?ms)\[$([regex]::Escape($section))\][^\[]*?^$([regex]::Escape($key))\s*=\s*`"([^`"]*)`"") {
+            return $matches[1]
+        }
     }
     return $null
 }
 
 function Get-TomlPromptContent {
     param([string]$toml)
-    # 取 [prompt] 下 content = """...""" 多行字串內容
+    # Codex 官方格式：developer_instructions = """...""" 頂層多行字串
+    if ($toml -match '(?ms)^developer_instructions\s*=\s*"""\s*\r?\n(.*?)\r?\n"""') {
+        return $matches[1]
+    }
+    # 向下相容舊格式：[prompt].content = """..."""
     if ($toml -match '(?s)\[prompt\][^\[]*?content\s*=\s*"""\s*\r?\n(.*?)\r?\n"""') {
         return $matches[1]
     }
