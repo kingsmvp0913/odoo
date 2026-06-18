@@ -1,5 +1,9 @@
 # CLAUDE.md (V8.4)
 
+## Skills
+- **getSQL** (`.claude/skills/getSQL/SKILL.md`) - 透過 SSH-SQLM API 查詢遠端 PostgreSQL。觸發：`/getSQL`
+When the user types `/getSQL`, invoke the Skill tool with `skill: "getSQL"` before doing anything else.
+
 ## 0. Hard Rules
 - NEVER modify core Odoo files. Custom code in `$ONLINE_ADDONS_DIR` (`C:\online_addons\` on Windows, `/online_addons` on Linux) only. Never touch `custom_addons/`.
 - NEVER guess intent. Surface 2–3 interpretations when ambiguous; state one core assumption before complex tasks. When still uncertain after surfacing interpretations, ask — do not proceed on a guess.
