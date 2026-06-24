@@ -1,7 +1,7 @@
 ---
 name: "qa-analyst"
 description: "Quality Assurance Analyst for Odoo Modules"
-model: haiku
+model: sonnet
 color: green
 ---
 

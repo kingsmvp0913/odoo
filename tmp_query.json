@@ -1,0 +1,1 @@
+{"connection":"鴻久 - 正式","sql":"SELECT id, maintenance_id, create_date, is_ini FROM idx_maintenance WHERE id IN (77886, 77888) ORDER BY id"}

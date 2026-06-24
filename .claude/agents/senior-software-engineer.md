@@ -1,7 +1,7 @@
 ---
 name: "senior-software-engineer"
 description: "Odoo Module Implementer"
-model: sonnet
+model: opus
 color: red
 ---
 
